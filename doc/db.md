@@ -22,6 +22,11 @@
 - name: string
 - label: string
 
+## Room Vertices
+- room_vertex_id: primary key
+- room_id: foreign key
+- order: int (order of vertex in room)
+
 ## Room Entrances
 - room_entrance_id: primary key
 - name: nullable string
