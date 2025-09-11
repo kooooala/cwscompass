@@ -1,35 +1,35 @@
 ## Paths
 - path_id: primary key
-- name: nullable string
 - label: nullable string
-
-## Vertices
-- vertex_id: primary key
-- name: nullable string
-- label: nullable string
-- floor: integer
-- latitude: decimal(8,6)
-- longitude: decimal(9,6)
 
 ## Path Vertices
 - path_vertex_id: primary key
-- path_id: foreign key
-- vertex_id: foreign key
-- order: int (order of vertex in path)
+- path: foreign key
+- sequence: int (order of vertex in path)
+- coordinates: foreign key
+- floor: integer
 
 ## Rooms
 - room_id: primary key
-- name: string
-- label: string
+- type: room | building
+- colour: int (24 bit integer with 8 bit for each colour channel)
+- subject: nullable string (null if type == building)
+- number: nullable string (null if type == building)
+- label: nullable string 
 
 ## Room Vertices
 - room_vertex_id: primary key
-- room_id: foreign key
-- order: int (order of vertex in room)
+- room: foreign key
+- sequence: int (order of vertex in room)
+- coordinates: foreign key
 
 ## Room Entrances
 - room_entrance_id: primary key
-- name: nullable string
 - label: nullable string
-- room_id: foreign key
-- vertex_id: foreign key
+- room: foreign key
+- coordinates: foreign key
+
+## Coordinates
+- coordinates_id: primary key
+- latitude: decimal(8,6)
+- longitude: decimal(9,6)
