@@ -1,19 +1,14 @@
-import 'package:cwscompass/room.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'dart:math' as math;
-import 'dart:io';
-import 'package:path/path.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'map_canvas.dart';
+import 'map_data.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatelessWidget { 
   const MyApp({super.key});
 
   // This widget is the root of your application.
@@ -24,80 +19,45 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: "Flutter Demo Home Page"),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
+class MyHomePage extends ConsumerWidget {
   const MyHomePage({super.key, required this.title});
 
   final String title;
-
+  
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final data = ref.watch(mapDataProvider);
 
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  final Rect rect = Offset(50, 50) & Size(150, 150);
-  Color color = Color((math.Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0);
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  Future<Database> openDatabaseFromAssets() async {
-    final directory = await getTemporaryDirectory();
-    final path = join(directory.path, "map.db");
-
-    final data = await rootBundle.load("assets/map.db");
-    List<int> bytes = data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
-
-    await File(path).writeAsBytes(bytes, flush:true);
-
-    return await openDatabase(path);
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            GestureDetector(
-              child: CustomPaint(
-                painter: MapCanvas(rect, color),
-                size: Size(480, 720),
-              ),
-              onTapDown: (TapDownDetails details) async {
-                if (rect.contains(details.localPosition)) {
-                  setState(() {
-                    color = Color((math.Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0);
-                  });
-                  print("Rectangle tapped");
-                  final db = await openDatabaseFromAssets();
-                  final room = await Room.fromRoomId(db, 1391733255107376182);
-                  print(room);
-                }
-              },
-            )
-          ],
+        appBar: AppBar(
+          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+          title: Text(title),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: const Icon(Icons.add),
-      ),
+        body: Center(
+          child: Column(
+            children: <Widget>[
+              data.when(
+                data: (mapData) => Expanded(child: ListView.builder(
+                  itemCount: mapData.rooms.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final colour = mapData.rooms[index].colour;
+                    return ListTile(
+                      tileColor: Color.fromARGB(0xFF, colour >> 16, (colour >> 8) & 0xFF, colour & 0xFF),
+                      title: Text("${mapData.rooms[index].number} ${mapData.rooms[index].subject}"),
+                    );
+                  },
+                )),
+                loading: () => CircularProgressIndicator(),
+                error: (err, stack) => Text("Oops: $err"),
+              )
+            ]
+          )
+        )
     );
   }
 }

@@ -14,6 +14,11 @@ class Room {
 
   Room(this.roomId, this.colour, this.subject, this.number, this.label, this.vertices);
 
+  static Future<List<int>> getRoomList(Database db) async {
+    final queryResults = await db.query("rooms", columns: ["room_id"]);
+    return queryResults.map((room) => room["room_id"] as int).toList();
+  }
+
   static Future<Room> fromRoomId(Database db, int roomId) async {
     final roomData = (await db.query("rooms",
         columns: ["colour", "subject", "number", "label"],
