@@ -1,3 +1,5 @@
+import 'package:cwscompass/coordinates.dart';
+import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/labelPainter.dart';
 import 'package:cwscompass/map/roomPainter.dart';
 import 'package:cwscompass/map_data.dart';
@@ -10,6 +12,7 @@ class MapCanvas extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mapData = ref.read(mapDataProvider);
+    final location = ref.watch(locationProvider);
 
     return Center(
       child: mapData.when(
@@ -45,6 +48,14 @@ class MapCanvas extends ConsumerWidget {
                     ),
                     RepaintBoundary(
                       child: CustomPaint(painter: LabelPainter(data)),
+                    ),
+                    location.when(
+                      data: (data) {
+                        final point = Coordinates(data.position.latitude, data.position.longitude).toPoint();
+                        return Positioned(top: point.y, left: point.x, child: Icon(Icons.location_on_rounded, size: 3,));
+                      },
+                      loading: () => const SizedBox.shrink(),
+                      error: (object, stack) => const SizedBox.shrink(),
                     )
                   ]
                 )
