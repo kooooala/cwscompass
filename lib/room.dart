@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:sqflite/sqflite.dart';
 
 import 'coordinates.dart';
@@ -5,7 +6,7 @@ import 'coordinates.dart';
 class Room {
   final int roomId;
 
-  final int colour;
+  final Color colour;
   final String subject;
   final String number;
   final String? label;
@@ -42,8 +43,11 @@ class Room {
       return Coordinates(result["latitude"] as double, result["longitude"] as double);
     }));
 
+    final colourHex = roomData["colour"] as int;
+    final colour = Color.fromARGB(0xFF, colourHex >> 16, (colourHex >> 8) & 0xFF, colourHex & 0xFF);
+
     return Room(roomId,
-      roomData["colour"] as int,
+      colour,
       roomData["subject"] as String,
       roomData["number"] as String,
       label == "None" ? null : label,

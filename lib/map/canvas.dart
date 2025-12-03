@@ -1,49 +1,51 @@
-import 'package:cwscompass/map/polygon.dart';
+import 'package:cwscompass/map/painter.dart';
+import 'package:cwscompass/map_data.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MapCanvas extends StatelessWidget {
+class MapCanvas extends ConsumerWidget {
   const MapCanvas({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mapData = ref.read(mapDataProvider);
+
     return Center(
-      child: InteractiveViewer(
-        minScale: 0.1,
-        maxScale: 64,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment(0.8, 1),
-              colors: <Color>[
-                Color(0xff1f005c),
-                Color(0xff5b0060),
-                Color(0xff870160),
-                Color(0xffac255e),
-                Color(0xffca485c),
-                Color(0xffe16b5c),
-                Color(0xfff39060),
-                Color(0xffffb56b),
-              ], // Gradient from https://learnui.design/tools/gradient-generator.html
-              tileMode: TileMode.mirror,
+      child: mapData.when(
+        data: (data) =>
+          InteractiveViewer(
+            minScale: 0.1,
+            maxScale: 64,
+            child: Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment(0.8, 1),
+                  colors: <Color>[
+                    Color(0xfff9f9f9),
+                    Color(0xffd4dad6),
+                    Color(0xffafbbb6),
+                    Color(0xff8b9d9b),
+                    Color(0xff698083),
+                    Color(0xff49636f),
+                    Color(0xff2c475c),
+                    Color(0xff142b4e),
+                  ], // Gradient from https://learnui.design/tools/gradient-generator.html
+                  tileMode: TileMode.mirror,
+                ),
+              ),
+              child: SizedBox(
+                  width: 512,
+                  height: 512,
+                  child: RepaintBoundary(
+                    child: CustomPaint(painter: Painter(data)),
+                  )
+              ),
             ),
           ),
-          child: SizedBox(
-            width: 512,
-            height: 512,
-            child: Stack(
-              clipBehavior: Clip.none,
-              fit: StackFit.expand,
-              children: <Widget>[
-                CustomPaint(
-                  painter: Polygon(<Offset>[Offset(0, 128), Offset(64, 0), Offset(128, 128)], Colors.yellow),
-                ),
-                Align(child: Text("Test")),
-              ]
-            )
-          ),
-        ),
-      )
+        loading: () => CircularProgressIndicator(),
+        error: (err, stack) => Text("Oops: $err"),
+      ),
     );
   }
 }
