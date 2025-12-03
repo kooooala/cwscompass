@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:math';
 import 'package:sqflite/sqflite.dart';
 
 import 'coordinates.dart';
@@ -11,9 +12,49 @@ class Room {
   final String number;
   final String? label;
 
-  final List<Coordinates> vertices;
+  // coordinates of the room using the WGS 84 Web Mercator projection
+  final List<Coordinates> coordinates;
+  // coordinates of the room in the app map
+  final List<Point<double>> vertices;
 
-  Room(this.roomId, this.colour, this.subject, this.number, this.label, this.vertices);
+  late double _area = 0;
+  late Point<double>? _centroid = null;
+
+  Room(this.roomId, this.colour, this.subject, this.number, this.label, this.coordinates)
+    : vertices = coordinates.map((c) => c.toPoint()).toList();
+
+  double get area {
+    if (_area != 0) {
+      return _area;
+    }
+
+    // computes the area of a polygon using the shoelace formula
+    double sum = 0;
+    for (var i = 0; i < vertices.length; i++) {
+      sum += vertices[i].x * vertices[(i + 1) % vertices.length].y - vertices[(i + 1) % vertices.length].x * vertices[i].y;
+    }
+    _area = sum / 2;
+    return _area;
+  }
+
+  Point<double> get centroid {
+    if (_centroid != null) {
+      return _centroid!;
+    }
+
+    double x = 0, y = 0;
+    for (var i = 0; i < vertices.length; i++) {
+      final current = vertices[i], next = vertices[(i + 1) % vertices.length];
+      x += (current.x + next.x) * (current.x * next.y - next.x * current.y);
+      y += (current.y + next.y) * (current.x * next.y - next.x * current.y);
+    }
+    x /= 6 * area;
+    y /= 6 * area;
+
+    _centroid = Point<double>(x, y);
+    print("$x, $y");
+    return _centroid!;
+  }
 
   static Future<List<int>> getRoomList(Database db) async {
     final queryResults = await db.query("rooms", columns: ["room_id"]);

@@ -1,4 +1,5 @@
-import 'package:cwscompass/map/painter.dart';
+import 'package:cwscompass/map/labelPainter.dart';
+import 'package:cwscompass/map/roomPainter.dart';
 import 'package:cwscompass/map_data.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,11 +36,18 @@ class MapCanvas extends ConsumerWidget {
                 ),
               ),
               child: SizedBox(
-                  width: 512,
-                  height: 512,
-                  child: RepaintBoundary(
-                    child: CustomPaint(painter: Painter(data)),
-                  )
+                width: 512,
+                height: 512,
+                child: Stack(
+                  children: <Widget>[
+                    RepaintBoundary(
+                      child: CustomPaint(painter: RoomPainter(data)),
+                    ),
+                    RepaintBoundary(
+                      child: CustomPaint(painter: LabelPainter(data)),
+                    )
+                  ]
+                )
               ),
             ),
           ),
