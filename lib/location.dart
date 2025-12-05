@@ -4,31 +4,22 @@ import 'package:cwscompass/coordinates.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final locationProvider = FutureProvider<Location>((ref) async {
-  final location = Location();
-  await location.load();
-  return location;
+final locationProvider = StreamProvider.autoDispose<Position>((ref) async* {
+  final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+  var permission = await Geolocator.checkPermission();
+
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
+
+  if (!serviceEnabled || permission == LocationPermission.denied || permission == LocationPermission.deniedForever) {
+    throw Exception("Unable to get location");
+  }
+
+  final stream = Geolocator.getPositionStream();
+
+  await for (final value in stream) {
+    yield value;
+  }
 });
 
-class Location {
-  late bool serviceEnabled;
-  late LocationPermission permission;
-
-  late Position position;
-
-  late StreamSubscription<Position> stream;
-
-  Future load() async {
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    permission = await Geolocator.checkPermission();
-
-    if (!serviceEnabled || (permission != LocationPermission.always && permission != LocationPermission.whileInUse)) {
-      return Future.error("Unable to get location");
-    }
-
-    position = await Geolocator.getCurrentPosition();
-    Geolocator.getPositionStream().listen((position) {
-      this.position = position;
-    });
-  }
-}

@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'map_data.dart';
 
 void main() async {
-  debugPaintSizeEnabled = true;
+  debugPaintSizeEnabled = false;
 
   runApp(const ProviderScope(child: MyApp()));
 }
@@ -45,16 +45,6 @@ class MyHomePage extends ConsumerWidget {
           child: Column(
             children: <Widget>[
               data.when(
-                //data: (mapData) => Expanded(child: ListView.builder(
-                //  itemCount: mapData.rooms.length,
-                //  itemBuilder: (BuildContext context, int index) {
-                //    final colour = mapData.rooms[index].colour;
-                //    return ListTile(
-                //      tileColor: Color.fromARGB(0xFF, colour >> 16, (colour >> 8) & 0xFF, colour & 0xFF),
-                //      title: Text("${mapData.rooms[index].number} ${mapData.rooms[index].subject}"),
-                //    );
-                //  },
-                //)),
                 data: (_) => MapCanvas(),
                 loading: () => CircularProgressIndicator(),
                 error: (err, stack) => Text("Oops: $err"),
