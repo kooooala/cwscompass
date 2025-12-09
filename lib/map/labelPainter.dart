@@ -1,3 +1,4 @@
+import 'package:cwscompass/common/maths.dart' as maths;
 import 'package:flutter/material.dart';
 
 import 'package:cwscompass/map_data.dart';
@@ -12,7 +13,7 @@ class LabelPainter extends CustomPainter {
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
 
     for (final room in mapData.rooms) {
-      final double contrast = (room.colour.computeLuminance() + 0.05) / (Colors.black87.computeLuminance() + 0.05);
+      final contrast = maths.contrastRatio(room.colour, Colors.black);
       final colour = contrast > 4.5 ? Colors.black : Colors.white;
 
       textPainter.text = TextSpan(
