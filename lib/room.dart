@@ -4,7 +4,6 @@ import 'package:sqflite/sqflite.dart';
 
 import 'common/maths.dart' as maths;
 import 'coordinates.dart';
-import 'common/maths.dart';
 
 class Room {
   final int roomId;
@@ -40,9 +39,9 @@ class Room {
 
   static Future<Room> fromRoomId(Database db, int roomId) async {
     final roomData = (await db.query("rooms",
-        columns: ["colour", "subject", "number", "label"],
-        where: "room_id = ?",
-        whereArgs: [roomId]
+      columns: ["colour", "subject", "number", "label"],
+      where: "room_id = ?",
+      whereArgs: [roomId]
     ))[0];
     final label = roomData["label"] as String;
 

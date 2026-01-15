@@ -1,10 +1,16 @@
+import 'package:equatable/equatable.dart';
 import 'dart:math';
 
-class Coordinates {
+class Coordinates extends Equatable {
+  // TODO: Implement floors
+
   final double latitude;
   final double longitude;
 
   Coordinates(this.latitude, this.longitude);
+
+  @override
+  List<Object> get props => [latitude, longitude];
 
   Point<double> toPoint() {
     final topLeft = Point<double>(-1.79278594, 51.55157938);
