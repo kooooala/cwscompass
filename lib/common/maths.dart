@@ -1,6 +1,8 @@
 import 'dart:math';
 import 'dart:ui';
 
+import 'package:cwscompass/coordinates.dart';
+
 /// Computes the area of a polygon using the shoelace formula.
 double polygonArea(List<Point<double>> vertices) {
   double sum = 0;
@@ -30,4 +32,20 @@ Point<double> centroid(List<Point<double>> vertices) {
 /// Computes the contrast ratio between [c1] and [c2] using WCAG's contrast ratio guidelines: https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html#key-terms
 double contrastRatio(Color c1, Color c2) {
   return (c1.computeLuminance() + 0.05) / (c2.computeLuminance() + 0.05);
+}
+
+const int earthRadius = 6371;
+
+/// Computes the distance between two coordinates
+double coordinatesDistance(Coordinates c1, Coordinates c2) {
+  // Haversine algorithm from https://www.movable-type.co.uk/scripts/latlong.html
+  final double phi1 = c1.latitude * pi / 180;
+  final double phi2 = c2.latitude * pi / 180;
+  final double phiDiff = phi2 - phi1;
+  final double lambdaDiff = (c2.longitude - c1.longitude) * pi / 180;
+
+  final double a = pow(sin(phiDiff / 2), 2) + cos(phi1) * cos(phi2) + pow(sin(lambdaDiff), 2);
+  final double c = 2 * atan2(sqrt(a), sqrt(1-a));
+
+  return earthRadius * c;
 }
