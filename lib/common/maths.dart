@@ -45,7 +45,7 @@ double coordinatesDistance(Coordinates c1, Coordinates c2) {
   final double lambdaDiff = (c2.longitude - c1.longitude) * pi / 180;
 
   final double a = pow(sin(phiDiff / 2), 2) + cos(phi1) * cos(phi2) + pow(sin(lambdaDiff), 2);
-  final double c = 2 * atan2(sqrt(a), sqrt(1-a));
+  final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
   return earthRadius * c;
 }

@@ -1,3 +1,4 @@
+import 'package:cwscompass/map/school.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
@@ -39,5 +40,7 @@ class MapData {
 
     final roomList = await Room.getRoomList(database);
     rooms = await Future.wait(roomList.map((room) async => await Room.fromRoomId(database, room)));
+
+    final school = School(rooms, paths);
   }
 }

@@ -2,6 +2,7 @@ import 'package:cwscompass/coordinates.dart';
 import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/labelPainter.dart';
 import 'package:cwscompass/map/marker.dart';
+import 'package:cwscompass/map/pathPainter.dart';
 import 'package:cwscompass/map/roomPainter.dart';
 import 'package:cwscompass/map_data.dart';
 import 'package:flutter/material.dart';
@@ -48,6 +49,9 @@ class MapCanvas extends ConsumerWidget {
                           ),
                           RepaintBoundary(
                             child: CustomPaint(painter: LabelPainter(data)),
+                          ),
+                          RepaintBoundary(
+                            child: CustomPaint(painter: PathPainter(data)),
                           ),
                           Marker(2)
                         ]
