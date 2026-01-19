@@ -37,6 +37,13 @@ class School {
       }
     }
 
+    for (final room in rooms) {
+      for (final entrance in room.entrances) {
+        final coordinates = Coordinates(entrance.latitude, entrance.longitude);
+        fullGraph[coordinates]!.add(entrance);
+      }
+    }
+
     // Simplify the graph by 'collapsing' paths with no branches i.e. removing
     // intermediate nodes (nodes with degree 2)
 
