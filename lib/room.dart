@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:math';
+import 'package:cwscompass/entrance.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'common/maths.dart' as maths;
@@ -13,6 +14,8 @@ class Room {
   final String number;
   final String? label;
 
+  final List<Entrance> entrances;
+
   /// Coordinates of the room using the WGS 84 Web Mercator projection (map projection used by Google Maps).
   final List<Coordinates> coordinates;
   /// Coordinates of the room in the app map.
@@ -20,7 +23,7 @@ class Room {
 
   Point<double>? _centroid;
 
-  Room(this.roomId, this.colour, this.subject, this.number, this.label, this.coordinates)
+  Room(this.roomId, this.colour, this.subject, this.number, this.label, this.entrances, this.coordinates)
     : vertices = coordinates.map((c) => c.toPoint()).toList();
 
   Point<double> get centroid {
@@ -43,6 +46,7 @@ class Room {
       where: "room_id = ?",
       whereArgs: [roomId]
     ))[0];
+    final number = roomData["number"] as String;
     final label = roomData["label"] as String;
 
     final vertices = await db.query("room_vertices",
@@ -52,22 +56,29 @@ class Room {
       orderBy: "sequence"
     );
 
-    final coordinates = await Future.wait(vertices.map((vertex) async {
-      final result = (await db.query("coordinates",
-        columns: ["latitude", "longitude"],
-        where: "coordinates_id = ?",
-        whereArgs: [vertex["coordinates"] as int]))[0];
-      return Coordinates(result["latitude"] as double, result["longitude"] as double);
-    }));
+    final coordinates = await Future.wait(vertices.map((vertex) async =>
+        Coordinates.fromCoordinatesId(db, vertex["coordinates"] as int)));
 
     final colourHex = roomData["colour"] as int;
     final colour = Color.fromARGB(0xFF, colourHex >> 16, (colourHex >> 8) & 0xFF, colourHex & 0xFF);
 
+    final entranceData = await db.query("room_entrances",
+      columns: ["label", "coordinates"],
+      where: "room = ?",
+      whereArgs: [roomId]
+    );
+    final entrances = await Future.wait(entranceData.map((entrance) async {
+      final coordinates = await Coordinates.fromCoordinatesId(db, entrance["coordinates"] as int);
+      final name = entrance["label"] as String == "None" ? null : label;
+      return Entrance(coordinates.latitude, coordinates.longitude, name);
+    }));
+
     return Room(roomId,
       colour,
       roomData["subject"] as String,
-      roomData["number"] as String,
+      number,
       label == "None" ? null : label,
+      entrances,
       coordinates);
   }
 }

@@ -37,6 +37,14 @@ class School {
       }
     }
 
+    for (final room in rooms) {
+      for (final entrance in room.entrances) {
+        final coordinates = Coordinates(entrance.latitude, entrance.longitude);
+        fullGraph[coordinates]!.add(entrance);
+        fullGraph[entrance] = [coordinates];
+      }
+    }
+
     // Simplify the graph by 'collapsing' paths with no branches i.e. removing
     // intermediate nodes (nodes with degree 2)
 
@@ -90,5 +98,7 @@ class School {
       graph[edgeNodes.last] ??= <Edge>[];
       graph[edgeNodes.last]!.add(edge);
     }
+
+    print("Hi!!!!!");
   }
 }

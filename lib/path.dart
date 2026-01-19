@@ -30,13 +30,8 @@ class Path {
       orderBy: "sequence"
     );
 
-    final coordinates = await Future.wait(vertices.map((vertex) async {
-      final result = (await db.query("coordinates",
-          columns: ["latitude", "longitude"],
-          where: "coordinates_id = ?",
-          whereArgs: [vertex["coordinates"] as int]))[0];
-      return Coordinates(result["latitude"] as double, result["longitude"] as double);
-    }));
+    final coordinates = await Future.wait(vertices.map((vertex) async =>
+        Coordinates.fromCoordinatesId(db, vertex["coordinates"] as int)));
 
     return Path(label == "None" ? null : label, coordinates);
   }
