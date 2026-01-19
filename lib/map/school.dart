@@ -12,6 +12,9 @@ class Edge {
   double calculateDistance() {
     double result = 0;
     for (int i = 0; i < coordinates.length - 1; i++) {
+      if (coordinates[i].latitude == coordinates[i + 1].latitude && coordinates[i].longitude == coordinates[i + 1].longitude) {
+        continue;
+      }
       result += maths.coordinatesDistance(coordinates[i], coordinates[i + 1]);
     }
     return result;
@@ -48,55 +51,46 @@ class School {
     // Simplify the graph by 'collapsing' paths with no branches i.e. removing
     // intermediate nodes (nodes with degree 2)
 
-    // Find a node with degree > 2 to use as the root node
-    final root = fullGraph.keys.firstWhere((c) => fullGraph[c] != null && fullGraph[c]!.length > 2);
+    // Identify all nodes that are not intermediate (the ones we want to keep)
+    final junctions = fullGraph.keys.where((n) => fullGraph[n]!.length != 2).toList();
+    final visited = <List<Coordinates>>[];
 
-    final unvisited = <Coordinates>[];
-    unvisited.addAll(fullGraph[root]!);
-    final visited = <Coordinates>[root];
+    for (final junction in junctions) {
+      final children = fullGraph[junction]!;
 
-    Coordinates edgeStart = root;
+      for (final child in children) {
+        // Skip over ones we have already traversed
+        if (visited.any((edge) =>
+          (edge[0] == junction && edge[1] == child) ||
+          (edge[1] == junction && edge[0] == child))) {
+          continue;
+        }
 
-    while (unvisited.isNotEmpty) {
-      Coordinates current = unvisited.removeLast();
-      if (visited.contains(current)) {
-        continue;
-      }
-      visited.add(current);
+        final edgeNodes = <Coordinates>[junction, child];
+        var last = junction;
+        var current = child;
 
-      final children = fullGraph[current]!;
-      List<Coordinates> edgeNodes = [edgeStart, current];
-
-      // If the current node is not an intermediate or end node, save it and add
-      // all its children to the stack
-      if (children.length > 2) {
-        edgeStart = current;
-        unvisited.addAll(children);
-      }
-
-      // if the urrent node is an intermediate node, we want to traverse the
-      // path until we find a non-intermediate node
-      if (children.length == 2) {
-        Coordinates next;
-        do {
-          next = fullGraph[current]!.firstWhere((c) => !edgeNodes.contains(c));
-          visited.add(current);
+        while (!junctions.contains(current)) {
+          final next = fullGraph[current]!.firstWhere((n) => n != last);
           edgeNodes.add(next);
+          last = current;
           current = next;
-        } while (fullGraph[current]!.length == 2);
+        }
 
-        visited.add(next);
-        unvisited.addAll(fullGraph[next]!);
+        // We only need to add the start and end edges to visited because these
+        // are the only ones that connect to a junction
+        visited.add([junction, child]);
+        visited.add([current, last]);
+
+        // Add the 'collapsed' path to our adjacency list
+        final edge = Edge(edgeNodes);
+
+        graph[edgeNodes.first] ??= <Edge>[];
+        graph[edgeNodes.first]!.add(edge);
+
+        graph[edgeNodes.last] ??= <Edge>[];
+        graph[edgeNodes.last]!.add(edge);
       }
-
-      // Add the 'collapsed' edge to our adjacency list
-      final edge = Edge(edgeNodes);
-
-      graph[edgeNodes.first] ??= <Edge>[];
-      graph[edgeNodes.first]!.add(edge);
-
-      graph[edgeNodes.last] ??= <Edge>[];
-      graph[edgeNodes.last]!.add(edge);
     }
 
     print("Hi!!!!!");

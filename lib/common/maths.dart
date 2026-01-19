@@ -34,7 +34,7 @@ double contrastRatio(Color c1, Color c2) {
   return (c1.computeLuminance() + 0.05) / (c2.computeLuminance() + 0.05);
 }
 
-const int earthRadius = 6371;
+const int earthRadius = 6_371_000; // in metres
 
 /// Computes the distance between two coordinates
 double coordinatesDistance(Coordinates c1, Coordinates c2) {
@@ -44,7 +44,7 @@ double coordinatesDistance(Coordinates c1, Coordinates c2) {
   final double phiDiff = phi2 - phi1;
   final double lambdaDiff = (c2.longitude - c1.longitude) * pi / 180;
 
-  final double a = pow(sin(phiDiff / 2), 2) + cos(phi1) * cos(phi2) + pow(sin(lambdaDiff), 2);
+  final double a = pow(sin(phiDiff / 2), 2) + cos(phi1) * cos(phi2) * pow(sin(lambdaDiff / 2), 2);
   final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
   return earthRadius * c;
