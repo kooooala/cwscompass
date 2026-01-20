@@ -37,21 +37,39 @@ class MyHomePage extends ConsumerWidget {
     final data = ref.watch(mapDataProvider);
 
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(title),
-        ),
-        body: Center(
-          child: Column(
-            children: <Widget>[
-              data.when(
-                data: (_) => MapCanvas(),
-                loading: () => CircularProgressIndicator(),
-                error: (err, stack) => Text("Oops: $err"),
-              )
-            ]
+      body: Builder(
+        builder: (context) => SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: <Widget>[
+                data.when(
+                  data: (_) => MapCanvas(onRoomTap: (room) {
+                    Scaffold.of(context).showBottomSheet((context) =>
+                      TapRegion(
+                        onTapOutside: (_) => Navigator.of(context).pop(),
+                        child: Container(
+                          height: 400,
+                          width: double.infinity,
+                          color: Theme.of(context).colorScheme.primaryContainer,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text("${room.subject} room ${room.number}", style: TextStyle(color: Theme.of(context).colorScheme.primary))
+                            ]
+                          )
+                        )
+                      ));
+                  },),
+                  loading: () => CircularProgressIndicator(),
+                  error: (err, stack) => Text("Oops: $err"),
+                )
+              ]
+            )
           )
         )
+      )
     );
   }
 }

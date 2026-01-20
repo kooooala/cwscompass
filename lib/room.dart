@@ -21,6 +21,8 @@ class Room {
   /// Coordinates of the room in the app map.
   final List<Point<double>> vertices;
 
+  late final (Point<double>, Point<double>) boundingBox = calculateBoundingBox();
+
   Point<double>? _centroid;
 
   Room(this.roomId, this.colour, this.subject, this.number, this.label, this.entrances, this.coordinates)
@@ -33,6 +35,35 @@ class Room {
 
     _centroid = maths.centroid(vertices);
     return _centroid!;
+  }
+
+  (Point<double>, Point<double>) calculateBoundingBox() {
+    final xList = vertices.map((v) => v.x), yList = vertices.map((v) => v.y);
+    final topLeft = Point(xList.reduce(min), yList.reduce(min));
+    final bottomRight = Point(xList.reduce(max), yList.reduce(max));
+    return (topLeft, bottomRight);
+  }
+
+  // Check if point is inside polygon by using the ray casting algorithm: https://people.utm.my/shahabuddin/?p=6277
+  bool pointIntersects(Point<double> point) {
+    // Quickly check if point is within bounding box
+    if (point.x < boundingBox.$1.x || point.x > boundingBox.$2.x ||
+      point.y < boundingBox.$1.y || point.y > boundingBox.$2.y) {
+      return false;
+    }
+
+    int intersections = 0;
+
+    for (int i = 0; i < vertices.length; i++) {
+      final current = vertices[i];
+      final next = vertices[(i + 1) % vertices.length];
+
+      if (((current.y > point.y) != (next.y > point.y)) && (point.x < (next.x - current.x) * (point.y - current.y) / (next.y - current.y) + current.x)) {
+        intersections++;
+      }
+    }
+
+    return intersections % 2 == 1;
   }
 
   static Future<List<int>> getRoomList(Database db) async {

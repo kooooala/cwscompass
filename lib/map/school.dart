@@ -79,8 +79,8 @@ class School {
 
         // We only need to add the start and end edges to visited because these
         // are the only ones that connect to a junction
-        visited.add([junction, child]);
-        visited.add([current, last]);
+        visited.add([edgeNodes.first, edgeNodes[1]]);
+        visited.add([edgeNodes.last, edgeNodes[edgeNodes.length - 2]]);
 
         // Add the 'collapsed' path to our adjacency list
         final edge = Edge(edgeNodes);
@@ -92,7 +92,5 @@ class School {
         graph[edgeNodes.last]!.add(edge);
       }
     }
-
-    print("Hi!!!!!");
   }
 }
