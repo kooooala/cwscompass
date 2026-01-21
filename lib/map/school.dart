@@ -3,6 +3,8 @@ import 'package:cwscompass/room.dart';
 import 'package:cwscompass/path.dart';
 import 'package:cwscompass/common/maths.dart' as maths;
 
+import 'package:collection/collection.dart';
+
 class Edge {
   final List<Coordinates> coordinates;
   late final double distance = calculateDistance();
@@ -20,6 +22,8 @@ class Edge {
     return result;
   }
 }
+
+typedef Route = Edge;
 
 class School {
   final Map<Coordinates, List<Edge>> graph = {};
@@ -99,7 +103,7 @@ class School {
     Coordinates closest = graph.keys.first;
 
     for (final node in graph.keys) {
-      final distance = maths.euclideanDistance(point.toPoint(), node.toPoint());
+      final distance = maths.equirectangularDistance(point, node);
       if (distance < minimum) {
         closest = node;
         minimum = distance;
@@ -107,5 +111,56 @@ class School {
     }
 
     return closest;
+  }
+
+  Route shortestRoute(Coordinates start, Coordinates goal) {
+    // Use A* search algorithm to find the shortest route between two points;
+    // implementation based on https://theory.stanford.edu/~amitp/GameProgramming/ImplementationNotes.html
+    final frontier = PriorityQueue<(Coordinates, double)>((a, b) => a.$2.compareTo(b.$2));
+    frontier.add((start, 0));
+    final cameFrom = <Coordinates, Coordinates?>{};
+    final costSoFar = <Coordinates, double>{};
+    cameFrom[start] = null;
+    costSoFar[start] = 0;
+
+    while (frontier.isNotEmpty) {
+      final current = frontier.removeFirst().$1;
+
+      if (current == goal) {
+        break;
+      }
+
+      for (final nextEdge in graph[current]!) {
+        final newCost = costSoFar[current]! + nextEdge.distance;
+        final next = nextEdge.coordinates.first == current ? nextEdge.coordinates.last : nextEdge.coordinates.first;
+        if (!costSoFar.keys.contains(next) || newCost < costSoFar[next]!) {
+          costSoFar[next] = newCost;
+          // Use the distance from the goal as the heuristic function
+          final priority = newCost + maths.equirectangularDistance(next, goal);
+          frontier.add((next, priority));
+
+          // Since an edge is made up of smaller intermediate edges, they will
+          // have all to be added to the list individually
+          List<Coordinates> intermediates = nextEdge.coordinates;
+          if (nextEdge.coordinates.first == current) {
+            intermediates = intermediates.reversed.toList();
+          }
+          for (var i = 0; i < intermediates.length - 1; i++) {
+            cameFrom[intermediates[i]] = intermediates[i + 1];
+          }
+        }
+      }
+    }
+
+    // Reconstruct shortest route
+    Coordinates current = goal;
+    final route = <Coordinates>[];
+    while (current != start) {
+      route.add(current);
+      current = cameFrom[current]!;
+    }
+    route.add(start);
+
+    return Route(route);
   }
 }

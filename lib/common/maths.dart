@@ -38,10 +38,10 @@ const int earthRadius = 6_371_000; // in metres
 
 /// Computes the distance between two coordinates
 double haversineDistance(Coordinates c1, Coordinates c2) {
-  // Haversine algorithm from https://www.movable-type.co.uk/scripts/latlong.html
+  // Haversine formula from https://www.movable-type.co.uk/scripts/latlong.html
   final double phi1 = c1.latitude * pi / 180;
   final double phi2 = c2.latitude * pi / 180;
-  final double phiDiff = phi2 - phi1;
+  final double phiDiff = (c2.latitude - c1.latitude) * pi / 180;
   final double lambdaDiff = (c2.longitude - c1.longitude) * pi / 180;
 
   final double a = pow(sin(phiDiff / 2), 2) + cos(phi1) * cos(phi2) * pow(sin(lambdaDiff / 2), 2);
@@ -50,6 +50,13 @@ double haversineDistance(Coordinates c1, Coordinates c2) {
   return earthRadius * c;
 }
 
-double euclideanDistance(Point<double> p1, Point<double> p2) {
-  return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2));
+/// Computes an approximate of the distance between the two coordinates; only
+/// suitable for short distances but much quicker
+double equirectangularDistance(Coordinates c1, Coordinates c2) {
+  // Formula also from https://www.movable-type.co.uk/scripts/latlong.html with
+  //
+  final meanLat = (c1.latitude + c2.latitude) * pi / 180 / 2;
+  final x = (c2.longitude - c1.longitude) * pi / 180 * cos(meanLat);
+  final y = (c2.latitude - c1.latitude) * pi / 180;
+  return earthRadius * sqrt(pow(x, 2) + pow(y, 2));
 }

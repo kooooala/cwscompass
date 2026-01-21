@@ -35,52 +35,44 @@ class MapCanvas extends ConsumerWidget {
 
     return Center(
       child: school.when(
-        data: (data) =>
-            InteractiveViewer(
-              transformationController: transformations,
-              minScale: 1,
-              maxScale: 64,
-              child: GestureDetector(
+        data: (data) {
+          final start = data.school.closestNode(Coordinates(51.5490108,-1.7894657));
+          final dest = data.school.closestNode(Coordinates(51.54907, -1.78829));
+
+          final route = data.school.shortestRoute(start, dest);
+
+          return InteractiveViewer(
+            transformationController: transformations,
+            minScale: 1,
+            maxScale: 64,
+            child: GestureDetector(
                 onTapUp: (details) => onTapUp(details, data.school),
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment(0.8, 1),
-                      colors: <Color>[
-                        Color(0xfff9f9f9),
-                        Color(0xffd4dad6),
-                        Color(0xffafbbb6),
-                        Color(0xff8b9d9b),
-                        Color(0xff698083),
-                        Color(0xff49636f),
-                        Color(0xff2c475c),
-                        Color(0xff142b4e),
-                      ], // Gradient from https://learnui.design/tools/gradient-generator.html
-                      tileMode: TileMode.mirror,
-                    ),
+                    color: const Color(0xffffffff),
                   ),
                   child: SizedBox(
                       width: width,
                       height: height,
                       child: Stack(
-                        children: <Widget>[
-                          RepaintBoundary(
-                            child: CustomPaint(painter: RoomPainter(data.school)),
-                          ),
-                          RepaintBoundary(
-                            child: CustomPaint(painter: LabelPainter(data.school)),
-                          ),
-                          //RepaintBoundary(
-                          //  child: CustomPaint(painter: PathPainter(data)),
-                          //),
-                          Marker(2, data.school),
-                        ]
+                          children: <Widget>[
+                            RepaintBoundary(
+                              child: CustomPaint(painter: RoomPainter(data.school)),
+                            ),
+                            RepaintBoundary(
+                              child: CustomPaint(painter: LabelPainter(data.school)),
+                            ),
+                            RepaintBoundary(
+                              child: CustomPaint(painter: PathPainter(route)),
+                            ),
+                            Marker(2, data.school),
+                          ]
                       )
                   ),
                 )
-              ),
             ),
+          );
+        },
         loading: () => CircularProgressIndicator(),
         error: (err, stack) => Text("Oops: $err"),
       ),
