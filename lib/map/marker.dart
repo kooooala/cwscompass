@@ -21,7 +21,7 @@ class Marker extends ConsumerWidget {
         final coordinates = Coordinates(position.latitude, position.longitude);
         final closest = school.closestNode(coordinates);
         print("Closest node: ${closest.latitude}, ${closest.longitude}");
-        final point = coordinates.toPoint();
+        final point = coordinates.point;
         final accuracy = position.accuracy;
         return Stack(children: [
           Positioned(top: point.y - size / 2, left: point.x - size / 2, child: Icon(Icons.circle_rounded, color: Colors.blue, size: size,))

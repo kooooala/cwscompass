@@ -26,7 +26,7 @@ class Room {
   Point<double>? _centroid;
 
   Room(this.roomId, this.colour, this.subject, this.number, this.label, this.entrances, this.coordinates)
-    : vertices = coordinates.map((c) => c.toPoint()).toList();
+    : vertices = coordinates.map((c) => c.point).toList();
 
   Point<double> get centroid {
     if (_centroid != null) {
@@ -45,7 +45,7 @@ class Room {
   }
 
   // Check if point is inside polygon by using the ray casting algorithm: https://people.utm.my/shahabuddin/?p=6277
-  bool pointIntersects(Point<double> point) {
+  bool intersects(Point<double> point) {
     // Quickly check if point is within bounding box
     if (point.x < boundingBox.$1.x || point.x > boundingBox.$2.x ||
       point.y < boundingBox.$1.y || point.y > boundingBox.$2.y) {

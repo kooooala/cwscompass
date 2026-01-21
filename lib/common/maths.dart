@@ -60,3 +60,22 @@ double equirectangularDistance(Coordinates c1, Coordinates c2) {
   final y = (c2.latitude - c1.latitude) * pi / 180;
   return earthRadius * sqrt(pow(x, 2) + pow(y, 2));
 }
+
+double pythagoras(Point p1, Point p2) {
+  return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2));
+}
+
+Point<double> coordinatesToPoint(double latitude, double longitude) {
+  final topLeft = Point<double>(-1.79278594, 51.55157938);
+  final bottomRight = Point<double>(-1.78508911, 51.54750466);
+
+  final canvasSize = 512;
+
+  final width = bottomRight.x - topLeft.x;
+  final height = topLeft.y - bottomRight.y;
+
+  final dx = (longitude - topLeft.x) / width * canvasSize;
+  final dy = ((1 - (latitude - bottomRight.y) / height) * canvasSize); // with latitude, positive = up
+
+  return Point<double>(dx, dy);
+}

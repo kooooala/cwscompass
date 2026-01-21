@@ -22,7 +22,7 @@ class MapCanvas extends ConsumerWidget {
 
   void onTapUp(TapUpDetails details, School school) {
     for (final room in school.rooms) {
-      if (room.pointIntersects(Point(details.localPosition.dx, details.localPosition.dy))) {
+      if (room.intersects(Point(details.localPosition.dx, details.localPosition.dy))) {
         onRoomTap(room);
       }
     }
@@ -63,7 +63,7 @@ class MapCanvas extends ConsumerWidget {
                               child: CustomPaint(painter: LabelPainter(data.school)),
                             ),
                             RepaintBoundary(
-                              child: CustomPaint(painter: PathPainter(route)),
+                              child: CustomPaint(painter: PathPainter(route, transformations)),
                             ),
                             Marker(2, data.school),
                           ]
