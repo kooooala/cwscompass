@@ -1,12 +1,13 @@
+import 'package:cwscompass/map/school.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cwscompass/room.dart';
 import 'package:cwscompass/map_data.dart';
 
 class RoomPainter extends CustomPainter {
-  final MapData mapData;
+  final School school;
 
-  RoomPainter(this.mapData);
+  RoomPainter(this.school);
 
   static Path pathFromRoom(Room room) {
     final vertices = room.vertices;
@@ -32,7 +33,7 @@ class RoomPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (final room in mapData.rooms) {
+    for (final room in school.rooms) {
       drawRoom(canvas, room);
     }
   }

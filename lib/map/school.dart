@@ -15,7 +15,7 @@ class Edge {
       if (coordinates[i].latitude == coordinates[i + 1].latitude && coordinates[i].longitude == coordinates[i + 1].longitude) {
         continue;
       }
-      result += maths.coordinatesDistance(coordinates[i], coordinates[i + 1]);
+      result += maths.haversineDistance(coordinates[i], coordinates[i + 1]);
     }
     return result;
   }
@@ -92,5 +92,20 @@ class School {
         graph[edgeNodes.last]!.add(edge);
       }
     }
+  }
+
+  Coordinates closestNode(Coordinates point) {
+    double minimum = double.infinity;
+    Coordinates closest = graph.keys.first;
+
+    for (final node in graph.keys) {
+      final distance = maths.euclideanDistance(point.toPoint(), node.toPoint());
+      if (distance < minimum) {
+        closest = node;
+        minimum = distance;
+      }
+    }
+
+    return closest;
   }
 }

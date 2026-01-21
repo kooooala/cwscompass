@@ -19,8 +19,7 @@ class MapData {
   final String dbName;
 
   late Database database;
-  late List<Room> rooms;
-  late List<Path> paths;
+  late School school;
 
   MapData(this.dbName);
 
@@ -36,11 +35,11 @@ class MapData {
     database = await openDatabase(path);
 
     final pathList = await Path.getPathList(database);
-    paths = await Future.wait(pathList.map((path) async => await Path.fromPathId(database, path)));
+    final paths = await Future.wait(pathList.map((path) async => await Path.fromPathId(database, path)));
 
     final roomList = await Room.getRoomList(database);
-    rooms = await Future.wait(roomList.map((room) async => await Room.fromRoomId(database, room)));
+    final rooms = await Future.wait(roomList.map((room) async => await Room.fromRoomId(database, room)));
 
-    final school = School(rooms, paths);
+    school = School(rooms, paths);
   }
 }

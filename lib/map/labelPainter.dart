@@ -1,18 +1,19 @@
 import 'package:cwscompass/common/maths.dart' as maths;
+import 'package:cwscompass/map/school.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cwscompass/map_data.dart';
 
 class LabelPainter extends CustomPainter {
-  final MapData mapData;
+  final School school;
   
-  LabelPainter(this.mapData);
+  LabelPainter(this.school);
 
   @override
   void paint(Canvas canvas, Size size) {
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
 
-    for (final room in mapData.rooms) {
+    for (final room in school.rooms) {
       final contrast = maths.contrastRatio(room.colour, Colors.black);
       final colour = contrast > 4.5 ? Colors.black : Colors.white;
 

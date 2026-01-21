@@ -6,6 +6,7 @@ import 'package:cwscompass/map/labelPainter.dart';
 import 'package:cwscompass/map/marker.dart';
 import 'package:cwscompass/map/pathPainter.dart';
 import 'package:cwscompass/map/roomPainter.dart';
+import 'package:cwscompass/map/school.dart';
 import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/room.dart';
 import 'package:flutter/material.dart';
@@ -19,8 +20,8 @@ class MapCanvas extends ConsumerWidget {
 
   const MapCanvas({super.key, required this.width, required this.height, required this.onRoomTap});
 
-  void onTapUp(TapUpDetails details, MapData mapData) {
-    for (final room in mapData.rooms) {
+  void onTapUp(TapUpDetails details, School school) {
+    for (final room in school.rooms) {
       if (room.pointIntersects(Point(details.localPosition.dx, details.localPosition.dy))) {
         onRoomTap(room);
       }
@@ -29,18 +30,18 @@ class MapCanvas extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mapData = ref.read(mapDataProvider);
+    final school = ref.read(mapDataProvider);
     final transformations = ref.read(transformationProvider);
 
     return Center(
-      child: mapData.when(
+      child: school.when(
         data: (data) =>
             InteractiveViewer(
               transformationController: transformations,
               minScale: 1,
               maxScale: 64,
               child: GestureDetector(
-                onTapUp: (details) => onTapUp(details, data),
+                onTapUp: (details) => onTapUp(details, data.school),
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -65,15 +66,15 @@ class MapCanvas extends ConsumerWidget {
                       child: Stack(
                         children: <Widget>[
                           RepaintBoundary(
-                            child: CustomPaint(painter: RoomPainter(data)),
+                            child: CustomPaint(painter: RoomPainter(data.school)),
                           ),
                           RepaintBoundary(
-                            child: CustomPaint(painter: LabelPainter(data)),
+                            child: CustomPaint(painter: LabelPainter(data.school)),
                           ),
-                          RepaintBoundary(
-                            child: CustomPaint(painter: PathPainter(data)),
-                          ),
-                          Marker(2)
+                          //RepaintBoundary(
+                          //  child: CustomPaint(painter: PathPainter(data)),
+                          //),
+                          Marker(2, data.school),
                         ]
                       )
                   ),

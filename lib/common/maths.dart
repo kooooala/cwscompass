@@ -37,7 +37,7 @@ double contrastRatio(Color c1, Color c2) {
 const int earthRadius = 6_371_000; // in metres
 
 /// Computes the distance between two coordinates
-double coordinatesDistance(Coordinates c1, Coordinates c2) {
+double haversineDistance(Coordinates c1, Coordinates c2) {
   // Haversine algorithm from https://www.movable-type.co.uk/scripts/latlong.html
   final double phi1 = c1.latitude * pi / 180;
   final double phi2 = c2.latitude * pi / 180;
@@ -48,4 +48,8 @@ double coordinatesDistance(Coordinates c1, Coordinates c2) {
   final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
 
   return earthRadius * c;
+}
+
+double euclideanDistance(Point<double> p1, Point<double> p2) {
+  return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2));
 }
