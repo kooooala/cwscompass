@@ -38,37 +38,43 @@ class MyHomePage extends ConsumerWidget {
 
     return Scaffold(
       body: Builder(
-        builder: (context) => SafeArea(
-          child: Center(
+        builder: (context) => //SafeArea(
+          //child:
+          Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 data.when(
-                  data: (_) => MapCanvas(onRoomTap: (room) {
-                    Scaffold.of(context).showBottomSheet((context) =>
-                      TapRegion(
-                        onTapOutside: (_) => Navigator.of(context).pop(),
-                        child: Container(
-                          height: 400,
-                          width: double.infinity,
-                          color: Theme.of(context).colorScheme.primaryContainer,
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text("${room.subject} room ${room.number}", style: TextStyle(color: Theme.of(context).colorScheme.primary))
-                            ]
+                  data: (_) => MapCanvas(
+                    width: MediaQuery.sizeOf(context).width,
+                    height: MediaQuery.sizeOf(context).height,
+                    onRoomTap: (room) {
+                      Scaffold.of(context).showBottomSheet((context) =>
+                        TapRegion(
+                          onTapOutside: (_) => Navigator.of(context).pop(),
+                          child: Container(
+                            height: 400,
+                            width: double.infinity,
+                            color: Theme.of(context).colorScheme.primaryContainer,
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text("${room.subject} room ${room.number}", style: TextStyle(color: Theme.of(context).colorScheme.primary))
+                              ]
+                            )
                           )
                         )
-                      ));
-                  },),
+                      );
+                    },
+                  ),
                   loading: () => CircularProgressIndicator(),
                   error: (err, stack) => Text("Oops: $err"),
                 )
               ]
             )
           )
-        )
+        //)
       )
     );
   }

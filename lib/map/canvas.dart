@@ -11,10 +11,13 @@ import 'package:cwscompass/room.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+final transformationProvider = Provider((ref) => TransformationController());
+
 class MapCanvas extends ConsumerWidget {
+  final double width, height;
   final void Function(Room room) onRoomTap;
 
-  const MapCanvas({super.key, required this.onRoomTap});
+  const MapCanvas({super.key, required this.width, required this.height, required this.onRoomTap});
 
   void onTapUp(TapUpDetails details, MapData mapData) {
     for (final room in mapData.rooms) {
@@ -27,12 +30,14 @@ class MapCanvas extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mapData = ref.read(mapDataProvider);
+    final transformations = ref.read(transformationProvider);
 
     return Center(
       child: mapData.when(
         data: (data) =>
             InteractiveViewer(
-              minScale: 0.1,
+              transformationController: transformations,
+              minScale: 1,
               maxScale: 64,
               child: GestureDetector(
                 onTapUp: (details) => onTapUp(details, data),
@@ -55,21 +60,21 @@ class MapCanvas extends ConsumerWidget {
                     ),
                   ),
                   child: SizedBox(
-                      width: 512,
-                      height: 720,
+                      width: width,
+                      height: height,
                       child: Stack(
-                          children: <Widget>[
-                            RepaintBoundary(
-                              child: CustomPaint(painter: RoomPainter(data)),
-                            ),
-                            RepaintBoundary(
-                              child: CustomPaint(painter: LabelPainter(data)),
-                            ),
-                            RepaintBoundary(
-                              child: CustomPaint(painter: PathPainter(data)),
-                            ),
-                            Marker(2)
-                          ]
+                        children: <Widget>[
+                          RepaintBoundary(
+                            child: CustomPaint(painter: RoomPainter(data)),
+                          ),
+                          RepaintBoundary(
+                            child: CustomPaint(painter: LabelPainter(data)),
+                          ),
+                          RepaintBoundary(
+                            child: CustomPaint(painter: PathPainter(data)),
+                          ),
+                          Marker(2)
+                        ]
                       )
                   ),
                 )
