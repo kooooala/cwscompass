@@ -12,8 +12,6 @@ import 'package:cwscompass/room.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final transformationProvider = Provider((ref) => TransformationController());
-
 class MapCanvas extends ConsumerWidget {
   final double width, height;
   final void Function(Room room) onRoomTap;
@@ -30,8 +28,8 @@ class MapCanvas extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final school = ref.read(mapDataProvider);
-    final transformations = ref.read(transformationProvider);
+    final school = ref.watch(mapDataProvider);
+    final transformations = TransformationController();
 
     return Center(
       child: school.when(
