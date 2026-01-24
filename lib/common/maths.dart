@@ -79,3 +79,18 @@ Point<double> coordinatesToPoint(double latitude, double longitude) {
 
   return Point<double>(dx, dy);
 }
+
+Coordinates pointToCoordinates(Point<double> point) {
+  final topLeft = Point<double>(-1.79278594, 51.55157938);
+  final bottomRight = Point<double>(-1.78508911, 51.54750466);
+
+  final canvasSize = 512;
+
+  final width = bottomRight.x - topLeft.x;
+  final height = topLeft.y - bottomRight.y;
+
+  final longitude = point.x * width / canvasSize + topLeft.x;
+  final latitude = height + bottomRight.y - (height * point.y) / canvasSize;
+
+  return Coordinates(latitude, longitude);
+}

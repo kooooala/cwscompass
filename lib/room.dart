@@ -14,6 +14,8 @@ class Room {
   final String number;
   final String? label;
 
+  late final MapEntry<String, Room> searchEntry = MapEntry("room$subject$number$label", this);
+
   final List<Entrance> entrances;
 
   /// Coordinates of the room using the WGS 84 Web Mercator projection (map projection used by Google Maps).
