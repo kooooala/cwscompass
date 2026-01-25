@@ -46,6 +46,11 @@ class Room {
     return (topLeft, bottomRight);
   }
 
+  double distanceFrom(Coordinates coordinates, {bool precise = false}) {
+    final double Function(Coordinates, Coordinates) distanceFunction = precise ? maths.haversineDistance : maths.equirectangularDistance;
+    return distanceFunction(coordinates, maths.pointToCoordinates(centroid));
+  }
+
   // Check if point is inside polygon by using the ray casting algorithm: https://people.utm.my/shahabuddin/?p=6277
   bool intersects(Point<double> point) {
     // Quickly check if point is within bounding box

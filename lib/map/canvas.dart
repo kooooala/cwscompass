@@ -15,15 +15,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class MapCanvas extends ConsumerWidget {
   final double width, height;
   final void Function(Room room) onRoomTap;
+  final void Function() onBlankTap;
 
-  const MapCanvas({super.key, required this.width, required this.height, required this.onRoomTap});
+  const MapCanvas({super.key, required this.width, required this.height, required this.onRoomTap, required this.onBlankTap});
 
   void onTapUp(TapUpDetails details, School school) {
     for (final room in school.rooms) {
       if (room.intersects(Point(details.localPosition.dx, details.localPosition.dy))) {
         onRoomTap(room);
+        return;
       }
     }
+    onBlankTap();
   }
 
   @override

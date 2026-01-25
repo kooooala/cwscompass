@@ -1,20 +1,15 @@
-import 'package:cwscompass/common/maths.dart';
-import 'package:cwscompass/coordinates.dart';
 import 'package:cwscompass/map_data.dart';
-import 'package:cwscompass/common/capital_extension.dart';
 import 'package:cwscompass/room.dart';
-import 'package:cwscompass/widgets/rounded_list.dart';
+import 'package:cwscompass/theme_colours.dart';
+import 'package:cwscompass/widgets/room_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 
-import '../location.dart';
-import '../theme_colours.dart';
-
 class SearchPage extends ConsumerWidget {
   final controller = SearchController();
 
-  final ValueNotifier<List<Room>> searchResults = ValueNotifier<List<Room>>([]);
+  final searchResults = ValueNotifier<List<Room>>([]);
 
   SearchPage({super.key});
 
@@ -106,58 +101,6 @@ class SearchPage extends ConsumerWidget {
           error: (err, stack) => Text("Oops: $err")
         )
       )
-    );
-  }
-}
-
-class RoomList extends ConsumerWidget {
-  final List<Room> rooms;
-
-  const RoomList({super.key, required this.rooms});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final location = ref.watch(locationProvider);
-
-    return RoundedList(
-      radius: 12.0,
-      children: List<Widget>.generate(rooms.length, (i) {
-        final room = rooms[i];
-        return Container(
-          color: Colors.white,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              spacing: 8.0,
-              children: [
-                Text(
-                  "Room ${room.number}",
-                  style: TextStyle(
-                    color: ThemeColours.darkText,
-                    fontSize: 18.0
-                  )
-                ),
-                Text(
-                  room.subject.capitalise(),
-                  style: TextStyle(
-                    color: ThemeColours.darkTextTint,
-                    fontSize: 14.0
-                  )
-                ),
-                Spacer(),
-                location.when<Widget>(
-                  data: (coordinates) {
-                    return Text("${haversineDistance(Coordinates(coordinates.latitude, coordinates.longitude), pointToCoordinates(room.centroid)).round()}m");
-                  },
-                  loading: () => Text(""),
-                  error: (_, _) => Text(""),
-                )
-              ]
-            )
-          )
-        );
-      })
     );
   }
 }

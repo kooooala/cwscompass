@@ -1,0 +1,176 @@
+import 'package:cwscompass/common/capital_extension.dart';
+import 'package:cwscompass/common/maths.dart';
+import 'package:cwscompass/coordinates.dart';
+import 'package:cwscompass/location.dart';
+import 'package:cwscompass/map_data.dart';
+import 'package:cwscompass/room.dart';
+import 'package:cwscompass/theme_colours.dart';
+import 'package:cwscompass/widgets/room_list.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smooth_sheets/smooth_sheets.dart';
+
+class InfoSheet extends StatelessWidget {
+  final controller = SheetController();
+  final ValueNotifier<Room?> selectedRoom;
+
+  static const selectedSize = 0.6, minSize = 0.25;
+
+  InfoSheet({super.key, required this.selectedRoom}) {
+    selectedRoom.addListener(onRoomSelected);
+  }
+
+  void onRoomSelected() {
+    final newSize = selectedRoom.value == null ? minSize : selectedSize;
+    controller.animateTo(
+      SheetOffset(newSize),
+      duration: Duration(milliseconds: 400),
+      curve: Curves.easeOut
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final height = MediaQuery.of(context).size.height;
+    final maxSize = (height - MediaQuery.paddingOf(context).top) / height;
+
+    final snapSizes = [minSize, selectedSize, maxSize].map((s) => SheetOffset(s)).toList();
+
+    return SheetViewport(
+      child: Sheet(
+        controller: controller,
+        decoration: MaterialSheetDecoration(
+          size: SheetSize.stretch,
+          color: ThemeColours.primary,
+          borderRadius: BorderRadius.circular(24.0),
+          shadowColor: Colors.black
+        ),
+        scrollConfiguration: SheetScrollConfiguration(),
+        initialOffset: snapSizes.first,
+        snapGrid: MultiSnapGrid(
+          snaps: snapSizes
+        ),
+        physics: ClampingSheetPhysics(
+          spring: SpringDescription(
+            mass: 1,
+            stiffness: 1000,
+            damping: 100
+          )
+        ),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+          child: ValueListenableBuilder(
+            valueListenable: selectedRoom,
+            builder: (context, value, _) {
+              Widget widget;
+              if (value == null) {
+                widget = NoneSelected(
+                  key: ValueKey(value),
+                );
+              } else {
+                widget = RoomInfo(
+                  key: ValueKey(value),
+                  room: value
+                );
+              }
+
+              return AnimatedSwitcher(
+                duration: Duration(milliseconds: 150),
+                child: widget
+              );
+            }
+          )
+        )
+      )
+    );
+  }
+}
+
+class RoomInfo extends StatelessWidget {
+  final Room room;
+
+  const RoomInfo({super.key, required this.room});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        Text(
+          "Room ${room.number}",
+          style: TextStyle(
+            color: ThemeColours.lightText,
+            fontWeight: FontWeight.w900,
+            fontSize: 28.0
+          )
+        ),
+        Text(
+          "${room.subject.capitalise()} • Building",
+          style: TextStyle(
+            color: ThemeColours.lightTextTint,
+            fontWeight: FontWeight.w800,
+            fontSize: 16.0
+          ),
+        ),
+        Text(
+          "No upcoming lessons",
+          style: TextStyle(
+            color: ThemeColours.lightText,
+            fontWeight: FontWeight.w800,
+            fontSize: 20.0
+          )
+        )
+      ],
+    );
+  }
+}
+
+class NoneSelected extends ConsumerWidget {
+  const NoneSelected({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final mapData = ref.watch(mapDataProvider);
+    final location = ref.watch(locationProvider);
+
+    return location.when(
+      data: (locationData) {
+        return ListView(
+          padding: EdgeInsets.zero,
+          children: [
+            Padding(
+              padding: EdgeInsets.only(bottom: 16.0),
+              child:  Text(
+                  "Nearby",
+                  style: TextStyle(
+                      color: ThemeColours.lightText,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 28.0
+                  )
+              ),
+            ),
+            mapData.when(
+              data: (data) {
+                final rooms = data.school.rooms;
+                rooms.sort((a, b) {
+                  final coordinates = Coordinates(locationData.latitude, locationData.longitude);
+                  return a.distanceFrom(coordinates).compareTo(b.distanceFrom(coordinates));
+                });
+
+                // Limit the number of nearby rooms shown to 10
+                final end = rooms.length > 10 ? 10 : rooms.length;
+                return RoomList(
+                  rooms: rooms.sublist(0, end),
+                );
+              },
+              loading: () => CircularProgressIndicator(),
+              error: (err, stack) => Text("Oops: $err")
+            )
+          ],
+        );
+      },
+      loading: () => CircularProgressIndicator(),
+      error: (err, stack) => Text("Oops: $err")
+    );
+  }
+}

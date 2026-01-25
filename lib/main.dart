@@ -1,5 +1,7 @@
 import 'package:cwscompass/map/canvas.dart';
+import 'package:cwscompass/room.dart';
 import 'package:cwscompass/theme_colours.dart';
+import 'package:cwscompass/widgets/info_sheet.dart';
 import 'package:cwscompass/widgets/search_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -34,50 +36,38 @@ class MyHomePage extends ConsumerWidget {
   
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Scaffold(
-      body: Builder(
-        builder: (context) =>
-          Stack(
-            children: [
-              Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: <Widget>[
-                    MapCanvas(
-                      width: MediaQuery.sizeOf(context).width,
-                      height: MediaQuery.sizeOf(context).height,
-                      onRoomTap: (room) {
-                        Scaffold.of(context).showBottomSheet((context) =>
-                          TapRegion(
-                            onTapOutside: (_) => Navigator.of(context).pop(),
-                            child: Container(
-                              height: 400,
-                              width: double.infinity,
-                              color: Theme.of(context).colorScheme.primaryContainer,
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    "${room.subject} room ${room.number}",
-                                    style: TextStyle(
-                                      color: Theme.of(context).colorScheme.primary
-                                    )
-                                  )
-                                ]
-                              )
-                            )
-                          )
-                        );
-                      },
-                    )
-                  ]
+    final selectedRoom = ValueNotifier<Room?>(null);
+
+    return PopScope(
+      canPop: false ,
+      onPopInvokedWithResult: (_, _) {
+        // Unselect room with back button
+        if (selectedRoom.value != null) {
+          selectedRoom.value = null;
+        }
+      },
+      child: Scaffold(
+        body: Builder(
+          builder: (context) =>
+            Stack(children: [
+              Center(child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: <Widget>[
+                  MapCanvas(
+                    width: MediaQuery.sizeOf(context).width,
+                    height: MediaQuery.sizeOf(context).height,
+                    onRoomTap: (room) => selectedRoom.value = room,
+                    onBlankTap: () => selectedRoom.value = null,
+                  )
+                ]
                 )
               ),
               FakeSearchBar(),
-            ]
-          )
-      ),
+              InfoSheet(selectedRoom: selectedRoom)
+            ]),
+        ),
+      )
     );
   }
 }

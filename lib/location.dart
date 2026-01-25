@@ -1,6 +1,3 @@
-import 'dart:async';
-
-import 'package:cwscompass/coordinates.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
