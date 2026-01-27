@@ -14,19 +14,23 @@ class InfoSheet extends StatelessWidget {
   final controller = SheetController();
   final ValueNotifier<Room?> selectedRoom;
 
-  static const nearbySize = 0.4, minSize = 0.25;
+  static const nearbySize = 0.5, minSize = 0.25;
 
   InfoSheet({super.key, required this.selectedRoom}) {
     selectedRoom.addListener(onRoomSelected);
   }
 
+  void animateSizeChange(SheetOffset newSize) {
+    controller.animateTo(
+        newSize,
+        duration: Duration(milliseconds: 400),
+        curve: Curves.easeOut
+    );
+  }
+  
   void onRoomSelected() {
     final newSize = selectedRoom.value == null ? nearbySize : minSize;
-    controller.animateTo(
-      SheetOffset(newSize),
-      duration: Duration(milliseconds: 400),
-      curve: Curves.easeOut
-    );
+    animateSizeChange(SheetOffset(newSize));
   }
 
   @override
@@ -57,28 +61,36 @@ class InfoSheet extends StatelessWidget {
             damping: 100
           )
         ),
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-          child: ValueListenableBuilder(
-            valueListenable: selectedRoom,
-            builder: (context, value, _) {
-              Widget widget;
-              if (value == null) {
-                widget = NoneSelected(
-                  key: ValueKey(value),
-                );
-              } else {
-                widget = RoomInfo(
-                  key: ValueKey(value),
-                  room: value
-                );
-              }
-
-              return AnimatedSwitcher(
-                duration: Duration(milliseconds: 150),
-                child: widget
-              );
+        child: GestureDetector(
+          onTap: () {
+            // Expand the room card when it's tapped
+            if (selectedRoom.value != null) {
+              animateSizeChange(snapSizes[1]);
             }
+          },
+          child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+              child: ValueListenableBuilder(
+                  valueListenable: selectedRoom,
+                  builder: (context, value, _) {
+                    Widget widget;
+                    if (value == null) {
+                      widget = NoneSelected(
+                        key: ValueKey(value),
+                      );
+                    } else {
+                      widget = RoomInfo(
+                          key: ValueKey(value),
+                          room: value
+                      );
+                    }
+
+                    return AnimatedSwitcher(
+                        duration: Duration(milliseconds: 150),
+                        child: widget
+                    );
+                  }
+              )
           )
         )
       )

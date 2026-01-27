@@ -53,7 +53,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     }
 
     final x = -focus.x * scale + widget.width / 2;
-    final y = (-focus.y - 2.5) * scale + widget.height / 2;
+    final y = -focus.y * scale + widget.height / 2 - 75;
 
     animationController.reset();
     focusAnimation = Matrix4Tween(

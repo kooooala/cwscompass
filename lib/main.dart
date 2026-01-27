@@ -2,6 +2,7 @@ import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/room.dart';
 import 'package:cwscompass/theme_colours.dart';
 import 'package:cwscompass/widgets/info_sheet.dart';
+import 'package:cwscompass/widgets/overlays/explore.dart';
 import 'package:cwscompass/widgets/search_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -24,20 +25,18 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         textTheme: GoogleFonts.familjenGroteskTextTheme()
       ),
-      home: const MyHomePage(title: "Flutter Demo Home Page"),
+      home: MyHomePage(),
     );
   }
 }
 
 class MyHomePage extends ConsumerWidget {
-  const MyHomePage({super.key, required this.title});
+  final selectedRoom = ValueNotifier<Room?>(null);
 
-  final String title;
+  MyHomePage({super.key});
   
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedRoom = ValueNotifier<Room?>(null);
-
     return PopScope(
       canPop: false ,
       onPopInvokedWithResult: (_, _) {
@@ -64,8 +63,7 @@ class MyHomePage extends ConsumerWidget {
                 ]
                 )
               ),
-              FakeSearchBar(),
-              InfoSheet(selectedRoom: selectedRoom)
+              ExploreOverlay(selectedRoom: selectedRoom)
             ]),
         ),
       )
@@ -73,48 +71,3 @@ class MyHomePage extends ConsumerWidget {
   }
 }
 
-class FakeSearchBar extends StatelessWidget {
-  const FakeSearchBar({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: MediaQuery.paddingOf(context).top + 16.0, horizontal: 28.0),
-      child: GestureDetector(
-        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (context) => SearchPage())),
-        child: Hero(
-          tag: "search-bar",
-          child: Material(
-            elevation: 4,
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(24.0),
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 6.0, vertical: 10.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10.0),
-                    child: Icon(
-                      Icons.menu_rounded,
-                      size: 32.0,
-                      color: ThemeColours.primary
-                    ),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 10.0),
-                    child: Icon(
-                      Icons.search_rounded,
-                      size: 32.0,
-                      color: ThemeColours.primary
-                    ),
-                  ),
-                ]
-              ),
-            )
-          )
-        )
-      )
-    );
-  }
-}
