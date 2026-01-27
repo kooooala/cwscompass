@@ -57,6 +57,7 @@ class MyHomePage extends ConsumerWidget {
                   MapCanvas(
                     width: MediaQuery.sizeOf(context).width,
                     height: MediaQuery.sizeOf(context).height,
+                    focusOnTap: true,
                     onRoomTap: (room) => selectedRoom.value = room,
                     onBlankTap: () => selectedRoom.value = null,
                   )

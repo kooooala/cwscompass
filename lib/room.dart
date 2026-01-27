@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:math';
+import 'package:cwscompass/common/bounding_box.dart';
 import 'package:cwscompass/entrance.dart';
 import 'package:sqflite/sqflite.dart';
 
@@ -23,12 +24,14 @@ class Room {
   /// Coordinates of the room in the app map.
   final List<Point<double>> vertices;
 
-  late final (Point<double>, Point<double>) boundingBox = calculateBoundingBox();
+  late final BoundingBox boundingBox;
 
   Point<double>? _centroid;
 
   Room(this.roomId, this.colour, this.subject, this.number, this.label, this.entrances, this.coordinates)
-    : vertices = coordinates.map((c) => c.point).toList();
+    : vertices = coordinates.map((c) => c.point).toList() {
+    boundingBox = BoundingBox.fromVertices(vertices);
+  }
 
   Point<double> get centroid {
     if (_centroid != null) {
@@ -39,13 +42,6 @@ class Room {
     return _centroid!;
   }
 
-  (Point<double>, Point<double>) calculateBoundingBox() {
-    final xList = vertices.map((v) => v.x), yList = vertices.map((v) => v.y);
-    final topLeft = Point(xList.reduce(min), yList.reduce(min));
-    final bottomRight = Point(xList.reduce(max), yList.reduce(max));
-    return (topLeft, bottomRight);
-  }
-
   double distanceFrom(Coordinates coordinates, {bool precise = false}) {
     final double Function(Coordinates, Coordinates) distanceFunction = precise ? maths.haversineDistance : maths.equirectangularDistance;
     return distanceFunction(coordinates, maths.pointToCoordinates(centroid));
@@ -54,8 +50,8 @@ class Room {
   // Check if point is inside polygon by using the ray casting algorithm: https://people.utm.my/shahabuddin/?p=6277
   bool intersects(Point<double> point) {
     // Quickly check if point is within bounding box
-    if (point.x < boundingBox.$1.x || point.x > boundingBox.$2.x ||
-      point.y < boundingBox.$1.y || point.y > boundingBox.$2.y) {
+    if (point.x < boundingBox.topLeft.x || point.x > boundingBox.bottomRight.x ||
+      point.y < boundingBox.topLeft.y || point.y > boundingBox.bottomRight.y) {
       return false;
     }
 

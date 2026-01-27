@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:vector_math/vector_math_64.dart' as vectors;
 
 import 'package:cwscompass/coordinates.dart';
 import 'package:cwscompass/location.dart';
@@ -14,42 +15,97 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class MapCanvas extends ConsumerStatefulWidget {
   final double width, height;
+  final bool focusOnTap;
+
   final void Function(Room room) onRoomTap;
   final void Function() onBlankTap;
 
-  const MapCanvas({super.key, required this.width, required this.height, required this.onRoomTap, required this.onBlankTap});
-
-  void onTapUp(TapUpDetails details, School school) {
-    for (final room in school.rooms) {
-      if (room.intersects(Point(details.localPosition.dx, details.localPosition.dy))) {
-        onRoomTap(room);
-        return;
-      }
-    }
-    onBlankTap();
-  }
+  const MapCanvas({super.key, required this.width, required this.height, required this.onRoomTap, required this.onBlankTap, this.focusOnTap = false});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => MapCanvasState();
 }
 
 class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderStateMixin {
-  late AnimationController animations;
-  final TransformationController transformations = TransformationController();
+  late final AnimationController animationController;
+  final TransformationController transformationController = TransformationController();
+  Animation<Matrix4>? focusAnimation;
 
   @override
   void initState() {
     super.initState();
-    animations = AnimationController(
+    animationController = AnimationController(
       vsync: this,
-      duration: Duration(seconds: 2)
+      duration: Duration(milliseconds: 800)
     );
   }
 
   @override
   void dispose() {
-    animations.dispose();
+    animationController.dispose();
+    transformationController.dispose();
     super.dispose();
+  }
+
+  void startFocusAnimation(Point<double> focus, double scale) {
+    if (focusAnimation != null) {
+      cancelAnimation();
+    }
+
+    final x = -focus.x * scale + widget.width / 2;
+    final y = (-focus.y - 2.5) * scale + widget.height / 2;
+
+    animationController.reset();
+    focusAnimation = Matrix4Tween(
+      begin: transformationController.value,
+      end: Matrix4.compose(
+        vectors.Vector3(x, y, 0),
+        vectors.Quaternion.identity(),
+        vectors.Vector3.all(scale)
+      )
+    ).animate(CurvedAnimation(
+      parent: animationController, 
+      curve: Curves.easeInOutSine
+    ));
+    focusAnimation!.addListener(onAnimationUpdate);
+    animationController.forward();
+  }
+
+  void onAnimationUpdate() {
+    transformationController.value = focusAnimation!.value;
+    if (!animationController.isAnimating) {
+      cancelAnimation();
+    }
+  }
+
+  void cancelAnimation() {
+    animationController.stop();
+    focusAnimation!.removeListener(onAnimationUpdate);
+    focusAnimation = null;
+    animationController.reset();
+  }
+
+  double computeScale(Room room) {
+    final topLeft = room.boundingBox.topLeft, bottomRight = room.boundingBox.bottomRight;
+    
+    final xScale = widget.width / (bottomRight.x - topLeft.x);
+    final yScale = widget.height / (bottomRight.y - topLeft.y);
+    
+    final scale = xScale > yScale ? yScale : xScale;
+    return scale * 0.5;
+  }
+
+  void onTapUp(TapUpDetails details, School school) {
+    for (final room in school.rooms) {
+      if (room.intersects(Point(details.localPosition.dx, details.localPosition.dy))) {
+        widget.onRoomTap(room);
+        if (widget.focusOnTap) {
+          startFocusAnimation(room.centroid, computeScale(room));
+        }
+        return;
+      }
+    }
+    widget.onBlankTap();
   }
 
   @override
@@ -65,11 +121,16 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
           final route = data.school.shortestRoute(start, dest);
 
           return InteractiveViewer(
-            transformationController: transformations,
+            transformationController: transformationController,
+            onInteractionStart: (_) {
+              if (animationController.status == AnimationStatus.forward) {
+                cancelAnimation();
+              }
+            },
             minScale: 1,
             maxScale: 64,
             child: GestureDetector(
-              onTapUp: (details) => widget.onTapUp(details, data.school),
+              onTapUp: (details) => onTapUp(details, data.school),
               child: Container(
                 color: Colors.white,
                 child: SizedBox(
@@ -84,7 +145,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                         child: CustomPaint(painter: LabelPainter(data.school)),
                       ),
                       RepaintBoundary(
-                        child: CustomPaint(painter: PathPainter(route, transformations)),
+                        child: CustomPaint(painter: PathPainter(route, transformationController)),
                       ),
                       Marker(2, data.school),
                     ]

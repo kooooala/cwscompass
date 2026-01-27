@@ -14,14 +14,14 @@ class InfoSheet extends StatelessWidget {
   final controller = SheetController();
   final ValueNotifier<Room?> selectedRoom;
 
-  static const selectedSize = 0.6, minSize = 0.25;
+  static const nearbySize = 0.4, minSize = 0.25;
 
   InfoSheet({super.key, required this.selectedRoom}) {
     selectedRoom.addListener(onRoomSelected);
   }
 
   void onRoomSelected() {
-    final newSize = selectedRoom.value == null ? minSize : selectedSize;
+    final newSize = selectedRoom.value == null ? nearbySize : minSize;
     controller.animateTo(
       SheetOffset(newSize),
       duration: Duration(milliseconds: 400),
@@ -34,7 +34,7 @@ class InfoSheet extends StatelessWidget {
     final height = MediaQuery.of(context).size.height;
     final maxSize = (height - MediaQuery.paddingOf(context).top) / height;
 
-    final snapSizes = [minSize, selectedSize, maxSize].map((s) => SheetOffset(s)).toList();
+    final snapSizes = [minSize, nearbySize, maxSize].map((s) => SheetOffset(s)).toList();
 
     return SheetViewport(
       child: Sheet(
@@ -46,7 +46,7 @@ class InfoSheet extends StatelessWidget {
           shadowColor: Colors.black
         ),
         scrollConfiguration: SheetScrollConfiguration(),
-        initialOffset: snapSizes.first,
+        initialOffset: snapSizes[1],
         snapGrid: MultiSnapGrid(
           snaps: snapSizes
         ),
