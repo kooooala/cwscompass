@@ -12,7 +12,7 @@ import 'package:cwscompass/room.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MapCanvas extends ConsumerWidget {
+class MapCanvas extends ConsumerStatefulWidget {
   final double width, height;
   final void Function(Room room) onRoomTap;
   final void Function() onBlankTap;
@@ -30,9 +30,31 @@ class MapCanvas extends ConsumerWidget {
   }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ConsumerStatefulWidget> createState() => MapCanvasState();
+}
+
+class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderStateMixin {
+  late AnimationController animations;
+  final TransformationController transformations = TransformationController();
+
+  @override
+  void initState() {
+    super.initState();
+    animations = AnimationController(
+      vsync: this,
+      duration: Duration(seconds: 2)
+    );
+  }
+
+  @override
+  void dispose() {
+    animations.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final school = ref.watch(mapDataProvider);
-    final transformations = TransformationController();
 
     return Center(
       child: school.when(
@@ -47,12 +69,12 @@ class MapCanvas extends ConsumerWidget {
             minScale: 1,
             maxScale: 64,
             child: GestureDetector(
-              onTapUp: (details) => onTapUp(details, data.school),
+              onTapUp: (details) => widget.onTapUp(details, data.school),
               child: Container(
                 color: Colors.white,
                 child: SizedBox(
-                  width: width,
-                  height: height,
+                  width: widget.width,
+                  height: widget.height,
                   child: Stack(
                     children: <Widget>[
                       RepaintBoundary(
