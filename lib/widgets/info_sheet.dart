@@ -10,15 +10,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
 
-class InfoSheet extends StatelessWidget {
-  final controller = SheetController();
+class InfoSheet extends StatefulWidget {
   final ValueNotifier<Room?> selectedRoom;
 
-  static const nearbySize = 0.5, minSize = 0.25;
+  const InfoSheet({super.key, required this.selectedRoom});
 
-  InfoSheet({super.key, required this.selectedRoom}) {
-    selectedRoom.addListener(onRoomSelected);
-  }
+  @override
+  State<StatefulWidget> createState() => InfoSheetState();
+}
+
+class InfoSheetState extends State<InfoSheet> {
+  late final SheetController controller;
+
+  static const nearbySize = 0.5, minSize = 0.25;
 
   void animateSizeChange(SheetOffset newSize) {
     controller.animateTo(
@@ -27,10 +31,24 @@ class InfoSheet extends StatelessWidget {
         curve: Curves.easeOut
     );
   }
-  
+
   void onRoomSelected() {
-    final newSize = selectedRoom.value == null ? nearbySize : minSize;
+    final newSize = widget.selectedRoom.value == null ? nearbySize : minSize;
     animateSizeChange(SheetOffset(newSize));
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    controller = SheetController();
+    widget.selectedRoom.addListener(onRoomSelected);
+  }
+
+  @override
+  void dispose() {
+    widget.selectedRoom.removeListener(onRoomSelected);
+    controller.dispose();
+    super.dispose();
   }
 
   @override
@@ -41,59 +59,59 @@ class InfoSheet extends StatelessWidget {
     final snapSizes = [minSize, nearbySize, maxSize].map((s) => SheetOffset(s)).toList();
 
     return SheetViewport(
-      child: Sheet(
-        controller: controller,
-        decoration: MaterialSheetDecoration(
-          size: SheetSize.stretch,
-          color: ThemeColours.primary,
-          borderRadius: BorderRadius.circular(24.0),
-          shadowColor: Colors.black
-        ),
-        scrollConfiguration: SheetScrollConfiguration(),
-        initialOffset: snapSizes[1],
-        snapGrid: MultiSnapGrid(
-          snaps: snapSizes
-        ),
-        physics: ClampingSheetPhysics(
-          spring: SpringDescription(
-            mass: 1,
-            stiffness: 1000,
-            damping: 100
-          )
-        ),
-        child: GestureDetector(
-          onTap: () {
-            // Expand the room card when it's tapped
-            if (selectedRoom.value != null) {
-              animateSizeChange(snapSizes[1]);
-            }
-          },
-          child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-              child: ValueListenableBuilder(
-                  valueListenable: selectedRoom,
-                  builder: (context, value, _) {
-                    Widget widget;
-                    if (value == null) {
-                      widget = NoneSelected(
-                        key: ValueKey(value),
-                      );
-                    } else {
-                      widget = RoomInfo(
-                          key: ValueKey(value),
-                          room: value
-                      );
-                    }
-
-                    return AnimatedSwitcher(
-                        duration: Duration(milliseconds: 150),
-                        child: widget
-                    );
+        child: Sheet(
+            controller: controller,
+            decoration: MaterialSheetDecoration(
+                size: SheetSize.stretch,
+                color: ThemeColours.primary,
+                borderRadius: BorderRadius.circular(24.0),
+                shadowColor: Colors.black
+            ),
+            scrollConfiguration: SheetScrollConfiguration(),
+            initialOffset: snapSizes[1],
+            snapGrid: MultiSnapGrid(
+                snaps: snapSizes
+            ),
+            physics: ClampingSheetPhysics(
+                spring: SpringDescription(
+                    mass: 1,
+                    stiffness: 1000,
+                    damping: 100
+                )
+            ),
+            child: GestureDetector(
+                onTap: () {
+                  // Expand the room card when it's tapped
+                  if (widget.selectedRoom.value != null) {
+                    animateSizeChange(snapSizes[1]);
                   }
-              )
-          )
+                },
+                child: Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+                    child: ValueListenableBuilder(
+                        valueListenable: widget.selectedRoom,
+                        builder: (context, value, _) {
+                          Widget widget;
+                          if (value == null) {
+                            widget = NoneSelected(
+                              key: ValueKey(value),
+                            );
+                          } else {
+                            widget = RoomInfo(
+                                key: ValueKey(value),
+                                room: value
+                            );
+                          }
+
+                          return AnimatedSwitcher(
+                              duration: Duration(milliseconds: 150),
+                              child: widget
+                          );
+                        }
+                    )
+                )
+            )
         )
-      )
     );
   }
 }
