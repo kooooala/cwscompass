@@ -57,7 +57,7 @@ class MyHomePage extends ConsumerWidget {
                 height: MediaQuery.sizeOf(context).height,
                 controller: canvasController
               ),
-              ExploreOverlay()
+              ExploreOverlay(canvasController: canvasController)
             ]),
         ),
       )

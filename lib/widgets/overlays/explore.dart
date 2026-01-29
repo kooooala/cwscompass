@@ -1,3 +1,4 @@
+import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/room.dart';
 import 'package:cwscompass/theme_colours.dart';
 import 'package:cwscompass/widgets/info_sheet.dart';
@@ -20,14 +21,16 @@ class SelectedRoomNotifier extends Notifier<Room?> {
 }
 
 class ExploreOverlay extends StatelessWidget {
-  const ExploreOverlay({super.key});
+  final MapCanvasController canvasController;
+
+  const ExploreOverlay({super.key, required this.canvasController});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         FakeSearchBar(),
-        InfoSheet()
+        InfoSheet(canvasController: canvasController)
       ],
     );
   }

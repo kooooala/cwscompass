@@ -48,7 +48,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
   @override
   void dispose() {
     animationController.dispose();
-    widget.controller.transformationController.dispose();
+    //widget.controller.transformationController.dispose();
     super.dispose();
   }
 

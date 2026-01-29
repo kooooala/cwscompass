@@ -2,18 +2,23 @@ import 'package:cwscompass/common/capital_extension.dart';
 import 'package:cwscompass/common/maths.dart';
 import 'package:cwscompass/coordinates.dart';
 import 'package:cwscompass/location.dart';
+import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/room.dart';
 import 'package:cwscompass/theme_colours.dart';
 import 'package:cwscompass/widgets/overlays/explore.dart';
+import 'package:cwscompass/widgets/overlays/route_preview.dart';
 import 'package:cwscompass/widgets/room_list.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
 
 class InfoSheet extends ConsumerStatefulWidget {
-  const InfoSheet({super.key});
+  final MapCanvasController canvasController;
+
+  const InfoSheet({super.key, required this.canvasController});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => InfoSheetState();
@@ -62,81 +67,100 @@ class InfoSheetState extends ConsumerState<InfoSheet> {
     ref.listen<Room?>(selectedRoomProvider, onRoomSelect);
 
     return SheetViewport(
-        child: Sheet(
-            controller: controller,
-            decoration: MaterialSheetDecoration(
-                size: SheetSize.stretch,
-                color: ThemeColours.primary,
-                borderRadius: BorderRadius.circular(24.0),
-                shadowColor: Colors.black
-            ),
-            scrollConfiguration: SheetScrollConfiguration(),
-            initialOffset: snapSizes[1],
-            snapGrid: MultiSnapGrid(
-                snaps: snapSizes
-            ),
-            physics: ClampingSheetPhysics(
-                spring: SpringDescription(
-                    mass: 1,
-                    stiffness: 1000,
-                    damping: 100
-                )
-            ),
-            child: GestureDetector(
-                onTap: () {
-                  // Expand the info sheet when it's tapped
-                  animateSizeChange(switch (currentSize) {
-                    nearbySize => minSize,
-                    minSize => nearbySize,
-                    _ => minSize
-                  });
-                },
-                child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-                    child: Builder(builder: (context) {
-                      final selectedRoom = ref.watch(selectedRoomProvider);
+      child: Sheet(
+        controller: controller,
+        decoration: MaterialSheetDecoration(
+          size: SheetSize.stretch,
+          color: ThemeColours.primary,
+          borderRadius: BorderRadius.circular(24.0),
+          shadowColor: Colors.black
+        ),
+        scrollConfiguration: SheetScrollConfiguration(),
+        initialOffset: snapSizes[1],
+        snapGrid: MultiSnapGrid(
+          snaps: snapSizes
+        ),
+        physics: ClampingSheetPhysics(
+          spring: SpringDescription(
+            mass: 1,
+            stiffness: 1000,
+            damping: 100
+          )
+        ),
+        child: GestureDetector(
+          onTap: () {
+            // Expand the info sheet when it's tapped
+            animateSizeChange(switch (currentSize) {
+              nearbySize => minSize,
+              minSize => nearbySize,
+              _ => minSize
+            });
+          },
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
+            child: Builder(builder: (context) {
+              final selectedRoom = ref.watch(selectedRoomProvider);
 
-                      Widget content;
-                      if (selectedRoom == null) {
-                        content = NoneSelected(
-                          key: ValueKey(selectedRoom)
-                        );
-                      } else {
-                        content = RoomInfo(
-                          room: selectedRoom,
-                          key: ValueKey(selectedRoom)
-                        );
-                      }
+              Widget content;
+              if (selectedRoom == null) {
+                content = NoneSelected(
+                  key: ValueKey(selectedRoom)
+                );
+              } else {
+                content = RoomInfo(
+                  room: selectedRoom,
+                  canvasController: widget.canvasController,
+                  key: ValueKey(selectedRoom)
+                );
+              }
 
-                      return AnimatedSwitcher(
-                        duration: Duration(milliseconds: 150),
-                        child: content
-                      );
-                    })
-                )
-            )
+              return AnimatedSwitcher(
+                duration: Duration(milliseconds: 150),
+                child: content
+              );
+            })
+          )
         )
+      )
     );
   }
 }
 
 class RoomInfo extends StatelessWidget {
   final Room room;
+  final MapCanvasController canvasController;
 
-  const RoomInfo({super.key, required this.room});
+  const RoomInfo({super.key, required this.room, required this.canvasController});
 
   @override
   Widget build(BuildContext context) {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        Text(
-          "Room ${room.number}",
-          style: TextStyle(
-            color: ThemeColours.lightText,
-            fontWeight: FontWeight.w900,
-            fontSize: 28.0
-          )
+        Row(
+          children: [
+            Text(
+              "Room ${room.number}",
+              style: TextStyle(
+                color: ThemeColours.lightText,
+                fontWeight: FontWeight.w900,
+                fontSize: 28.0
+              )
+            ),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => RoutePreview(initialDest: room, canvasController: canvasController,)));
+              },
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.resolveWith((_) => ThemeColours.accent),
+                foregroundColor: WidgetStateProperty.resolveWith((_) => Colors.white),
+                iconColor: WidgetStateProperty.resolveWith((_) => Colors.white),
+                iconAlignment: IconAlignment.end,
+              ),
+              label: Text("Go"),
+              icon: Icon(Icons.turn_right_rounded),
+            )
+          ],
         ),
         Text(
           "${room.subject.capitalise()} • Building",
@@ -175,12 +199,12 @@ class NoneSelected extends ConsumerWidget {
             Padding(
               padding: EdgeInsets.only(bottom: 16.0),
               child:  Text(
-                  "Nearby",
-                  style: TextStyle(
-                      color: ThemeColours.lightText,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 28.0
-                  )
+                "Nearby",
+                style: TextStyle(
+                  color: ThemeColours.lightText,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 28.0
+                )
               ),
             ),
             mapData.when(
