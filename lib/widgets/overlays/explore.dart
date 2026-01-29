@@ -3,31 +3,41 @@ import 'package:cwscompass/theme_colours.dart';
 import 'package:cwscompass/widgets/info_sheet.dart';
 import 'package:cwscompass/widgets/search_page.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+final selectedRoomProvider = NotifierProvider<SelectedRoomNotifier, Room?>(SelectedRoomNotifier.new);
+
+class SelectedRoomNotifier extends Notifier<Room?> {
+  @override
+  Room? build() {
+    // Initial value
+    return null;
+  }
+
+  void set(Room? room) {
+    state = room;
+  }
+}
 
 class ExploreOverlay extends StatelessWidget {
-  final ValueNotifier<Room?> selectedRoom;
-
-  const ExploreOverlay({super.key, required this.selectedRoom});
+  const ExploreOverlay({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        FakeSearchBar(selectedRoom: selectedRoom),
-        InfoSheet(selectedRoom: selectedRoom)
+        FakeSearchBar(),
+        InfoSheet()
       ],
     );
   }
 }
 
-class FakeSearchBar extends StatelessWidget {
-  final ValueNotifier<Room?> selectedRoom;
-
-  const FakeSearchBar({super.key, required this.selectedRoom});
+class FakeSearchBar extends ConsumerWidget {
+  const FakeSearchBar({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
       padding: EdgeInsets.symmetric(vertical: MediaQuery.paddingOf(context).top + 16.0, horizontal: 28.0),
       child: GestureDetector(
@@ -35,7 +45,7 @@ class FakeSearchBar extends StatelessWidget {
           final result = await Navigator.of(context).push<Room?>(MaterialPageRoute(builder: (context) => SearchPage()));
 
           if (result != null) {
-            selectedRoom.value = result;
+            ref.read(selectedRoomProvider.notifier).set(result);
           }
         },
         child: Hero(

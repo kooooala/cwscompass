@@ -5,60 +5,48 @@ import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/room.dart';
 import 'package:cwscompass/theme_colours.dart';
+import 'package:cwscompass/widgets/overlays/explore.dart';
 import 'package:cwscompass/widgets/room_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:path/path.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
 
-class InfoSheet extends StatefulWidget {
-  final ValueNotifier<Room?> selectedRoom;
-
-  const InfoSheet({super.key, required this.selectedRoom});
+class InfoSheet extends ConsumerStatefulWidget {
+  const InfoSheet({super.key});
 
   @override
-  State<StatefulWidget> createState() => InfoSheetState();
+  ConsumerState<ConsumerStatefulWidget> createState() => InfoSheetState();
 }
 
-class InfoSheetState extends State<InfoSheet> {
+class InfoSheetState extends ConsumerState<InfoSheet> {
   late final SheetController controller;
 
   static const nearbySize = 0.5, minSize = 0.25;
+  double currentSize = nearbySize;
 
-  void animateSizeChange(SheetOffset newSize) {
+  void animateSizeChange(double newSize) {
+    currentSize = newSize;
     controller.animateTo(
-        newSize,
+        SheetOffset(newSize),
         duration: Duration(milliseconds: 400),
         curve: Curves.easeOut
     );
   }
 
-  void onRoomSelect() {
-    final newSize = widget.selectedRoom.value == null ? nearbySize : minSize;
-    animateSizeChange(SheetOffset(newSize));
+  void onRoomSelect(Room? previous, Room? next) {
+    final newSize = next == null ? nearbySize : minSize;
+    animateSizeChange(newSize);
   }
 
   @override
   void initState() {
     super.initState();
     controller = SheetController();
-    widget.selectedRoom.addListener(onRoomSelect);
-  }
-
-  @override
-  void didUpdateWidget(InfoSheet oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // In case the parent widget is rebuilt and a new selectedRoom object is created
-    if (oldWidget.selectedRoom != widget.selectedRoom) {
-      oldWidget.selectedRoom.removeListener(onRoomSelect);
-      widget.selectedRoom.addListener(onRoomSelect);
-      onRoomSelect();
-    }
   }
 
   @override
   void dispose() {
-    widget.selectedRoom.removeListener(onRoomSelect);
     controller.dispose();
     super.dispose();
   }
@@ -69,6 +57,9 @@ class InfoSheetState extends State<InfoSheet> {
     final maxSize = (height - MediaQuery.paddingOf(context).top) / height;
 
     final snapSizes = [minSize, nearbySize, maxSize].map((s) => SheetOffset(s)).toList();
+    currentSize = nearbySize;
+
+    ref.listen<Room?>(selectedRoomProvider, onRoomSelect);
 
     return SheetViewport(
         child: Sheet(
@@ -93,34 +84,35 @@ class InfoSheetState extends State<InfoSheet> {
             ),
             child: GestureDetector(
                 onTap: () {
-                  // Expand the room card when it's tapped
-                  if (widget.selectedRoom.value != null) {
-                    animateSizeChange(snapSizes[1]);
-                  }
+                  // Expand the info sheet when it's tapped
+                  animateSizeChange(switch (currentSize) {
+                    nearbySize => minSize,
+                    minSize => nearbySize,
+                    _ => minSize
+                  });
                 },
                 child: Padding(
                     padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-                    child: ValueListenableBuilder(
-                        valueListenable: widget.selectedRoom,
-                        builder: (context, value, _) {
-                          Widget widget;
-                          if (value == null) {
-                            widget = NoneSelected(
-                              key: ValueKey(value),
-                            );
-                          } else {
-                            widget = RoomInfo(
-                                key: ValueKey(value),
-                                room: value
-                            );
-                          }
+                    child: Builder(builder: (context) {
+                      final selectedRoom = ref.watch(selectedRoomProvider);
 
-                          return AnimatedSwitcher(
-                              duration: Duration(milliseconds: 150),
-                              child: widget
-                          );
-                        }
-                    )
+                      Widget content;
+                      if (selectedRoom == null) {
+                        content = NoneSelected(
+                          key: ValueKey(selectedRoom)
+                        );
+                      } else {
+                        content = RoomInfo(
+                          room: selectedRoom,
+                          key: ValueKey(selectedRoom)
+                        );
+                      }
+
+                      return AnimatedSwitcher(
+                        duration: Duration(milliseconds: 150),
+                        child: content
+                      );
+                    })
                 )
             )
         )

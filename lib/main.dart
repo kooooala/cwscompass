@@ -29,13 +29,12 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends ConsumerWidget {
-  final selectedRoom = ValueNotifier<Room?>(null);
   late final MapCanvasController canvasController;
 
   MyHomePage({super.key}) {
     canvasController = MapCanvasController(
         focusOnTap: true,
-        selectedRoom: selectedRoom
+        focusOnRoomSelect: true,
     );
   }
   
@@ -45,8 +44,8 @@ class MyHomePage extends ConsumerWidget {
       canPop: false ,
       onPopInvokedWithResult: (_, _) {
         // Unselect room with back button
-        if (selectedRoom.value != null) {
-          selectedRoom.value = null;
+        if (ref.watch(selectedRoomProvider) != null) {
+          ref.read(selectedRoomProvider.notifier).set(null);
         }
       },
       child: Scaffold(
@@ -58,7 +57,7 @@ class MyHomePage extends ConsumerWidget {
                 height: MediaQuery.sizeOf(context).height,
                 controller: canvasController
               ),
-              ExploreOverlay(selectedRoom: selectedRoom)
+              ExploreOverlay()
             ]),
         ),
       )

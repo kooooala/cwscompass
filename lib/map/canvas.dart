@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:cwscompass/widgets/overlays/explore.dart';
 import 'package:vector_math/vector_math_64.dart' as vectors;
 
 import 'package:cwscompass/coordinates.dart';
@@ -16,10 +17,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class MapCanvasController {
   bool focusOnTap;
   bool focusOnRoomSelect;
-  final ValueNotifier<Room?> selectedRoom;
   final TransformationController transformationController = TransformationController();
 
-  MapCanvasController({this.focusOnTap = false, this.focusOnRoomSelect = false, required this.selectedRoom});
+  MapCanvasController({this.focusOnTap = false, this.focusOnRoomSelect = false});
 }
 
 class MapCanvas extends ConsumerStatefulWidget {
@@ -43,35 +43,18 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
       vsync: this,
       duration: Duration(milliseconds: 500)
     );
-    if (widget.controller.focusOnRoomSelect) {
-      widget.controller.selectedRoom.addListener(onRoomSelect);
-    }
-  }
-
-  @override
-  void didUpdateWidget(MapCanvas oldWidget) {
-    super.didUpdateWidget(oldWidget);
-
-    // In case the parent widget is rebuilt and a new selectedRoom object is created
-    if (oldWidget.controller.selectedRoom != widget.controller.selectedRoom) {
-      oldWidget.controller.selectedRoom.removeListener(onRoomSelect);
-      widget.controller.selectedRoom.addListener(onRoomSelect);
-      onRoomSelect();
-    }
   }
 
   @override
   void dispose() {
     animationController.dispose();
     widget.controller.transformationController.dispose();
-    widget.controller.selectedRoom.removeListener(onRoomSelect);
     super.dispose();
   }
 
-  void onRoomSelect() {
-    final room = widget.controller.selectedRoom.value;
-    if (room != null) {
-      startFocusAnimation(room.centroid, computeScale(room));
+  void onRoomSelect(Room? previous, Room? next) {
+    if (next != null) {
+      startFocusAnimation(next.centroid, computeScale(next));
     }
   }
 
@@ -126,7 +109,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
   void onTapUp(TapUpDetails details, School school) {
     for (final room in school.rooms) {
       if (room.intersects(Point(details.localPosition.dx, details.localPosition.dy))) {
-        widget.controller.selectedRoom.value = room;
+        ref.read(selectedRoomProvider.notifier).set(room);
         if (widget.controller.focusOnTap) {
           startFocusAnimation(room.centroid, computeScale(room));
         }
@@ -134,12 +117,16 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
       }
     }
     // Tapped on blank space
-    widget.controller.selectedRoom.value = null;
+    ref.read(selectedRoomProvider.notifier).set(null);
   }
 
   @override
   Widget build(BuildContext context) {
     final school = ref.watch(mapDataProvider);
+
+    if (widget.controller.focusOnRoomSelect) {
+      ref.listen<Room?>(selectedRoomProvider, onRoomSelect);
+    }
 
     return Center(
       child: school.when(
