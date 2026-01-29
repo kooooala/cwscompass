@@ -87,7 +87,10 @@ class SearchPage extends ConsumerWidget {
                                 )
                               )
                             ),
-                            RoomList(rooms: value.isNotEmpty ? value : data.school.rooms)
+                            RoomList(
+                              rooms: value.isNotEmpty ? value : data.school.rooms,
+                              onRoomTap: (room) => Navigator.of(context).pop(room),
+                            )
                           ]
                         )
                       );

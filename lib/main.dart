@@ -1,9 +1,7 @@
 import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/room.dart';
-import 'package:cwscompass/theme_colours.dart';
-import 'package:cwscompass/widgets/info_sheet.dart';
 import 'package:cwscompass/widgets/overlays/explore.dart';
-import 'package:cwscompass/widgets/search_page.dart';
+import 'package:cwscompass/widgets/overlays/route_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -21,7 +19,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'CWS Compass',
       theme: ThemeData(
         textTheme: GoogleFonts.familjenGroteskTextTheme()
       ),
@@ -32,8 +30,14 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends ConsumerWidget {
   final selectedRoom = ValueNotifier<Room?>(null);
+  late final MapCanvasController canvasController;
 
-  MyHomePage({super.key});
+  MyHomePage({super.key}) {
+    canvasController = MapCanvasController(
+        focusOnTap: true,
+        selectedRoom: selectedRoom
+    );
+  }
   
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -49,19 +53,10 @@ class MyHomePage extends ConsumerWidget {
         body: Builder(
           builder: (context) =>
             Stack(children: [
-              Center(child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: <Widget>[
-                  MapCanvas(
-                    width: MediaQuery.sizeOf(context).width,
-                    height: MediaQuery.sizeOf(context).height,
-                    focusOnTap: true,
-                    onRoomTap: (room) => selectedRoom.value = room,
-                    onBlankTap: () => selectedRoom.value = null,
-                  )
-                ]
-                )
+              MapCanvas(
+                width: MediaQuery.sizeOf(context).width,
+                height: MediaQuery.sizeOf(context).height,
+                controller: canvasController
               ),
               ExploreOverlay(selectedRoom: selectedRoom)
             ]),

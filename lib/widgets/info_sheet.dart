@@ -32,7 +32,7 @@ class InfoSheetState extends State<InfoSheet> {
     );
   }
 
-  void onRoomSelected() {
+  void onRoomSelect() {
     final newSize = widget.selectedRoom.value == null ? nearbySize : minSize;
     animateSizeChange(SheetOffset(newSize));
   }
@@ -41,12 +41,24 @@ class InfoSheetState extends State<InfoSheet> {
   void initState() {
     super.initState();
     controller = SheetController();
-    widget.selectedRoom.addListener(onRoomSelected);
+    widget.selectedRoom.addListener(onRoomSelect);
+  }
+
+  @override
+  void didUpdateWidget(InfoSheet oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    // In case the parent widget is rebuilt and a new selectedRoom object is created
+    if (oldWidget.selectedRoom != widget.selectedRoom) {
+      oldWidget.selectedRoom.removeListener(onRoomSelect);
+      widget.selectedRoom.addListener(onRoomSelect);
+      onRoomSelect();
+    }
   }
 
   @override
   void dispose() {
-    widget.selectedRoom.removeListener(onRoomSelected);
+    widget.selectedRoom.removeListener(onRoomSelect);
     controller.dispose();
     super.dispose();
   }

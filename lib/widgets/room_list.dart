@@ -11,7 +11,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class RoomList extends ConsumerWidget {
   final List<Room> rooms;
 
-  const RoomList({super.key, required this.rooms});
+  final void Function(Room room) onRoomTap;
+
+  const RoomList({super.key, required this.rooms, this.onRoomTap = defaultRoomTap});
+
+  static void defaultRoomTap(Room room) {}
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,37 +25,40 @@ class RoomList extends ConsumerWidget {
       radius: 12.0,
       children: List<Widget>.generate(rooms.length, (i) {
         final room = rooms[i];
-        return Container(
-          color: Colors.white,
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              spacing: 8.0,
-              children: [
-                Text(
-                  "Room ${room.number}",
-                  style: TextStyle(
-                      color: ThemeColours.darkText,
-                      fontSize: 18.0
+        return GestureDetector(
+          onTap: () => onRoomTap(room),
+          child: Container(
+            color: Colors.white,
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                spacing: 8.0,
+                children: [
+                  Text(
+                    "Room ${room.number}",
+                    style: TextStyle(
+                        color: ThemeColours.darkText,
+                        fontSize: 18.0
+                    )
+                  ),
+                  Text(
+                    room.subject.capitalise(),
+                    style: TextStyle(
+                        color: ThemeColours.darkTextTint,
+                        fontSize: 14.0
+                    )
+                  ),
+                  Spacer(),
+                  location.when<Widget>(
+                    data: (coordinates) {
+                      return Text("${room.distanceFrom(Coordinates(coordinates.latitude, coordinates.longitude)).round()}m");
+                    },
+                    loading: () => Text(""),
+                    error: (_, _) => Text(""),
                   )
-                ),
-                Text(
-                  room.subject.capitalise(),
-                  style: TextStyle(
-                      color: ThemeColours.darkTextTint,
-                      fontSize: 14.0
-                  )
-                ),
-                Spacer(),
-                location.when<Widget>(
-                  data: (coordinates) {
-                    return Text("${room.distanceFrom(Coordinates(coordinates.latitude, coordinates.longitude)).round()}m");
-                  },
-                  loading: () => Text(""),
-                  error: (_, _) => Text(""),
-                )
-              ]
+                ]
+              )
             )
           )
         );
