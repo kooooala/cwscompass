@@ -4,8 +4,6 @@ import 'package:cwscompass/common/maths.dart' as maths;
 import 'package:cwscompass/map/school.dart' as school;
 import 'package:flutter/material.dart';
 
-import 'package:cwscompass/map_data.dart';
-
 class PathPainter extends CustomPainter {
   final school.Route route;
   static const double betweenDots = 20;
@@ -18,9 +16,9 @@ class PathPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     double spillover = 0;
     double scale = transformations.value.getMaxScaleOnAxis();
-    if (scale < 10) {
-      scale = 10;
-    }
+    //if (scale < 10) {
+    //  scale = 10;
+    //}
     final actualBetweenDots = betweenDots / scale;
     for (var i = 0; i < route.coordinates.length - 1; i++) {
       final point1 = route.coordinates[i].point;

@@ -1,3 +1,5 @@
+import 'package:cwscompass/coordinates.dart';
+import 'package:cwscompass/map_data.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -18,5 +20,19 @@ final locationProvider = StreamProvider.autoDispose<Position>((ref) async* {
   await for (final value in stream) {
     yield value;
   }
+});
+
+final roomListSortingProvider = Provider<void>((ref) {
+  // Sort room list by distance from device
+  ref.listen(locationProvider, (prev, next) {
+    if (!ref.read(mapDataProvider).hasValue) {
+      return;
+    }
+
+    final location = Coordinates(next.value!.latitude, next.value!.longitude);
+    ref.read(mapDataProvider).value!.school.rooms.sort((a, b) {
+      return a.distanceFrom(location).compareTo(b.distanceFrom(location));
+    });
+  });
 });
 

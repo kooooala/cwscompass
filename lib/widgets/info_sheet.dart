@@ -16,9 +16,7 @@ import 'package:path/path.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
 
 class InfoSheet extends ConsumerStatefulWidget {
-  final MapCanvasController canvasController;
-
-  const InfoSheet({super.key, required this.canvasController});
+  const InfoSheet({super.key});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => InfoSheetState();
@@ -109,7 +107,6 @@ class InfoSheetState extends ConsumerState<InfoSheet> {
               } else {
                 content = RoomInfo(
                   room: selectedRoom,
-                  canvasController: widget.canvasController,
                   key: ValueKey(selectedRoom)
                 );
               }
@@ -128,9 +125,8 @@ class InfoSheetState extends ConsumerState<InfoSheet> {
 
 class RoomInfo extends StatelessWidget {
   final Room room;
-  final MapCanvasController canvasController;
 
-  const RoomInfo({super.key, required this.room, required this.canvasController});
+  const RoomInfo({super.key, required this.room});
 
   @override
   Widget build(BuildContext context) {
@@ -140,16 +136,17 @@ class RoomInfo extends StatelessWidget {
         Row(
           children: [
             Text(
-              "Room ${room.number}",
+              room.name.capitalise(),
               style: TextStyle(
                 color: ThemeColours.lightText,
                 fontWeight: FontWeight.w900,
                 fontSize: 28.0
               )
             ),
+            Spacer(),
             TextButton.icon(
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => RoutePreview(initialDest: room, canvasController: canvasController,)));
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => RoutePreview(initialDest: room,)));
               },
               style: ButtonStyle(
                 backgroundColor: WidgetStateProperty.resolveWith((_) => ThemeColours.accent),
@@ -157,7 +154,15 @@ class RoomInfo extends StatelessWidget {
                 iconColor: WidgetStateProperty.resolveWith((_) => Colors.white),
                 iconAlignment: IconAlignment.end,
               ),
-              label: Text("Go"),
+              label: Padding(
+                padding: EdgeInsets.only(left: 4.0),
+                child: Text(
+                  "Go",
+                  style: TextStyle(
+                    fontWeight: FontWeight.w900
+                  ),
+                ),
+              ),
               icon: Icon(Icons.turn_right_rounded),
             )
           ],
@@ -210,13 +215,9 @@ class NoneSelected extends ConsumerWidget {
             mapData.when(
               data: (data) {
                 final rooms = data.school.rooms;
-                rooms.sort((a, b) {
-                  final coordinates = Coordinates(locationData.latitude, locationData.longitude);
-                  return a.distanceFrom(coordinates).compareTo(b.distanceFrom(coordinates));
-                });
 
                 // Limit the number of nearby rooms shown to 10
-                final end = rooms.length > 10 ? 10 : rooms.length;
+                final end = rooms.length > 5 ? 5 : rooms.length;
                 return RoomList(
                   rooms: rooms.sublist(0, end),
                 );

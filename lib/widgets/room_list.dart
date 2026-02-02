@@ -36,7 +36,7 @@ class RoomList extends ConsumerWidget {
                 spacing: 8.0,
                 children: [
                   Text(
-                    "Room ${room.number}",
+                    room.name.capitalise(),
                     style: TextStyle(
                         color: ThemeColours.darkText,
                         fontSize: 18.0

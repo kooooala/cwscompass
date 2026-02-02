@@ -21,16 +21,14 @@ class SelectedRoomNotifier extends Notifier<Room?> {
 }
 
 class ExploreOverlay extends StatelessWidget {
-  final MapCanvasController canvasController;
-
-  const ExploreOverlay({super.key, required this.canvasController});
+  const ExploreOverlay({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
         FakeSearchBar(),
-        InfoSheet(canvasController: canvasController)
+        InfoSheet()
       ],
     );
   }

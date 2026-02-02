@@ -1,7 +1,8 @@
+import 'package:cwscompass/coordinates.dart';
+import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/canvas.dart';
-import 'package:cwscompass/room.dart';
+import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/widgets/overlays/explore.dart';
-import 'package:cwscompass/widgets/overlays/route_preview.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,11 +14,13 @@ void main() async {
   runApp(const ProviderScope(child: MyApp()));
 }
 
-class MyApp extends StatelessWidget { 
+class MyApp extends ConsumerWidget {
   const MyApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(roomListSortingProvider);
+
     return MaterialApp(
       title: 'CWS Compass',
       theme: ThemeData(
@@ -28,40 +31,50 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends ConsumerWidget {
+class MyHomePage extends ConsumerStatefulWidget {
+  MyHomePage({super.key});
+
+  @override
+  ConsumerState<ConsumerStatefulWidget> createState() => _MyHomePageState();
+}
+
+class _MyHomePageState extends ConsumerState<MyHomePage> {
   late final MapCanvasController canvasController;
 
-  MyHomePage({super.key}) {
+  @override
+  void initState() {
+    super.initState();
     canvasController = MapCanvasController(
-        focusOnTap: true,
-        focusOnRoomSelect: true,
+      focusOnTap: true,
+      focusOnRoomSelect: true,
+      roomSelectable: true,
+      transformationController: ref.read(transformationControllerProvider)
     );
   }
-  
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return PopScope(
-      canPop: false ,
-      onPopInvokedWithResult: (_, _) {
-        // Unselect room with back button
-        if (ref.watch(selectedRoomProvider) != null) {
-          ref.read(selectedRoomProvider.notifier).set(null);
-        }
-      },
-      child: Scaffold(
-        body: Builder(
-          builder: (context) =>
-            Stack(children: [
-              MapCanvas(
-                width: MediaQuery.sizeOf(context).width,
-                height: MediaQuery.sizeOf(context).height,
-                controller: canvasController
-              ),
-              ExploreOverlay(canvasController: canvasController)
-            ]),
-        ),
-      )
+        canPop: false ,
+        onPopInvokedWithResult: (_, _) {
+          // Unselect room with back button
+          if (ref.read(selectedRoomProvider) != null) {
+            ref.read(selectedRoomProvider.notifier).set(null);
+          }
+        },
+        child: Scaffold(
+          body: Builder(
+            builder: (context) =>
+                Stack(children: [
+                  MapCanvas(
+                      width: MediaQuery.sizeOf(context).width,
+                      height: MediaQuery.sizeOf(context).height,
+                      controller: canvasController
+                  ),
+                  ExploreOverlay()
+                ]),
+          ),
+        )
     );
   }
 }
-

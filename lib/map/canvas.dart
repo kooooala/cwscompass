@@ -1,9 +1,9 @@
 import 'dart:math';
+import 'package:cwscompass/map/debugPainter.dart';
 import 'package:cwscompass/widgets/overlays/explore.dart';
 import 'package:vector_math/vector_math_64.dart' as vectors;
 
 import 'package:cwscompass/coordinates.dart';
-import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/labelPainter.dart';
 import 'package:cwscompass/map/marker.dart';
 import 'package:cwscompass/map/pathPainter.dart';
@@ -14,12 +14,22 @@ import 'package:cwscompass/room.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+final transformationControllerProvider = Provider((ref) {
+  return TransformationController();
+});
+
 class MapCanvasController {
   bool focusOnTap;
   bool focusOnRoomSelect;
-  final TransformationController transformationController = TransformationController();
+  bool roomSelectable;
+  final TransformationController transformationController;
 
-  MapCanvasController({this.focusOnTap = false, this.focusOnRoomSelect = false});
+  MapCanvasController({
+    this.focusOnTap = false,
+    this.focusOnRoomSelect = false,
+    this.roomSelectable = false,
+    required this.transformationController
+  });
 }
 
 class MapCanvas extends ConsumerStatefulWidget {
@@ -109,7 +119,9 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
   void onTapUp(TapUpDetails details, School school) {
     for (final room in school.rooms) {
       if (room.intersects(Point(details.localPosition.dx, details.localPosition.dy))) {
-        ref.read(selectedRoomProvider.notifier).set(room);
+        if (widget.controller.roomSelectable) {
+          ref.read(selectedRoomProvider.notifier).set(room);
+        }
         if (widget.controller.focusOnTap) {
           startFocusAnimation(room.centroid, computeScale(room));
         }
@@ -162,6 +174,9 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                       ),
                       RepaintBoundary(
                         child: CustomPaint(painter: PathPainter(route, widget.controller.transformationController)),
+                      ),
+                      RepaintBoundary(
+                        child: CustomPaint(painter: DebugPainter(data.school)),
                       ),
                       Marker(2, data.school),
                     ]

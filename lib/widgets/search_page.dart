@@ -18,7 +18,7 @@ class SearchPage extends ConsumerWidget {
     final results = extractAll(
       query: query,
       choices: roomEntries.keys.toList(),
-      cutoff: 50,
+      cutoff: 60,
     );
 
     searchResults.value = results.map((key) => roomEntries[key.choice]!).toList();
@@ -70,6 +70,15 @@ class SearchPage extends ConsumerWidget {
                   child: ValueListenableBuilder(
                     valueListenable: searchResults,
                     builder: (context, value, _) {
+                      List<Room> roomList;// = value.isNotEmpty ? value : data.school.rooms;
+                      if (value.isNotEmpty) {
+                        roomList = value;
+                      } else {
+                        final rooms = data.school.rooms;
+                        final end = rooms.length > 5 ? 5 : rooms.length;
+                        roomList = rooms.sublist(0, end);
+                      }
+
                       return AnimatedSwitcher(
                         duration: Duration(milliseconds: 150),
                         child: ListView(
@@ -79,7 +88,7 @@ class SearchPage extends ConsumerWidget {
                             Padding(
                               padding: EdgeInsets.only(bottom: 4.0),
                               child: Text(
-                                value.isNotEmpty ? "Results" : "All rooms",
+                                value.isNotEmpty ? "Results" : "Nearby",
                                 style: TextStyle(
                                   color: ThemeColours.lightText,
                                   fontWeight: FontWeight.w800,
@@ -88,7 +97,7 @@ class SearchPage extends ConsumerWidget {
                               )
                             ),
                             RoomList(
-                              rooms: value.isNotEmpty ? value : data.school.rooms,
+                              rooms: roomList,
                               onRoomTap: (room) => Navigator.of(context).pop(room),
                             )
                           ]

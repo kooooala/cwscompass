@@ -12,8 +12,9 @@ class Room {
 
   final Color colour;
   final String subject;
-  final String number;
+  final String? number;
   final String? label;
+  final String name;
 
   late final MapEntry<String, Room> searchEntry = MapEntry("room$subject$number$label", this);
 
@@ -29,7 +30,8 @@ class Room {
   Point<double>? _centroid;
 
   Room(this.roomId, this.colour, this.subject, this.number, this.label, this.entrances, this.coordinates)
-    : vertices = coordinates.map((c) => c.point).toList() {
+    : vertices = coordinates.map((c) => c.point).toList(),
+      name = label ?? "room $number" {
     boundingBox = BoundingBox.fromVertices(vertices);
   }
 
@@ -110,9 +112,10 @@ class Room {
     return Room(roomId,
       colour,
       roomData["subject"] as String,
-      number,
+      number == "None" ? null : number,
       label == "None" ? null : label,
       entrances,
-      coordinates);
+      coordinates
+    );
   }
 }

@@ -1,8 +1,8 @@
+import 'package:cwscompass/common/capital_extension.dart';
 import 'package:cwscompass/common/maths.dart' as maths;
 import 'package:cwscompass/map/school.dart';
 import 'package:flutter/material.dart';
-
-import 'package:cwscompass/map_data.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class LabelPainter extends CustomPainter {
   final School school;
@@ -18,10 +18,12 @@ class LabelPainter extends CustomPainter {
       final colour = contrast > 4.5 ? Colors.black : Colors.white;
 
       textPainter.text = TextSpan(
-        text: "${room.subject} room ${room.number}",
-        style: TextStyle(
+        text: room.name.capitalise(),
+        style: GoogleFonts.familjenGrotesk(
           color: colour,
-          fontSize: 1),
+          fontWeight: FontWeight.w500,
+          fontSize: 1.0,
+        ),
       );
       textPainter.layout();
 

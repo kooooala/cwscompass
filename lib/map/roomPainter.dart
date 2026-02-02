@@ -1,4 +1,5 @@
 import 'package:cwscompass/map/school.dart';
+import 'package:cwscompass/theme_colours.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cwscompass/room.dart';
@@ -24,11 +25,16 @@ class RoomPainter extends CustomPainter {
 
   static void drawRoom(Canvas canvas, Room room) {
     final path = pathFromRoom(room);
-    final paint = Paint()
+    final fill = Paint()
       ..style = PaintingStyle.fill
       ..color = room.colour;
+    final stroke = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.05
+      ..color = ThemeColours.darkText;
 
-    canvas.drawPath(path, paint);
+    canvas.drawPath(path, fill);
+    canvas.drawPath(path, stroke);
   }
 
   @override
