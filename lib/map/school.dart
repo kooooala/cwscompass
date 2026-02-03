@@ -164,20 +164,23 @@ class School {
     return Route(route);
   }
 
-  Route shortestRoutePairing(List<Coordinates> startNodes, List<Coordinates> endNodes) {
+  (Route, Coordinates, Coordinates) shortestRoutePairing(List<Coordinates> startNodes, List<Coordinates> endNodes) {
     Route? shortest;
+    Coordinates? start, end;
     double shortestDistance = double.infinity;
 
-    for (final start in startNodes) {
-      for (final end in endNodes) {
-        final route = shortestRoute(start, end);
+    for (final startNode in startNodes) {
+      for (final endNode in endNodes) {
+        final route = shortestRoute(startNode, endNode);
         if (route.distance < shortestDistance) {
           shortest = route;
           shortestDistance = route.distance;
+          start = startNode;
+          end = endNode;
         }
       }
     }
 
-    return shortest!;
+    return (shortest!, start!, end!);
   }
 }

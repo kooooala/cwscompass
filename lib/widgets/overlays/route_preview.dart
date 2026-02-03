@@ -25,27 +25,20 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
   Room? start, end;
   late school.Route route;
 
-  school.Route? calculateRoute() {
-    // Stop if the current location is selected for both start & end
-    if (start == null && end == null) {
-      return null;
-    }
+  (school.Route, Coordinates, Coordinates) calculateRoute() {
+    final school = ref.read(mapDataProvider).value!.school;
+    final location = ref.read(locationProvider).value!;
+    final locationNode = school.closestNode(Coordinates(location.latitude, location.longitude));
+    final startNodes =
+    start == null
+        ? <Coordinates>[locationNode]
+        : start!.entrances;
+    final endNodes =
+    end == null
+        ? <Coordinates>[locationNode]
+        : end!.entrances;
 
-    ref.watch(mapDataProvider).whenData((data) {
-      ref.watch(locationProvider).whenData((location) {
-        final locationNode = data.school.closestNode(Coordinates(location.latitude, location.longitude));
-        final startNodes =
-        start == null
-            ? <Coordinates>[locationNode]
-            : start!.entrances;
-        final endNodes =
-        end == null
-            ? <Coordinates>[locationNode]
-            : end!.entrances;
-
-        return data.school.shortestRoutePairing(startNodes, endNodes);
-      });
-    });
+    return school.shortestRoutePairing(startNodes, endNodes);
   }
 
   void updateRoute() {
@@ -54,26 +47,12 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
       return;
     }
 
-    ref.watch(mapDataProvider).whenData((data) {
-      ref.watch(locationProvider).whenData((location) {
-        final locationNode = data.school.closestNode(Coordinates(location.latitude, location.longitude));
-        final startNodes =
-          start == null
-          ? <Coordinates>[locationNode]
-          : start!.entrances;
-        final endNodes =
-          end == null
-          ? <Coordinates>[locationNode]
-          : end!.entrances;
-
-        final shortestRoute = data.school.shortestRoutePairing(startNodes, endNodes);
-        final routePolygon = Polygon(shortestRoute.coordinates.map((c) => c.point).toList());
-        widget.canvasController.focus(routePolygon, ZoomFocus.average);
-        widget.canvasController.path.value = shortestRoute;
-        setState(() {
-          route = shortestRoute;
-        });
-      });
+    final shortestRoute = calculateRoute();
+    final routePolygon = Polygon(shortestRoute.$1.coordinates.map((c) => c.point).toList());
+    widget.canvasController.focus(routePolygon, ZoomFocus.average);
+    widget.canvasController.path.value = (shortestRoute.$1, shortestRoute.$3);
+    setState(() {
+      route = shortestRoute.$1;
     });
   }
   
@@ -81,16 +60,19 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
   void initState() {
     super.initState();
     end = widget.initialEnd;
+    final shortestRoute = calculateRoute();
     widget.canvasController = MapCanvasController(
       focusOnTap: false,
       focusOnRoomSelect: false,
+      zoomToPath: true,
+      showPath: true,
       transformationController: ref.read(transformationControllerProvider),
     );
+    widget.canvasController.path.value = (shortestRoute.$1, shortestRoute.$3);
   }
 
   @override
   Widget build(BuildContext context) {
-    updateRoute();
     return Stack(
       children: [
         MapCanvas(

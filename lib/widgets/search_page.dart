@@ -15,7 +15,7 @@ class SearchPage extends ConsumerWidget {
 
   void search(String query, List<Room> rooms) async {
     final roomEntries = Map.fromEntries(rooms.map((room) => room.searchEntry));
-    final results = extractAll(
+    final results = extractAllSorted(
       query: query,
       choices: roomEntries.keys.toList(),
       cutoff: 60,

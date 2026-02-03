@@ -30,7 +30,8 @@ class MapCanvasController {
   bool focusOnRoomSelect;
   bool roomSelectable;
   bool showPath;
-  ValueNotifier<school.Route?> path = ValueNotifier(null);
+  bool zoomToPath;
+  ValueNotifier<(school.Route, Coordinates)?> path = ValueNotifier(null);
   final TransformationController transformationController;
   final ValueNotifier<(Polygon, ZoomFocus)?> focusRequest = ValueNotifier(null);
 
@@ -39,6 +40,7 @@ class MapCanvasController {
     this.focusOnRoomSelect = false,
     this.roomSelectable = false,
     this.showPath = false,
+    this.zoomToPath = false,
     required this.transformationController
   });
 
@@ -69,6 +71,11 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
       duration: Duration(milliseconds: 500)
     );
     widget.controller.focusRequest.addListener(onFocusRequest);
+
+    if (widget.controller.zoomToPath && widget.controller.path.value != null) {
+      final polygon = Polygon(widget.controller.path.value!.$1.coordinates.map((c) => c.point).toList());
+      startFocusAnimation(average(polygon), computeZoomScale(polygon));
+    }
   }
 
   @override
@@ -201,13 +208,14 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                           if (widget.controller.path.value == null) {
                             return SizedBox.shrink();
                           } else {
-                            return CustomPaint(painter: PathPainter(widget.controller.path.value!, widget.controller.transformationController));
+                            final path = widget.controller.path;
+                            return CustomPaint(painter: PathPainter(path.value!.$1, path.value!.$2.point, widget.controller.transformationController));
                           }
                         }
                       ),
-                      RepaintBoundary(
-                        child: CustomPaint(painter: DebugPainter(data.school)),
-                      ),
+                      //RepaintBoundary(
+                      //  child: CustomPaint(painter: DebugPainter(data.school)),
+                      //),
                       Marker(2, data.school),
                     ]
                   )

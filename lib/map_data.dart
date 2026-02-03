@@ -1,3 +1,5 @@
+import 'package:cwscompass/coordinates.dart';
+import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/school.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -12,6 +14,13 @@ import 'room.dart';
 final mapDataProvider = FutureProvider<MapData>((ref) async {
   final mapData = MapData("map.db");
   await mapData.load();
+
+  ref.listen(locationProvider, (_, next) {
+    final location = Coordinates(next.value!.latitude, next.value!.longitude);
+    mapData.school.rooms.sort((a, b) {
+      return a.distanceFrom(location).compareTo(b.distanceFrom(location));
+    });
+  });
   return mapData;
 });
 

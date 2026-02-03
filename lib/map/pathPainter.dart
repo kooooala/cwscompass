@@ -2,15 +2,17 @@ import 'dart:math';
 
 import 'package:cwscompass/common/maths.dart' as maths;
 import 'package:cwscompass/map/school.dart' as school;
+import 'package:cwscompass/theme_colours.dart';
 import 'package:flutter/material.dart';
 
 class PathPainter extends CustomPainter {
   final school.Route path;
+  final Point<double> destination;
   static const double betweenDots = 20;
 
   final TransformationController transformations;
 
-  PathPainter(this.path, this.transformations) : super(repaint: transformations);
+  PathPainter(this.path, this.destination, this.transformations) : super(repaint: transformations);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -43,11 +45,15 @@ class PathPainter extends CustomPainter {
           break;
         }
 
-        canvas.drawCircle(Offset(x, y), 5 / scale, Paint()..color = Color(0xFF8F4953));
+        canvas.drawCircle(Offset(x, y), 5 / scale, Paint()..color = ThemeColours.accent);
       }
 
       spillover = actualBetweenDots - ((magnitude - spillover) % actualBetweenDots);
     }
+
+    final destinationOffset = Offset(destination.x, destination.y);
+    canvas.drawCircle(destinationOffset, 7 / scale, Paint()..color = ThemeColours.accent);
+    canvas.drawCircle(destinationOffset, 4 / scale, Paint()..color = Colors.white);
   }
 
   @override
