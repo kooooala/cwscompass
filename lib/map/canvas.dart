@@ -1,5 +1,7 @@
 import 'dart:math';
+import 'package:cwscompass/common/maths.dart';
 import 'package:cwscompass/map/debugPainter.dart';
+import 'package:cwscompass/polygon.dart';
 import 'package:cwscompass/widgets/overlays/explore.dart';
 import 'package:vector_math/vector_math_64.dart' as vectors;
 
@@ -8,7 +10,7 @@ import 'package:cwscompass/map/labelPainter.dart';
 import 'package:cwscompass/map/marker.dart';
 import 'package:cwscompass/map/pathPainter.dart';
 import 'package:cwscompass/map/roomPainter.dart';
-import 'package:cwscompass/map/school.dart';
+import 'package:cwscompass/map/school.dart' as school;
 import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/room.dart';
 import 'package:flutter/material.dart';
@@ -18,18 +20,31 @@ final transformationControllerProvider = Provider((ref) {
   return TransformationController();
 });
 
+enum ZoomFocus {
+  centroid,
+  average
+}
+
 class MapCanvasController {
   bool focusOnTap;
   bool focusOnRoomSelect;
   bool roomSelectable;
+  bool showPath;
+  ValueNotifier<school.Route?> path = ValueNotifier(null);
   final TransformationController transformationController;
+  final ValueNotifier<(Polygon, ZoomFocus)?> focusRequest = ValueNotifier(null);
 
   MapCanvasController({
     this.focusOnTap = false,
     this.focusOnRoomSelect = false,
     this.roomSelectable = false,
+    this.showPath = false,
     required this.transformationController
   });
+
+  void focus(Polygon polygon, ZoomFocus zoomFocus) {
+    focusRequest.value = (polygon, zoomFocus);
+  }
 }
 
 class MapCanvas extends ConsumerStatefulWidget {
@@ -53,18 +68,31 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
       vsync: this,
       duration: Duration(milliseconds: 500)
     );
+    widget.controller.focusRequest.addListener(onFocusRequest);
   }
 
   @override
   void dispose() {
     animationController.dispose();
-    //widget.controller.transformationController.dispose();
+    widget.controller.focusRequest.removeListener(onFocusRequest);
     super.dispose();
+  }
+
+  void onFocusRequest() {
+    final request = widget.controller.focusRequest.value;
+    if (request != null) {
+      final polygon = request.$1;
+      final focus = switch (request.$2) {
+        ZoomFocus.centroid => centroid(polygon),
+        ZoomFocus.average => average(polygon),
+      };
+      startFocusAnimation(focus, computeZoomScale(polygon));
+    }
   }
 
   void onRoomSelect(Room? previous, Room? next) {
     if (next != null) {
-      startFocusAnimation(next.centroid, computeScale(next));
+      startFocusAnimation(next.centroid, computeZoomScale(next));
     }
   }
 
@@ -106,24 +134,24 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     animationController.reset();
   }
 
-  double computeScale(Room room) {
-    final topLeft = room.boundingBox.topLeft, bottomRight = room.boundingBox.bottomRight;
-    
+  double computeZoomScale(Polygon polygon) {
+    final topLeft = polygon.boundingBox.topLeft, bottomRight = polygon.boundingBox.bottomRight;
+
     final xScale = widget.width / (bottomRight.x - topLeft.x);
     final yScale = widget.height / (bottomRight.y - topLeft.y);
-    
+
     final scale = xScale > yScale ? yScale : xScale;
     return scale * 0.5;
   }
 
-  void onTapUp(TapUpDetails details, School school) {
+  void onTapUp(TapUpDetails details, school.School school) {
     for (final room in school.rooms) {
       if (room.intersects(Point(details.localPosition.dx, details.localPosition.dy))) {
         if (widget.controller.roomSelectable) {
           ref.read(selectedRoomProvider.notifier).set(room);
         }
         if (widget.controller.focusOnTap) {
-          startFocusAnimation(room.centroid, computeScale(room));
+          startFocusAnimation(room.centroid, computeZoomScale(room));
         }
         return;
       }
@@ -143,11 +171,6 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     return Center(
       child: school.when(
         data: (data) {
-          final start = data.school.closestNode(Coordinates(51.5490108,-1.7894657));
-          final dest = data.school.closestNode(Coordinates(51.54907, -1.78829));
-
-          final route = data.school.shortestRoute(start, dest);
-
           return InteractiveViewer(
             transformationController: widget.controller.transformationController,
             onInteractionStart: (_) {
@@ -172,8 +195,15 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                       RepaintBoundary(
                         child: CustomPaint(painter: LabelPainter(data.school)),
                       ),
-                      RepaintBoundary(
-                        child: CustomPaint(painter: PathPainter(route, widget.controller.transformationController)),
+                      ListenableBuilder(
+                        listenable: widget.controller.path,
+                        builder: (context, _) {
+                          if (widget.controller.path.value == null) {
+                            return SizedBox.shrink();
+                          } else {
+                            return CustomPaint(painter: PathPainter(widget.controller.path.value!, widget.controller.transformationController));
+                          }
+                        }
                       ),
                       RepaintBoundary(
                         child: CustomPaint(painter: DebugPainter(data.school)),

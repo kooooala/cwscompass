@@ -1,37 +1,96 @@
 import 'package:cwscompass/common/capital_extension.dart';
+import 'package:cwscompass/coordinates.dart';
+import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/canvas.dart';
+import 'package:cwscompass/map_data.dart';
+import 'package:cwscompass/polygon.dart';
 import 'package:cwscompass/room.dart';
 import 'package:cwscompass/theme_colours.dart';
 import 'package:cwscompass/widgets/search_page.dart';
+import 'package:cwscompass/map/school.dart' as school;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class RoutePreview extends ConsumerStatefulWidget {
-  final Room initialDest;
+  final Room initialEnd;
   late final MapCanvasController canvasController;
   
-  RoutePreview({super.key, required this.initialDest});
+  RoutePreview({super.key, required this.initialEnd});
 
   @override
   ConsumerState<RoutePreview> createState() => _RoutePreviewState();
 }
 
 class _RoutePreviewState extends ConsumerState<RoutePreview> {
-  Room? start, dest;
+  Room? start, end;
+  late school.Route route;
+
+  school.Route? calculateRoute() {
+    // Stop if the current location is selected for both start & end
+    if (start == null && end == null) {
+      return null;
+    }
+
+    ref.watch(mapDataProvider).whenData((data) {
+      ref.watch(locationProvider).whenData((location) {
+        final locationNode = data.school.closestNode(Coordinates(location.latitude, location.longitude));
+        final startNodes =
+        start == null
+            ? <Coordinates>[locationNode]
+            : start!.entrances;
+        final endNodes =
+        end == null
+            ? <Coordinates>[locationNode]
+            : end!.entrances;
+
+        return data.school.shortestRoutePairing(startNodes, endNodes);
+      });
+    });
+  }
+
+  void updateRoute() {
+    // Stop if the current location is selected for both start & end
+    if (start == null && end == null) {
+      return;
+    }
+
+    ref.watch(mapDataProvider).whenData((data) {
+      ref.watch(locationProvider).whenData((location) {
+        final locationNode = data.school.closestNode(Coordinates(location.latitude, location.longitude));
+        final startNodes =
+          start == null
+          ? <Coordinates>[locationNode]
+          : start!.entrances;
+        final endNodes =
+          end == null
+          ? <Coordinates>[locationNode]
+          : end!.entrances;
+
+        final shortestRoute = data.school.shortestRoutePairing(startNodes, endNodes);
+        final routePolygon = Polygon(shortestRoute.coordinates.map((c) => c.point).toList());
+        widget.canvasController.focus(routePolygon, ZoomFocus.average);
+        widget.canvasController.path.value = shortestRoute;
+        setState(() {
+          route = shortestRoute;
+        });
+      });
+    });
+  }
   
   @override
   void initState() {
     super.initState();
-    dest = widget.initialDest;
+    end = widget.initialEnd;
     widget.canvasController = MapCanvasController(
+      focusOnTap: false,
+      focusOnRoomSelect: false,
       transformationController: ref.read(transformationControllerProvider),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    widget.canvasController.focusOnTap = false;
-    widget.canvasController.focusOnRoomSelect = false;
+    updateRoute();
     return Stack(
       children: [
         MapCanvas(
@@ -56,6 +115,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                         setState(() {
                           start = result;
                         });
+                        updateRoute();
                       },
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 12.0),
@@ -93,8 +153,9 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                       onTap: () async {
                         final result = await Navigator.of(context).push<Room?>(MaterialPageRoute(builder: (context) => SearchPage()));
                         setState(() {
-                          dest = result;
+                          end = result;
                         });
+                        updateRoute();
                       },
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: 12.0),
@@ -109,7 +170,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                               ),
                             ),
                             Text(
-                              dest != null ? dest!.name.capitalise() : "Your location",
+                              end != null ? end!.name.capitalise() : "Your location",
                               style: TextStyle(
                                 fontSize: 16.0
                               ),

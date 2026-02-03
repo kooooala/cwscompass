@@ -5,12 +5,12 @@ import 'package:cwscompass/map/school.dart' as school;
 import 'package:flutter/material.dart';
 
 class PathPainter extends CustomPainter {
-  final school.Route route;
+  final school.Route path;
   static const double betweenDots = 20;
 
   final TransformationController transformations;
 
-  PathPainter(this.route, this.transformations) : super(repaint: transformations);
+  PathPainter(this.path, this.transformations) : super(repaint: transformations);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -20,14 +20,19 @@ class PathPainter extends CustomPainter {
     //  scale = 10;
     //}
     final actualBetweenDots = betweenDots / scale;
-    for (var i = 0; i < route.coordinates.length - 1; i++) {
-      final point1 = route.coordinates[i].point;
-      final point2 = route.coordinates[i + 1].point;
+    for (var i = 0; i < path.coordinates.length - 1; i++) {
+      final point1 = path.coordinates[i].point;
+      final point2 = path.coordinates[i + 1].point;
+
+      // Skip over repeat points
+      if (point1 == point2) {
+        continue;
+      }
 
       final magnitude = maths.pythagoras(point1, point2);
       final count = (magnitude + spillover) ~/ actualBetweenDots;
 
-      final angle= atan2(point2.y - point1.y, point2.x - point1.x);
+      final angle = atan2(point2.y - point1.y, point2.x - point1.x);
 
       for (var j = 0; j <= count; j++) {
         final x = spillover * cos(angle) + (point2.x - point1.x) * (actualBetweenDots / magnitude) * j + point1.x;
@@ -46,5 +51,7 @@ class PathPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant PathPainter oldDelegate) {
+    return path != oldDelegate.path;
+  }
 }

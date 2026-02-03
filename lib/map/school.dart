@@ -113,7 +113,7 @@ class School {
     return closest;
   }
 
-  Route shortestRoute(Coordinates start, Coordinates goal) {
+  Route shortestRoute(Coordinates start, Coordinates end) {
     // Use A* search algorithm to find the shortest route between two points;
     // implementation based on https://theory.stanford.edu/~amitp/GameProgramming/ImplementationNotes.html
     final frontier = PriorityQueue<(Coordinates, double)>((a, b) => a.$2.compareTo(b.$2));
@@ -126,7 +126,7 @@ class School {
     while (frontier.isNotEmpty) {
       final current = frontier.removeFirst().$1;
 
-      if (current == goal) {
+      if (current == end) {
         break;
       }
 
@@ -135,8 +135,8 @@ class School {
         final next = nextEdge.coordinates.first == current ? nextEdge.coordinates.last : nextEdge.coordinates.first;
         if (!costSoFar.keys.contains(next) || newCost < costSoFar[next]!) {
           costSoFar[next] = newCost;
-          // Use the distance from the goal as the heuristic function
-          final priority = newCost + maths.equirectangularDistance(next, goal);
+          // Use the distance from the end node as the heuristic function
+          final priority = newCost + maths.equirectangularDistance(next, end);
           frontier.add((next, priority));
 
           // Since an edge is made up of smaller intermediate edges, they will
@@ -153,7 +153,7 @@ class School {
     }
 
     // Reconstruct shortest route
-    Coordinates current = goal;
+    Coordinates current = end;
     final route = <Coordinates>[];
     while (current != start) {
       route.add(current);
@@ -162,5 +162,22 @@ class School {
     route.add(start);
 
     return Route(route);
+  }
+
+  Route shortestRoutePairing(List<Coordinates> startNodes, List<Coordinates> endNodes) {
+    Route? shortest;
+    double shortestDistance = double.infinity;
+
+    for (final start in startNodes) {
+      for (final end in endNodes) {
+        final route = shortestRoute(start, end);
+        if (route.distance < shortestDistance) {
+          shortest = route;
+          shortestDistance = route.distance;
+        }
+      }
+    }
+
+    return shortest!;
   }
 }

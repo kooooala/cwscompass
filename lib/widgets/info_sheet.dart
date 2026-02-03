@@ -146,7 +146,7 @@ class RoomInfo extends StatelessWidget {
             Spacer(),
             TextButton.icon(
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => RoutePreview(initialDest: room,)));
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => RoutePreview(initialEnd: room,)));
               },
               style: ButtonStyle(
                 backgroundColor: WidgetStateProperty.resolveWith((_) => ThemeColours.accent),

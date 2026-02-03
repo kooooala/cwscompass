@@ -2,12 +2,13 @@ import 'dart:ui';
 import 'dart:math';
 import 'package:cwscompass/common/bounding_box.dart';
 import 'package:cwscompass/entrance.dart';
+import 'package:cwscompass/polygon.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'common/maths.dart' as maths;
 import 'coordinates.dart';
 
-class Room {
+class Room extends Polygon {
   final int roomId;
 
   final Color colour;
@@ -22,25 +23,19 @@ class Room {
 
   /// Coordinates of the room using the WGS 84 Web Mercator projection (map projection used by Google Maps).
   final List<Coordinates> coordinates;
-  /// Coordinates of the room in the app map.
-  final List<Point<double>> vertices;
-
-  late final BoundingBox boundingBox;
 
   Point<double>? _centroid;
 
   Room(this.roomId, this.colour, this.subject, this.number, this.label, this.entrances, this.coordinates)
-    : vertices = coordinates.map((c) => c.point).toList(),
-      name = label ?? "room $number" {
-    boundingBox = BoundingBox.fromVertices(vertices);
-  }
+    : name = label ?? "room $number",
+      super(coordinates.map((c) => c.point).toList());
 
   Point<double> get centroid {
     if (_centroid != null) {
       return _centroid!;
     }
 
-    _centroid = maths.centroid(vertices);
+    _centroid = maths.centroid(this);
     return _centroid!;
   }
 
