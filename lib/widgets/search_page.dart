@@ -2,16 +2,26 @@ import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/room.dart';
 import 'package:cwscompass/theme_colours.dart';
 import 'package:cwscompass/widgets/room_list.dart';
+import 'package:cwscompass/widgets/rounded_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fuzzywuzzy/fuzzywuzzy.dart';
 
+abstract class SearchResult {}
+
+class SearchResultNone extends SearchResult {}
+class SearchResultDeviceLocation extends SearchResult {}
+class SearchResultRoom extends SearchResult {
+  final Room room;
+
+  SearchResultRoom(this.room);
+}
+
 class SearchPage extends ConsumerWidget {
-  final controller = SearchController();
-
   final searchResults = ValueNotifier<List<Room>>([]);
+  final bool myLocationSelectable;
 
-  SearchPage({super.key});
+  SearchPage({super.key, this.myLocationSelectable = false});
 
   void search(String query, List<Room> rooms) async {
     final roomEntries = Map.fromEntries(rooms.map((room) => room.searchEntry));
@@ -28,6 +38,46 @@ class SearchPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mapData = ref.watch(mapDataProvider);
 
+    Widget myLocationButton;
+    if (myLocationSelectable) {
+      myLocationButton = Padding(
+        padding: EdgeInsets.only(top: 16.0),
+        child: GestureDetector(
+          onTap: () => Navigator.of(context).pop<SearchResult>(SearchResultDeviceLocation()),
+          child: RoundedList(
+            children: [
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                color: Colors.white,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(right: 8.0),
+                      child: Icon(
+                        Icons.my_location,
+                        size: 16.0,
+                        color: ThemeColours.primary,
+                      )
+                    ),
+                    Text(
+                      "My location",
+                      style: TextStyle(
+                        color: ThemeColours.darkText,
+                        fontSize: 18.0
+                      ),
+                    )
+                  ],
+                )
+              )
+            ]
+          ),
+        )
+      );
+    } else {
+      myLocationButton = SizedBox.shrink();
+    }
+
     return Scaffold(
       backgroundColor: ThemeColours.secondary,
       body: Padding(
@@ -38,7 +88,7 @@ class SearchPage extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
-              spacing: 16.0,
+              spacing: 8.0,
               children: [
                 Padding(
                   padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 16.0),
@@ -47,7 +97,7 @@ class SearchPage extends ConsumerWidget {
                     child: SearchBar(
                       autoFocus: true,
                       leading: GestureDetector(
-                        onTap: Navigator.of(context).pop,
+                        onTap: () => Navigator.of(context).pop<SearchResult>(SearchResultNone()),
                         child: Icon(
                           Icons.arrow_back_rounded,
                           size: 32.0,
@@ -66,11 +116,12 @@ class SearchPage extends ConsumerWidget {
                     )
                   )
                 ),
+                myLocationButton,
                 Expanded(
                   child: ValueListenableBuilder(
                     valueListenable: searchResults,
                     builder: (context, value, _) {
-                      List<Room> roomList;// = value.isNotEmpty ? value : data.school.rooms;
+                      List<Room> roomList;
                       if (value.isNotEmpty) {
                         roomList = value;
                       } else {
@@ -98,7 +149,7 @@ class SearchPage extends ConsumerWidget {
                             ),
                             RoomList(
                               rooms: roomList,
-                              onRoomTap: (room) => Navigator.of(context).pop(room),
+                              onRoomTap: (room) => Navigator.of(context).pop<SearchResult>(SearchResultRoom(room)),
                             )
                           ]
                         )

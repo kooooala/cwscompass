@@ -23,7 +23,12 @@ class Edge {
   }
 }
 
-typedef Route = Edge;
+class Route {
+  final Coordinates start, end;
+  final Edge path;
+
+  Route(this.start, this.end, this.path);
+}
 
 class School {
   final Map<Coordinates, List<Edge>> graph = {};
@@ -161,26 +166,23 @@ class School {
     }
     route.add(start);
 
-    return Route(route);
+    return Route(start, end, Edge(route));
   }
 
-  (Route, Coordinates, Coordinates) shortestRoutePairing(List<Coordinates> startNodes, List<Coordinates> endNodes) {
+  Route shortestRoutePairing(List<Coordinates> startNodes, List<Coordinates> endNodes) {
     Route? shortest;
-    Coordinates? start, end;
     double shortestDistance = double.infinity;
 
     for (final startNode in startNodes) {
       for (final endNode in endNodes) {
         final route = shortestRoute(startNode, endNode);
-        if (route.distance < shortestDistance) {
+        if (route.path.distance < shortestDistance) {
           shortest = route;
-          shortestDistance = route.distance;
-          start = startNode;
-          end = endNode;
+          shortestDistance = route.path.distance;
         }
       }
     }
 
-    return (shortest!, start!, end!);
+    return shortest!;
   }
 }

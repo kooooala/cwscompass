@@ -22,7 +22,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: 'CWS Compass',
       theme: ThemeData(
-        textTheme: GoogleFonts.familjenGroteskTextTheme()
+        textTheme: GoogleFonts.nunitoTextTheme()
       ),
       home: MyHomePage(),
     );

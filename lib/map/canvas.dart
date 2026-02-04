@@ -31,7 +31,9 @@ class MapCanvasController {
   bool roomSelectable;
   bool showPath;
   bool zoomToPath;
-  ValueNotifier<(school.Route, Coordinates)?> path = ValueNotifier(null);
+  double maxAnimationScale;
+  double focusYOffset;
+  ValueNotifier<school.Route?> path = ValueNotifier(null);
   final TransformationController transformationController;
   final ValueNotifier<(Polygon, ZoomFocus)?> focusRequest = ValueNotifier(null);
 
@@ -41,6 +43,8 @@ class MapCanvasController {
     this.roomSelectable = false,
     this.showPath = false,
     this.zoomToPath = false,
+    this.maxAnimationScale = 32.0,
+    this.focusYOffset = 75.0,
     required this.transformationController
   });
 
@@ -73,7 +77,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     widget.controller.focusRequest.addListener(onFocusRequest);
 
     if (widget.controller.zoomToPath && widget.controller.path.value != null) {
-      final polygon = Polygon(widget.controller.path.value!.$1.coordinates.map((c) => c.point).toList());
+      final polygon = Polygon(widget.controller.path.value!.path.coordinates.map((c) => c.point).toList());
       startFocusAnimation(average(polygon), computeZoomScale(polygon));
     }
   }
@@ -108,8 +112,12 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
       cancelAnimation();
     }
 
+    if (scale >= widget.controller.maxAnimationScale) {
+      scale = widget.controller.maxAnimationScale;
+    }
+
     final x = -focus.x * scale + widget.width / 2;
-    final y = -focus.y * scale + widget.height / 2 - 75;
+    final y = -focus.y * scale + widget.height / 2 - widget.controller.focusYOffset;
 
     animationController.reset();
     focusAnimation = Matrix4Tween(
@@ -208,14 +216,13 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                           if (widget.controller.path.value == null) {
                             return SizedBox.shrink();
                           } else {
-                            final path = widget.controller.path;
-                            return CustomPaint(painter: PathPainter(path.value!.$1, path.value!.$2.point, widget.controller.transformationController));
+                            return CustomPaint(painter: PathPainter(widget.controller.path.value!, widget.controller.transformationController));
                           }
                         }
                       ),
-                      //RepaintBoundary(
-                      //  child: CustomPaint(painter: DebugPainter(data.school)),
-                      //),
+                      RepaintBoundary(
+                        child: CustomPaint(painter: DebugPainter(data.school)),
+                      ),
                       Marker(2, data.school),
                     ]
                   )

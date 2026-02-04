@@ -25,7 +25,13 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
   Room? start, end;
   late school.Route route;
 
-  (school.Route, Coordinates, Coordinates) calculateRoute() {
+  double swapRotation = 0.0;
+
+  void rotateSwap() {
+    setState(() => swapRotation += 0.5);
+  }
+
+  school.Route calculateRoute() {
     final school = ref.read(mapDataProvider).value!.school;
     final location = ref.read(locationProvider).value!;
     final locationNode = school.closestNode(Coordinates(location.latitude, location.longitude));
@@ -48,11 +54,11 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
     }
 
     final shortestRoute = calculateRoute();
-    final routePolygon = Polygon(shortestRoute.$1.coordinates.map((c) => c.point).toList());
+    final routePolygon = Polygon(shortestRoute.path.coordinates.map((c) => c.point).toList());
     widget.canvasController.focus(routePolygon, ZoomFocus.average);
-    widget.canvasController.path.value = (shortestRoute.$1, shortestRoute.$3);
+    widget.canvasController.path.value = shortestRoute;
     setState(() {
-      route = shortestRoute.$1;
+      route = shortestRoute;
     });
   }
   
@@ -66,9 +72,12 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
       focusOnRoomSelect: false,
       zoomToPath: true,
       showPath: true,
+      maxAnimationScale: 16.0,
+      focusYOffset: 0,
       transformationController: ref.read(transformationControllerProvider),
     );
-    widget.canvasController.path.value = (shortestRoute.$1, shortestRoute.$3);
+    route = shortestRoute;
+    widget.canvasController.path.value = shortestRoute;
   }
 
   @override
@@ -80,93 +89,266 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
           height: MediaQuery.sizeOf(context).height,
           controller: widget.canvasController
         ),
-        Padding(
-          padding: EdgeInsets.symmetric(vertical: MediaQuery.paddingOf(context).top + 16.0, horizontal: 28.0),
-          child: Stack(
-            children: [
-              Material(
-                borderRadius: BorderRadius.circular(24.0),
-                color: Colors.white,
-                elevation: 4,
-                child: Wrap(
-                  children: [
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () async {
-                        final result = await Navigator.of(context).push<Room?>(MaterialPageRoute(builder: (context) => SearchPage()));
-                        setState(() {
-                          start = result;
-                        });
-                        updateRoute();
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12.0),
-                        child: Row(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16.0),
-                              child: Icon(
-                                Icons.circle_outlined,
-                                size: 20.0,
-                                color: ThemeColours.primary
+        Column(
+          children: [
+            Padding(
+              padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 16.0, left: 28.0, right: 48.0),
+              child: Stack(
+                alignment: Alignment.centerRight,
+                clipBehavior: Clip.none,
+                children: [
+                  Hero(
+                    tag: "search-bar",
+                    child: Material(
+                        borderRadius: BorderRadius.circular(24.0),
+                        color: Colors.white,
+                        elevation: 4,
+                        child: Wrap(
+                            children: [
+                              GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () async {
+                                    final result = await Navigator.of(context).push<SearchResult>(
+                                        MaterialPageRoute(
+                                            builder: (context) => SearchPage(myLocationSelectable: end != null)
+                                        )
+                                    );
+                                    switch (result) {
+                                      case SearchResultNone _:
+                                        return;
+                                      case SearchResultDeviceLocation _:
+                                        setState(() => start = null);
+                                        break;
+                                      case SearchResultRoom r:
+                                        setState(() => start = r.room);
+                                        break;
+                                    }
+                                    updateRoute();
+                                  },
+                                  child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 12.0),
+                                      child: AnimatedSwitcher(
+                                          duration: Duration(milliseconds: 300),
+                                          child: Row(
+                                            key: ValueKey(start),
+                                            mainAxisAlignment: MainAxisAlignment.start,
+                                            children: [
+                                              Padding(
+                                                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                                                child: Icon(
+                                                    Icons.circle_outlined,
+                                                    size: 20.0,
+                                                    color: ThemeColours.primary
+                                                ),
+                                              ),
+                                              Text(
+                                                start != null ? start!.name.capitalise() : "My location",
+                                                style: TextStyle(
+                                                    color: ThemeColours.darkTextTint,
+                                                    fontSize: 16.0,
+                                                    fontWeight: FontWeight.w600
+                                                ),
+                                              ),
+                                              Spacer()
+                                            ],
+                                          )
+                                      )
+                                  )
                               ),
-                            ),
-                            Text(
-                              start != null ? start!.name.capitalise() : "Your location",
-                              style: TextStyle(
-                                  fontSize: 16.0
+                              Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                                  child: Divider(
+                                    thickness: 1.0,
+                                    color: ThemeColours.divider,
+                                    height: 0,
+                                  )
                               ),
-                            ),
-                            Spacer()
-                          ],
+                              GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () async {
+                                  final result = await Navigator.of(context).push<SearchResult>(
+                                      MaterialPageRoute(
+                                          builder: (context) => SearchPage(myLocationSelectable: start != null)
+                                      )
+                                  );
+                                  switch (result) {
+                                    case SearchResultNone _:
+                                      return;
+                                    case SearchResultDeviceLocation _:
+                                      setState(() => end = null);
+                                      break;
+                                    case SearchResultRoom r:
+                                      setState(() => end = r.room);
+                                      break;
+                                  }
+                                  updateRoute();
+                                },
+                                child: Padding(
+                                    padding: EdgeInsets.symmetric(vertical: 12.0),
+                                    child: AnimatedSwitcher(
+                                        duration: Duration(milliseconds: 300),
+                                        child: Row(
+                                          key: ValueKey(end),
+                                          mainAxisAlignment: MainAxisAlignment.start,
+                                          children: [
+                                            Padding(
+                                              padding: EdgeInsets.symmetric(horizontal: 16.0),
+                                              child: Icon(
+                                                  Icons.location_on_rounded,
+                                                  size: 20.0,
+                                                  color: ThemeColours.primary
+                                              ),
+                                            ),
+                                            Text(
+                                              end != null ? end!.name.capitalise() : "My location",
+                                              style: TextStyle(
+                                                  fontSize: 16.0,
+                                                  color: ThemeColours.darkTextTint,
+                                                  fontWeight: FontWeight.w600
+                                              ),
+                                            )
+                                          ],
+                                        )
+                                    )
+                                ),
+                              )
+                            ]
                         )
-                      )
-                    ),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 16.0),
-                      child: Divider(
-                        thickness: 1.0,
-                        color: ThemeColours.divider,
-                        height: 0,
-                      )
-                    ),
-                    GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTap: () async {
-                        final result = await Navigator.of(context).push<Room?>(MaterialPageRoute(builder: (context) => SearchPage()));
-                        setState(() {
-                          end = result;
-                        });
-                        updateRoute();
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: 12.0),
-                        child: Row(
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16.0),
-                              child: Icon(
-                                Icons.location_on_rounded,
-                                size: 20.0,
-                                color: ThemeColours.primary
-                              ),
-                            ),
-                            Text(
-                              end != null ? end!.name.capitalise() : "Your location",
-                              style: TextStyle(
-                                fontSize: 16.0
-                              ),
-                            )
-                          ],
-                        )
-                      ),
                     )
-                  ]
-                )
-              )
-            ],)
+                  ),
+                ]
+              ),
+            ),
+            Spacer(),
+            RouteInfo(route: route, endRoom: end)
+          ]
+        ),
+        Positioned(
+            top: MediaQuery.paddingOf(context).top + 40.0,
+            right: 23.0,
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () {
+                debugPrint("Swap pressed");
+                setState(() {
+                  final temp = start;
+                  start = end;
+                  end = temp;
+                });
+                rotateSwap();
+              },
+              child: Container(
+                height: 46.0,
+                width: 46.0,
+                decoration: BoxDecoration(
+                    color: ThemeColours.accent,
+                    boxShadow: [BoxShadow(
+                        offset: Offset(0, 3),
+                        blurRadius: 4.0,
+                        color: Colors.black.withAlpha(64)
+                    )],
+                    shape: BoxShape.circle
+                ),
+                child: AnimatedRotation(
+                    turns: swapRotation,
+                    duration: Duration(milliseconds: 150),
+                    curve: Curves.easeInOutSine,
+                    child: Icon(Icons.swap_vert_rounded, size: 28.0, color: Colors.white,)
+                ),
+              ),
+            )
         )
       ]
+    );
+  }
+}
+
+class RouteInfo extends StatelessWidget {
+  final school.Route route;
+  final Room? endRoom;
+
+  const RouteInfo({super.key, required this.route, required this.endRoom});
+
+  @override
+  Widget build(BuildContext context) {
+    const walkingSpeed = 3;
+    final travelTime = route.path.distance / walkingSpeed;
+    final travelTimeMin = (travelTime / 60).round();
+    final eta = DateTime.now().add(Duration(seconds: travelTime.round()));
+    final endName = endRoom == null ? "my location" : endRoom!.name.capitalise();
+
+    return Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: 28.0,
+        vertical: MediaQuery.paddingOf(context).bottom + 16.0,
+      ),
+      child: Material(
+        borderRadius: BorderRadius.circular(24.0),
+        color: ThemeColours.primary,
+        elevation: 4,
+        child: Wrap(
+          children: [
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: 300),
+                child: Row(
+                  key: UniqueKey(),
+                  children: [
+                    Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                              "To $endName",
+                              style: TextStyle(
+                                  color: ThemeColours.lightText,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700
+                              )
+                          ),
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                "${travelTimeMin < 1 ? "< 1" : travelTimeMin} min",
+                                style: TextStyle(
+                                    color: ThemeColours.lightText,
+                                    fontSize: 26.0,
+                                    fontWeight: FontWeight.w900
+                                ),
+                              ),
+                              Padding(
+                                  padding: EdgeInsets.only(left: 8.0),
+                                  child: Text(
+                                      "/ ETA ${eta.hour}:${eta.minute}",
+                                      style: TextStyle(
+                                          color: ThemeColours.lightTextTint,
+                                          fontSize: 18.0,
+                                          fontWeight: FontWeight.w600
+                                      )
+                                  )
+                              )
+                            ],
+                          )
+                        ]
+                    ),
+                    Spacer(),
+                    Text(
+                      "${route.path.distance.round()}m",
+                      style: TextStyle(
+                          color: ThemeColours.lightText,
+                          fontSize: 24.0,
+                          fontWeight: FontWeight.w900
+                      ),
+                    )
+                  ],
+                )
+              )
+            )
+          ],
+        ),
+      )
     );
   }
 }

@@ -43,10 +43,10 @@ class FakeSearchBar extends ConsumerWidget {
       padding: EdgeInsets.symmetric(vertical: MediaQuery.paddingOf(context).top + 16.0, horizontal: 28.0),
       child: GestureDetector(
         onTap: () async {
-          final result = await Navigator.of(context).push<Room?>(MaterialPageRoute(builder: (context) => SearchPage()));
+          final result = await Navigator.of(context).push<SearchResult>(MaterialPageRoute(builder: (context) => SearchPage()));
 
-          if (result != null) {
-            ref.read(selectedRoomProvider.notifier).set(result);
+          if (result is SearchResultRoom) {
+            ref.read(selectedRoomProvider.notifier).set(result.room);
           }
         },
         child: Hero(

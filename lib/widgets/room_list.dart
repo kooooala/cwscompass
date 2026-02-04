@@ -32,7 +32,8 @@ class RoomList extends ConsumerWidget {
             child: Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
               child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.baseline,
+                textBaseline: TextBaseline.alphabetic,
                 spacing: 8.0,
                 children: [
                   Text(
