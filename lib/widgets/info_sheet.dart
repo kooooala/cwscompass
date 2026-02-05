@@ -13,6 +13,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path/path.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
 
 class InfoSheet extends ConsumerStatefulWidget {
@@ -157,13 +158,13 @@ class RoomInfo extends StatelessWidget {
               label: Padding(
                 padding: EdgeInsets.only(left: 4.0),
                 child: Text(
-                  "Go",
+                  "Directions",
                   style: TextStyle(
-                    fontWeight: FontWeight.w900
+                    fontWeight: FontWeight.bold
                   ),
                 ),
               ),
-              icon: Icon(Icons.turn_right_rounded),
+              icon: PhosphorIcon(PhosphorIconsBold.arrowBendUpRight),
             )
           ],
         ),

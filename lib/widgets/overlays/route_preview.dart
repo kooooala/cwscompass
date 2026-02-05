@@ -10,6 +10,8 @@ import 'package:cwscompass/widgets/search_page.dart';
 import 'package:cwscompass/map/school.dart' as school;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class RoutePreview extends ConsumerStatefulWidget {
   final Room initialEnd;
@@ -90,11 +92,11 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
           controller: widget.canvasController
         ),
         Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Padding(
               padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 16.0, left: 28.0, right: 48.0),
               child: Stack(
-                alignment: Alignment.centerRight,
                 clipBehavior: Clip.none,
                 children: [
                   Hero(
@@ -220,6 +222,45 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
               ),
             ),
             Spacer(),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
+                child: GestureDetector(
+                  child: Material(
+                    color: ThemeColours.accent,
+                    elevation: 4.0,
+                    borderRadius: BorderRadius.circular(24.0),
+                    child: Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                        child: Wrap(
+                          direction: Axis.horizontal,
+                          spacing: 12.0,
+                          crossAxisAlignment: WrapCrossAlignment.center,
+                          children: [
+                            Text(
+                              "Go",
+                              style: TextStyle(
+                                  fontSize: 24.0,
+                                  fontWeight: FontWeight.w900,
+                                  color: ThemeColours.lightText
+                              ),
+                            ),
+                            Transform.flip(
+                              flipX: true,
+                              child: PhosphorIcon(
+                                PhosphorIconsFill.navigationArrow,
+                                color: ThemeColours.lightText,
+                                size: 20.0,
+                              )
+                            )
+                          ],
+                        )
+                    ),
+                  )
+                )
+              )
+            ),
             RouteInfo(route: route, endRoom: end)
           ]
         ),
@@ -227,7 +268,6 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
             top: MediaQuery.paddingOf(context).top + 40.0,
             right: 23.0,
             child: GestureDetector(
-              behavior: HitTestBehavior.translucent,
               onTap: () {
                 debugPrint("Swap pressed");
                 setState(() {
@@ -253,7 +293,11 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                     turns: swapRotation,
                     duration: Duration(milliseconds: 150),
                     curve: Curves.easeInOutSine,
-                    child: Icon(Icons.swap_vert_rounded, size: 28.0, color: Colors.white,)
+                    child: PhosphorIcon(
+                      PhosphorIconsBold.arrowsDownUp,
+                      size: 24.0,
+                      color: Colors.white,
+                    )
                 ),
               ),
             )
@@ -275,12 +319,14 @@ class RouteInfo extends StatelessWidget {
     final travelTime = route.path.distance / walkingSpeed;
     final travelTimeMin = (travelTime / 60).round();
     final eta = DateTime.now().add(Duration(seconds: travelTime.round()));
+    final formattedEta = DateFormat.Hm().format(eta);
     final endName = endRoom == null ? "my location" : endRoom!.name.capitalise();
 
     return Padding(
-      padding: EdgeInsets.symmetric(
-        horizontal: 28.0,
-        vertical: MediaQuery.paddingOf(context).bottom + 16.0,
+      padding: EdgeInsets.only(
+        left: 28.0,
+        right: 28.0,
+        bottom: MediaQuery.paddingOf(context).bottom + 16.0,
       ),
       child: Material(
         borderRadius: BorderRadius.circular(24.0),
@@ -321,7 +367,7 @@ class RouteInfo extends StatelessWidget {
                               Padding(
                                   padding: EdgeInsets.only(left: 8.0),
                                   child: Text(
-                                      "/ ETA ${eta.hour}:${eta.minute}",
+                                      "/ ETA $formattedEta",
                                       style: TextStyle(
                                           color: ThemeColours.lightTextTint,
                                           fontSize: 18.0,

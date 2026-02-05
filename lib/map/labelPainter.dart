@@ -19,7 +19,7 @@ class LabelPainter extends CustomPainter {
 
       textPainter.text = TextSpan(
         text: room.name.capitalise(),
-        style: GoogleFonts.familjenGrotesk(
+        style: GoogleFonts.nunito(
           color: colour,
           fontWeight: FontWeight.w500,
           fontSize: 1.0,
