@@ -104,3 +104,21 @@ Coordinates pointToCoordinates(Point<double> point) {
 
   return Coordinates(latitude, longitude);
 }
+
+/// Determine whether the perpendicular line through [point] intersects the
+/// given line between [lineStart] and [lineEnd].
+/// Formula based on https://math.stackexchange.com/questions/2248617/shortest-distance-between-a-point-and-a-line-segment
+bool pointIntersectsLine(Point<double> point, Point<double> lineStart, Point<double> lineEnd) {
+  final t = -((lineStart.x - point.x) * (lineEnd.x - lineStart.x) + (lineStart.y - point.y) * (lineEnd.y - lineStart.y))
+      / (pow((lineEnd.x - lineStart.x), 2) + pow((lineEnd.y - lineStart.y), 2));
+  return t >= 0 && t <= 1;
+}
+
+/// Determine the perpendicular distance from [point] to given line, when the
+/// perpendicular line through [point] intersects line between [lineStart] and
+/// [lineEnd].
+/// Formula also based on https://math.stackexchange.com/questions/2248617/shortest-distance-between-a-point-and-a-line-segment
+double pointDistanceToLineWithinSegment(Point<double> point, Point<double> lineStart, Point<double> lineEnd) {
+  return ((lineEnd.x - lineStart.x) * (lineStart.y - point.y) - (lineEnd.y - lineStart.y) * (lineStart.x - point.x)).abs()
+      / sqrt(pow((lineEnd.x - lineStart.x), 2) + pow((lineEnd.y - lineStart.y), 2));
+}

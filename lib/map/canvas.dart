@@ -28,19 +28,27 @@ enum ZoomFocus {
 class MapCanvasController {
   bool focusOnTap;
   bool focusOnRoomSelect;
+
   bool roomSelectable;
+
+  bool drawStart, drawEnd;
+
   bool showPath;
   bool zoomToPath;
   double maxAnimationScale;
   double focusYOffset;
   ValueNotifier<school.Route?> path = ValueNotifier(null);
+
   final TransformationController transformationController;
+
   final ValueNotifier<(Polygon, ZoomFocus)?> focusRequest = ValueNotifier(null);
 
   MapCanvasController({
     this.focusOnTap = false,
     this.focusOnRoomSelect = false,
     this.roomSelectable = false,
+    this.drawStart = false,
+    this.drawEnd = false,
     this.showPath = false,
     this.zoomToPath = false,
     this.maxAnimationScale = 32.0,
@@ -216,7 +224,12 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                           if (widget.controller.path.value == null) {
                             return SizedBox.shrink();
                           } else {
-                            return CustomPaint(painter: PathPainter(widget.controller.path.value!, widget.controller.transformationController));
+                            return CustomPaint(painter: PathPainter(
+                              drawStart: widget.controller.drawStart,
+                              drawEnd: widget.controller.drawEnd,
+                              route: widget.controller.path.value!,
+                              transformations: widget.controller.transformationController)
+                            );
                           }
                         }
                       ),

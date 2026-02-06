@@ -9,9 +9,16 @@ class PathPainter extends CustomPainter {
   final school.Route route;
   static const double betweenDots = 20;
 
+  final bool drawStart, drawEnd;
+
   final TransformationController transformations;
 
-  PathPainter(this.route, this.transformations) : super(repaint: transformations);
+  PathPainter({
+    required this.route,
+    required this.transformations,
+    this.drawStart = false,
+    this.drawEnd = false,
+  }) : super(repaint: transformations);
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -50,13 +57,17 @@ class PathPainter extends CustomPainter {
       spillover = actualBetweenDots - ((magnitude - spillover) % actualBetweenDots);
     }
 
-    final startOffset = Offset(route.start.point.x, route.start.point.y);
-    canvas.drawCircle(startOffset, 7 / scale, Paint()..color = ThemeColours.accent);
-    canvas.drawCircle(startOffset, 4 / scale, Paint()..color = Colors.white);
+    if (drawStart) {
+      final startOffset = Offset(route.start.point.x, route.start.point.y);
+      canvas.drawCircle(startOffset, 7 / scale, Paint()..color = ThemeColours.accent);
+      canvas.drawCircle(startOffset, 4 / scale, Paint()..color = Colors.white);
+    }
 
-    final endOffset = Offset(route.end.point.x, route.end.point.y);
-    canvas.drawCircle(endOffset, 7 / scale, Paint()..color = ThemeColours.accent);
-    canvas.drawCircle(endOffset, 4 / scale, Paint()..color = Colors.white);
+    if (drawEnd) {
+      final endOffset = Offset(route.end.point.x, route.end.point.y);
+      canvas.drawCircle(endOffset, 7 / scale, Paint()..color = ThemeColours.accent);
+      canvas.drawCircle(endOffset, 4 / scale, Paint()..color = Colors.white);
+    }
   }
 
   @override
