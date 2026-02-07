@@ -24,7 +24,7 @@ class InfoSheet extends ConsumerStatefulWidget {
 }
 
 class InfoSheetState extends ConsumerState<InfoSheet> {
-  late final SheetController controller;
+  final SheetController controller = SheetController();
 
   static const nearbySize = 0.5, minSize = 0.25;
   double currentSize = nearbySize;
@@ -41,12 +41,6 @@ class InfoSheetState extends ConsumerState<InfoSheet> {
   void onRoomSelect(Room? previous, Room? next) {
     final newSize = next == null ? nearbySize : minSize;
     animateSizeChange(newSize);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    controller = SheetController();
   }
 
   @override
