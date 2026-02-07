@@ -4,6 +4,7 @@ import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/room.dart';
+import 'package:cwscompass/widgets/direction_sheet.dart';
 import 'package:cwscompass/widgets/overlays/route_preview.dart';
 import 'package:cwscompass/map/school.dart' as school;
 import 'package:flutter/material.dart';
@@ -39,10 +40,32 @@ class _NavigationState extends ConsumerState<Navigation> {
     widget.canvasController.path.value = route;
   }
 
+  void updateDirections() {
+    displayRoute.directions.removeWhere((c) => !displayRoute.path.coordinates.contains(c.coordinates));
+    ref.watch(locationProvider).whenData((position) {
+      final location = Coordinates(position.latitude, position.longitude);
+
+      if (displayRoute.directions.isEmpty) {
+        return;
+      }
+
+      double firstDistance = equirectangularDistance(location, displayRoute.path.coordinates[1]);
+      Coordinates node = displayRoute.path.coordinates[1];
+      int i = 1;
+      while (node != displayRoute.directions.first.coordinates) {
+        firstDistance += equirectangularDistance(displayRoute.path.coordinates[i], displayRoute.path.coordinates[i + 1]);
+        node = displayRoute.path.coordinates[i + 1];
+        i++;
+      }
+      displayRoute.directions.first.distance = firstDistance;
+    });
+  }
+
   void updateDisplayRoute(school.Route newRoute) {
     setState(() {
       displayRoute = newRoute;
     });
+    updateDirections();
     widget.canvasController.path.value = displayRoute;
   }
   
@@ -84,10 +107,11 @@ class _NavigationState extends ConsumerState<Navigation> {
                 right: 28.0,
                 top: MediaQuery.paddingOf(context).top + 16.0
               ),
-              child: RouteInfo(route: route, endRoom: widget.endRoom),
+              child: RouteInfo(route: displayRoute, endRoom: widget.endRoom),
             )
           ],
-        )
+        ),
+        DirectionSheet(directions: displayRoute.directions, endRoom: widget.endRoom,)
       ],
     );
   }

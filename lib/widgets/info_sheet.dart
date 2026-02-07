@@ -12,7 +12,6 @@ import 'package:cwscompass/widgets/room_list.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
 
@@ -24,7 +23,7 @@ class InfoSheet extends ConsumerStatefulWidget {
 }
 
 class InfoSheetState extends ConsumerState<InfoSheet> {
-  late final SheetController controller;
+  final SheetController controller = SheetController();
 
   static const nearbySize = 0.5, minSize = 0.25;
   double currentSize = nearbySize;
@@ -41,12 +40,6 @@ class InfoSheetState extends ConsumerState<InfoSheet> {
   void onRoomSelect(Room? previous, Room? next) {
     final newSize = next == null ? nearbySize : minSize;
     animateSizeChange(newSize);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    controller = SheetController();
   }
 
   @override

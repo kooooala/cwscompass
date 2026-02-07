@@ -1,9 +1,13 @@
+import 'dart:math';
+
 import 'package:cwscompass/coordinates.dart';
+import 'package:cwscompass/entrance.dart';
 import 'package:cwscompass/room.dart';
 import 'package:cwscompass/path.dart';
 import 'package:cwscompass/common/maths.dart' as maths;
 
 import 'package:collection/collection.dart';
+import 'package:vector_math/vector_math.dart';
 
 class Edge {
   final List<Coordinates> coordinates;
@@ -17,45 +21,66 @@ class Edge {
       if (coordinates[i].latitude == coordinates[i + 1].latitude && coordinates[i].longitude == coordinates[i + 1].longitude) {
         continue;
       }
-      result += maths.haversineDistance(coordinates[i], coordinates[i + 1]);
+      result += maths.equirectangularDistance(coordinates[i], coordinates[i + 1]);
     }
     return result;
   }
 }
 
+class EdgeWithLabel extends Edge {
+  final String? label;
+
+  EdgeWithLabel(super.coordinates, this.label);
+}
+
 class Route {
   final Coordinates start, end;
+  final List<Direction> directions;
   final Edge path;
 
-  Route(this.start, this.end, this.path);
+  Route(this.start, this.end, this.directions, this.path);
+}
+
+enum Turn {
+  left, right, straight, destination
+}
+
+class Direction {
+  final Turn turn;
+  final String? label;
+  final Coordinates coordinates;
+
+  double distance;
+
+  Direction(this.turn, this.label, this.coordinates, this.distance);
 }
 
 class School {
-  final Map<Coordinates, List<Edge>> graph = {};
+  final Map<Coordinates, List<EdgeWithLabel>> graph = {};
   // A map of the edge each intermediate node belongs to
   final Map<Coordinates, Edge> intermediateNodeEdge = {};
   final List<Room> rooms;
 
   School(this.rooms, List<Path> _paths) {
-    Map<Coordinates, List<Coordinates>> fullGraph = {};
+    Map<Coordinates, List<(Coordinates, String?)>> fullGraph = {};
 
     for (final path in _paths) {
       for (final (i, vertex) in path.vertices.sublist(0, path.vertices.length - 1).indexed) {
         final next = path.vertices[i + 1];
 
-        fullGraph[vertex] ??= <Coordinates>[];
-        fullGraph[vertex]!.add(next);
+        fullGraph[vertex] ??= <(Coordinates, String?)>[];
+        fullGraph[vertex]!.add((next, path.label));
 
-        fullGraph[next] ??= <Coordinates>[];
-        fullGraph[next]!.add(vertex);
+        fullGraph[next] ??= <(Coordinates, String?)>[];
+        fullGraph[next]!.add((vertex, path.label));
       }
     }
 
     for (final room in rooms) {
       for (final entrance in room.entrances) {
         final coordinates = Coordinates(entrance.latitude, entrance.longitude);
-        fullGraph[coordinates]!.add(entrance);
-        fullGraph[entrance] = [coordinates];
+        fullGraph[coordinates]!.add((entrance, null));
+        fullGraph[entrance] = [(coordinates, null)];
       }
     }
 
@@ -72,19 +97,19 @@ class School {
       for (final child in children) {
         // Skip over ones we have already traversed
         if (visited.any((edge) =>
-          (edge[0] == junction && edge[1] == child) ||
-          (edge[1] == junction && edge[0] == child))) {
+          (edge[0] == junction && edge[1] == child.$1) ||
+          (edge[1] == junction && edge[0] == child.$1))) {
           continue;
         }
 
-        final edgeNodes = <Coordinates>[junction, child];
+        final edgeNodes = <Coordinates>[junction, child.$1];
         var last = junction;
         var current = child;
 
-        while (!junctions.contains(current)) {
-          final next = fullGraph[current]!.firstWhere((n) => n != last);
-          edgeNodes.add(next);
-          last = current;
+        while (!junctions.contains(current.$1)) {
+          final next = fullGraph[current.$1]!.firstWhere((n) => n.$1 != last);
+          edgeNodes.add(next.$1);
+          last = current.$1;
           current = next;
         }
 
@@ -94,7 +119,7 @@ class School {
         visited.add([edgeNodes.last, edgeNodes[edgeNodes.length - 2]]);
 
         // Add the 'collapsed' path to our adjacency list
-        final edge = Edge(edgeNodes);
+        final edge = EdgeWithLabel(edgeNodes, child.$2);
 
         if (edge.coordinates.length > 2) {
           for (final intermediateNode in edge.coordinates.sublist(1, edge.coordinates.length - 1)) {
@@ -102,10 +127,10 @@ class School {
           }
         }
 
-        graph[edgeNodes.first] ??= <Edge>[];
+        graph[edgeNodes.first] ??= <EdgeWithLabel>[];
         graph[edgeNodes.first]!.add(edge);
 
-        graph[edgeNodes.last] ??= <Edge>[];
+        graph[edgeNodes.last] ??= <EdgeWithLabel>[];
         graph[edgeNodes.last]!.add(edge);
       }
     }
@@ -146,6 +171,26 @@ class School {
     }
 
     return closest;
+  }
+
+  Direction getDirection(Coordinates previous, Coordinates current, Coordinates next) {
+    final vector1 = Vector2(current.longitude - previous.longitude, current.latitude - previous.latitude);
+    final vector2 = Vector2(next.longitude - current.longitude, next.latitude - current.latitude);
+    final crossProduct = vector1.cross(vector2);
+    final dotProduct = vector1.dot(vector2);
+    final angle = atan2(crossProduct, dotProduct);
+
+    Turn turn;
+    if (angle < 0 - 0.1 * pi) {
+      turn = Turn.left;
+    } else if (angle > 0 + 0.1 * pi) {
+      turn = Turn.right;
+    } else {
+      turn = Turn.straight;
+    }
+
+    final label = graph[current]!.firstWhere((e) => e.coordinates.contains(next)).label;
+    return Direction(turn, label, current, 0);
   }
 
   Route shortestRoute(Coordinates start, Coordinates end) {
@@ -189,14 +234,32 @@ class School {
 
     // Reconstruct shortest route
     Coordinates current = end;
+    Coordinates? previous, next;
     final route = <Coordinates>[];
+    List<Direction> directions = [Direction(Turn.destination, null, end, 0)];
+    double distanceToNextJunction = 0;
     while (current != start) {
+      if (previous != null) {
+        distanceToNextJunction += maths.equirectangularDistance(current, previous);
+      }
       route.add(current);
-      current = cameFrom[current]!;
+
+      // Add direction if current is a junction
+      if (graph.containsKey(current) && previous != null && next != null) {
+        if (graph[current]!.where((e) => e.coordinates.any((c) => c is Entrance)).isEmpty) {
+          directions.first.distance = distanceToNextJunction;
+          directions.insert(0, getDirection(previous, current, next));
+          distanceToNextJunction = 0;
+        }
+      }
+
+      previous = current;
+      current = cameFrom[previous]!;
+      next = cameFrom[current];
     }
     route.add(start);
 
-    return Route(start, end, Edge(route.reversed.toList()));
+    return Route(start, end, directions.toList(), Edge(route.reversed.toList()));
   }
 
   Route shortestRoutePairing(List<Coordinates> startNodes, List<Coordinates> endNodes) {
@@ -253,7 +316,7 @@ class School {
       fullPath = intermediateToRegular(start, shortestRoute.start) + fullPath.sublist(1);
     }
 
-    return Route(start, shortestRoute.end, Edge(fullPath));
+    return Route(start, shortestRoute.end, shortestRoute.directions, Edge(fullPath));
   }
 
   Route adjustRouteDisplay(Coordinates location, Route route) {
@@ -290,7 +353,7 @@ class School {
     }
 
     final path = [location] + coordinates.sublist(lastDisplayNodeIndex, coordinates.length);
-    return Route(path.first, path.last, Edge(path));
+    return Route(path.first, path.last, route.directions, Edge(path));
   }
 
   Route locationToRoom(Coordinates location, Room room) {

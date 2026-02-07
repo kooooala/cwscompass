@@ -25,6 +25,22 @@ enum ZoomFocus {
   average
 }
 
+abstract class FocusRequest {}
+
+class PolygonFocus extends FocusRequest {
+  final Polygon polygon;
+  final ZoomFocus zoomFocus;
+
+  PolygonFocus(this.polygon, this.zoomFocus);
+}
+
+class PointFocus extends FocusRequest {
+  final Point<double> focus;
+  final double scale;
+
+  PointFocus(this.focus, this.scale);
+}
+
 class MapCanvasController {
   bool focusOnTap;
   bool focusOnRoomSelect;
@@ -41,7 +57,7 @@ class MapCanvasController {
 
   final TransformationController transformationController;
 
-  final ValueNotifier<(Polygon, ZoomFocus)?> focusRequest = ValueNotifier(null);
+  final ValueNotifier<FocusRequest?> focusRequest = ValueNotifier(null);
 
   MapCanvasController({
     this.focusOnTap = false,
@@ -56,8 +72,12 @@ class MapCanvasController {
     required this.transformationController
   });
 
-  void focus(Polygon polygon, ZoomFocus zoomFocus) {
-    focusRequest.value = (polygon, zoomFocus);
+  void focusPolygon(Polygon polygon, ZoomFocus zoomFocus) {
+    focusRequest.value = PolygonFocus(polygon, zoomFocus);
+  }
+
+  void focusPoint(Point<double> focus, double scale) {
+    focusRequest.value = PointFocus(focus, scale);
   }
 }
 
@@ -100,12 +120,24 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
   void onFocusRequest() {
     final request = widget.controller.focusRequest.value;
     if (request != null) {
-      final polygon = request.$1;
-      final focus = switch (request.$2) {
-        ZoomFocus.centroid => centroid(polygon),
-        ZoomFocus.average => average(polygon),
-      };
-      startFocusAnimation(focus, computeZoomScale(polygon));
+      Point<double> focus;
+      double scale;
+
+      switch (request) {
+        case PointFocus pointFocus:
+          focus = pointFocus.focus;
+          scale = pointFocus.scale;
+          break;
+        case PolygonFocus polygonFocus:
+          focus = switch (polygonFocus.zoomFocus) {
+            ZoomFocus.centroid => centroid(polygonFocus.polygon),
+            ZoomFocus.average => average(polygonFocus.polygon),
+          };
+          scale = computeZoomScale(polygonFocus.polygon);
+        default:
+          return;
+      }
+      startFocusAnimation(focus, scale);
     }
   }
 

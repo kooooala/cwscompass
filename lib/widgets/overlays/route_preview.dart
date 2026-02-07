@@ -55,7 +55,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
 
     if (focus) {
       final routePolygon = Polygon(shortestRoute.path.coordinates.map((c) => c.point).toList());
-      widget.canvasController.focus(routePolygon, ZoomFocus.average);
+      widget.canvasController.focusPolygon(routePolygon, ZoomFocus.average);
     }
     widget.canvasController.path.value = shortestRoute;
     setState(() {
@@ -82,10 +82,6 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
   }
 
   void onLocationUpdate(Position position) {
-    if (start != null) {
-      return;
-    }
-
     updateRoute(false);
   }
 
@@ -291,7 +287,6 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
             child: GestureDetector(
               onTap: () {
                 if (start == null) {
-                  
                   return;
                 }
 
@@ -340,7 +335,7 @@ class RouteInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const walkingSpeed = 3;
+    const walkingSpeed = 1.3;
     final travelTime = route.path.distance / walkingSpeed;
     final travelTimeMin = (travelTime / 60).round();
     final eta = DateTime.now().add(Duration(seconds: travelTime.round()));
@@ -358,7 +353,7 @@ class RouteInfo extends StatelessWidget {
               child: AnimatedSwitcher(
                   duration: Duration(milliseconds: 300),
                   child: Row(
-                    key: UniqueKey(),
+                    key: ValueKey(route.start.hashCode + route.end.hashCode),
                     children: [
                       Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
