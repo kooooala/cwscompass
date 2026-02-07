@@ -14,4 +14,6 @@ class ThemeColours {
   static const Color darkTextTint = Color(0xFF44464F);
 
   static const Color divider = Color(0xFFC5C6D0);
+
+  static const Color disabled = Color(0xFF757780);
 }

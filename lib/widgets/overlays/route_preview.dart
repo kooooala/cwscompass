@@ -11,6 +11,7 @@ import 'package:cwscompass/widgets/search_page.dart';
 import 'package:cwscompass/map/school.dart' as school;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
@@ -25,7 +26,8 @@ class RoutePreview extends ConsumerStatefulWidget {
 }
 
 class _RoutePreviewState extends ConsumerState<RoutePreview> {
-  Room? start, end;
+  Room? start;
+  late Room end;
   late school.Route route;
 
   double swapRotation = 0.0;
@@ -35,30 +37,26 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
   }
 
   school.Route calculateRoute() {
-    final school = ref.read(mapDataProvider).value!.school;
-    final location = ref.read(locationProvider).value!;
-    final locationNode = school.closestNode(Coordinates(location.latitude, location.longitude));
-    final startNodes =
-    start == null
-        ? <Coordinates>[locationNode]
-        : start!.entrances;
-    final endNodes =
-    end == null
-        ? <Coordinates>[locationNode]
-        : end!.entrances;
+    final mapData = ref.read(mapDataProvider).value!;
 
-    return school.shortestRoutePairing(startNodes, endNodes);
-  }
-
-  void updateRoute() {
-    // Stop if the current location is selected for both start & end
-    if (start == null && end == null) {
-      return;
+    school.Route shortestRoute;
+    if (start == null) {
+      final location = ref.read(locationProvider).value!;
+      shortestRoute = mapData.school.locationToRoom(Coordinates(location.latitude, location.longitude), end);
+    } else {
+      shortestRoute = mapData.school.shortestRoutePairing(start!.entrances, end.entrances);
     }
 
+    return shortestRoute;
+  }
+
+  void updateRoute(bool focus) {
     final shortestRoute = calculateRoute();
-    final routePolygon = Polygon(shortestRoute.path.coordinates.map((c) => c.point).toList());
-    widget.canvasController.focus(routePolygon, ZoomFocus.average);
+
+    if (focus) {
+      final routePolygon = Polygon(shortestRoute.path.coordinates.map((c) => c.point).toList());
+      widget.canvasController.focus(routePolygon, ZoomFocus.average);
+    }
     widget.canvasController.path.value = shortestRoute;
     setState(() {
       route = shortestRoute;
@@ -83,8 +81,18 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
     widget.canvasController.path.value = shortestRoute;
   }
 
+  void onLocationUpdate(Position position) {
+    if (start != null) {
+      return;
+    }
+
+    updateRoute(false);
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.watch(locationProvider).whenData(onLocationUpdate);
+
     return Stack(
       children: [
         MapCanvas(
@@ -113,7 +121,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                                   onTap: () async {
                                     final result = await Navigator.of(context).push<SearchResult>(
                                         MaterialPageRoute(
-                                            builder: (context) => SearchPage(myLocationSelectable: end != null)
+                                            builder: (context) => SearchPage(myLocationSelectable: true)
                                         )
                                     );
                                     switch (result) {
@@ -126,7 +134,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                                         setState(() => start = r.room);
                                         break;
                                     }
-                                    updateRoute();
+                                    updateRoute(true);
                                   },
                                   child: Padding(
                                       padding: EdgeInsets.symmetric(vertical: 12.0),
@@ -171,20 +179,18 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                                 onTap: () async {
                                   final result = await Navigator.of(context).push<SearchResult>(
                                       MaterialPageRoute(
-                                          builder: (context) => SearchPage(myLocationSelectable: start != null)
+                                          builder: (context) => SearchPage(myLocationSelectable: false)
                                       )
                                   );
                                   switch (result) {
                                     case SearchResultNone _:
-                                      return;
                                     case SearchResultDeviceLocation _:
-                                      setState(() => end = null);
-                                      break;
+                                      return;
                                     case SearchResultRoom r:
                                       setState(() => end = r.room);
                                       break;
                                   }
-                                  updateRoute();
+                                  updateRoute(true);
                                 },
                                 child: Padding(
                                     padding: EdgeInsets.symmetric(vertical: 12.0),
@@ -203,7 +209,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                                               ),
                                             ),
                                             Text(
-                                              end != null ? end!.name.capitalise() : "My location",
+                                              end.name.capitalise(),
                                               style: TextStyle(
                                                   fontSize: 16.0,
                                                   color: ThemeColours.darkTextTint,
@@ -229,13 +235,11 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                 padding: EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
                 child: GestureDetector(
                   onTap: () {
-                    if (end != null) {
-                      Navigator.of(context).push<SearchResult>(
-                        MaterialPageRoute(
-                          builder: (_) => Navigation(initialRoute: route, endRoom: end!)
-                        )
-                      );
-                    }
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => Navigation(initialRoute: route, endRoom: end)
+                      )
+                    );
                   },
                   child: Material(
                     color: ThemeColours.accent,
@@ -286,11 +290,15 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
             right: 23.0,
             child: GestureDetector(
               onTap: () {
-                debugPrint("Swap pressed");
+                if (start == null) {
+                  
+                  return;
+                }
+
                 setState(() {
                   final temp = start;
                   start = end;
-                  end = temp;
+                  end = temp!;
                 });
                 rotateSwap();
               },
@@ -298,7 +306,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                 height: 46.0,
                 width: 46.0,
                 decoration: BoxDecoration(
-                    color: ThemeColours.accent,
+                    color: start != null ? ThemeColours.accent : ThemeColours.disabled,
                     boxShadow: [BoxShadow(
                         offset: Offset(0, 3),
                         blurRadius: 4.0,

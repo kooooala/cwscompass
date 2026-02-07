@@ -23,13 +23,14 @@ class Navigation extends ConsumerStatefulWidget{
 
 class _NavigationState extends ConsumerState<Navigation> {
   late school.Route route;
+  late school.Route displayRoute;
 
   @override
   void initState() {
     super.initState();
     widget.canvasController = MapCanvasController(
       showPath: true,
-      drawStart: true,
+      drawStart: false,
       drawEnd: true,
       maxAnimationScale: 16.0,
       transformationController: ref.read(transformationControllerProvider),
@@ -38,58 +39,29 @@ class _NavigationState extends ConsumerState<Navigation> {
     widget.canvasController.path.value = route;
   }
 
-  void updateRoute(school.Route newRoute) {
+  void updateDisplayRoute(school.Route newRoute) {
     setState(() {
-      route = newRoute;
+      displayRoute = newRoute;
     });
-    widget.canvasController.drawStart = false;
-    widget.canvasController.path.value = route;
+    widget.canvasController.path.value = displayRoute;
   }
   
   void onLocationUpdate(Position position) {
     ref.watch(mapDataProvider).whenData((data) {
       final location = Coordinates(position.latitude, position.longitude);
-      final closestNode = data.school.closestNode(location);
+      final closestNode = data.school.closestIntermediateNode(location);
 
       // Recalculate route if closest node is not in the route
       if (!route.path.coordinates.contains(closestNode)) {
-        final newRoute = data.school.shortestRoutePairing([closestNode], widget.endRoom.entrances);
-        updateRoute(newRoute);
+        final newRoute = data.school.locationToRoom(location, widget.endRoom);
+        setState(() => route = newRoute);
+        updateDisplayRoute(newRoute);
         debugPrint("Route recalculated");
         return;
       }
 
-      List<Coordinates> coordinates = route.path.coordinates;
-
-      if (route.start != route.path.coordinates.first) {
-        coordinates = route.path.coordinates.reversed.toList();
-      }
-
-      double shortestDistance = double.infinity;
-      List<Coordinates> closestEdge = [];
-      int closestEdgeIndex = -1;
-      for (int i = 0; i < coordinates.length - 1; i++) {
-        if (!pointIntersectsLine(location.point, coordinates[i].point, coordinates[i + 1].point)) {
-          continue;
-        }
-
-        final distance = pointDistanceToLineWithinSegment(location.point, coordinates[i].point, coordinates[i + 1].point);
-        if (distance < shortestDistance) {
-          shortestDistance = distance;
-          closestEdge = [coordinates[i], coordinates[i + 1]];
-          closestEdgeIndex = i + 1;
-        }
-      }
-
-      if (shortestDistance == double.infinity) {
-        return;
-      }
-
-      // Remove the edges between the start and the one we're closest to
-      final updatedCoordinates = coordinates.sublist(closestEdgeIndex, coordinates.length);
-      final newRoute = school.Route(updatedCoordinates.first, route.end, school.Edge(updatedCoordinates));
-      widget.canvasController.path.value = newRoute;
-      updateRoute(newRoute);
+      final displayRoute = data.school.adjustRouteDisplay(location, route);
+      updateDisplayRoute(displayRoute);
     });
   }
 

@@ -32,6 +32,8 @@ class Route {
 
 class School {
   final Map<Coordinates, List<Edge>> graph = {};
+  // A map of the edge each intermediate node belongs to
+  final Map<Coordinates, Edge> intermediateNodeEdge = {};
   final List<Room> rooms;
 
   School(this.rooms, List<Path> _paths) {
@@ -94,6 +96,12 @@ class School {
         // Add the 'collapsed' path to our adjacency list
         final edge = Edge(edgeNodes);
 
+        if (edge.coordinates.length > 2) {
+          for (final intermediateNode in edge.coordinates.sublist(1, edge.coordinates.length - 1)) {
+            intermediateNodeEdge[intermediateNode] = edge;
+          }
+        }
+
         graph[edgeNodes.first] ??= <Edge>[];
         graph[edgeNodes.first]!.add(edge);
 
@@ -112,6 +120,28 @@ class School {
       if (distance < minimum) {
         closest = node;
         minimum = distance;
+      }
+    }
+
+    return closest;
+  }
+
+  Coordinates closestIntermediateNode(Coordinates point) {
+    // Find the closest non-intermediate node to point, then iterate
+    // through its adjacent edges and from their nodes return the node closest
+    // to point
+    final closestNonIntermediate = closestNode(point);
+
+    double minimum = maths.equirectangularDistance(point, closestNonIntermediate);
+    Coordinates closest = closestNonIntermediate;
+
+    for (final edge in graph[closestNonIntermediate]!) {
+      for (final node in edge.coordinates) {
+        final distance = maths.equirectangularDistance(point, node);
+        if (distance < minimum) {
+          closest = node;
+          minimum = distance;
+        }
       }
     }
 
@@ -166,7 +196,7 @@ class School {
     }
     route.add(start);
 
-    return Route(start, end, Edge(route));
+    return Route(start, end, Edge(route.reversed.toList()));
   }
 
   Route shortestRoutePairing(List<Coordinates> startNodes, List<Coordinates> endNodes) {
@@ -184,5 +214,89 @@ class School {
     }
 
     return shortest!;
+  }
+
+  List<Coordinates> intermediateToRegular(Coordinates intermediate, Coordinates regular) {
+    final edge = intermediateNodeEdge[intermediate]!;
+    final index = edge.coordinates.indexOf(intermediate);
+    if (edge.coordinates.first == regular) {
+      return edge.coordinates.sublist(0, index + 1).reversed.toList();
+    } else {
+      return edge.coordinates.sublist(index, edge.coordinates.length);
+    }
+  }
+
+  Route shortestRouteFromIntermediateNode(Coordinates start, List<Coordinates> endNodes) {
+    Route shortestRoute;
+    final startIsIntermediate = !graph.containsKey(start);
+
+    if (startIsIntermediate) {
+      final edge = intermediateNodeEdge[start]!.coordinates;
+
+      final route1 = shortestRoutePairing([edge.first], endNodes);
+      final distance1 = route1.path.distance + Edge(intermediateToRegular(start, route1.start)).distance;
+
+      final route2 = shortestRoutePairing([edge.last], endNodes);
+      final distance2 = route2.path.distance + Edge(intermediateToRegular(start, route2.start)).distance;
+
+      if (distance1 < distance2) {
+        shortestRoute = route1;
+      } else {
+        shortestRoute = route2;
+      }
+    } else {
+      shortestRoute = shortestRoutePairing([start], endNodes);
+    }
+
+    List<Coordinates> fullPath = shortestRoute.path.coordinates;
+    if (startIsIntermediate) {
+      fullPath = intermediateToRegular(start, shortestRoute.start) + fullPath.sublist(1);
+    }
+
+    return Route(start, shortestRoute.end, Edge(fullPath));
+  }
+
+  Route adjustRouteDisplay(Coordinates location, Route route) {
+    final closestNode = closestIntermediateNode(location);
+
+    final coordinates = route.path.coordinates;
+    final closestNodeIndex = coordinates.indexOf(closestNode);
+
+    double nextDistanceProportion;
+    if (closestNode == coordinates.last) {
+      nextDistanceProportion = 0;
+    } else {
+      nextDistanceProportion = maths.equirectangularDistance(location, coordinates[closestNodeIndex + 1])
+          / maths.equirectangularDistance(closestNode, coordinates[closestNodeIndex + 1]);
+    }
+
+    double previousDistanceProportion;
+    if (closestNode == coordinates.first) {
+      if (maths.equirectangularDistance(location, coordinates[1]) > maths.equirectangularDistance(coordinates.first, coordinates[1])) {
+        previousDistanceProportion = 0;
+      } else {
+        previousDistanceProportion = double.infinity;
+      }
+    } else {
+      previousDistanceProportion = maths.equirectangularDistance(location, coordinates[closestNodeIndex - 1])
+          / maths.equirectangularDistance(closestNode, coordinates[closestNodeIndex - 1]);
+    }
+
+    int lastDisplayNodeIndex;
+    if (previousDistanceProportion > nextDistanceProportion) {
+      lastDisplayNodeIndex = closestNodeIndex + 1;
+    } else {
+      lastDisplayNodeIndex = closestNodeIndex;
+    }
+
+    final path = [location] + coordinates.sublist(lastDisplayNodeIndex, coordinates.length);
+    return Route(path.first, path.last, Edge(path));
+  }
+
+  Route locationToRoom(Coordinates location, Room room) {
+    final closestNode = closestIntermediateNode(location);
+    final route = shortestRouteFromIntermediateNode(closestNode, room.entrances);
+
+    return adjustRouteDisplay(location, route);
   }
 }
