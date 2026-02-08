@@ -7,7 +7,6 @@
 - path: foreign key
 - sequence: int (order of vertex in path)
 - coordinates: foreign key
-- floor: integer
 
 ## Rooms
 - room_id: primary key

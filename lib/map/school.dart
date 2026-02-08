@@ -141,6 +141,10 @@ class School {
     Coordinates closest = graph.keys.first;
 
     for (final node in graph.keys) {
+      if (node is Entrance) {
+        continue;
+      }
+
       final distance = maths.equirectangularDistance(point, node);
       if (distance < minimum) {
         closest = node;
