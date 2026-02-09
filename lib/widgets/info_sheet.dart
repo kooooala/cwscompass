@@ -137,15 +137,18 @@ class RoomInfo extends StatelessWidget {
       children: [
         Row(
           children: [
-            Text(
-              room.name.capitalise(),
-              style: TextStyle(
-                color: ThemeColours.lightText,
-                fontWeight: FontWeight.w900,
-                fontSize: 28.0
+            Expanded(
+              child: Text(
+                  room.name.capitalise(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      color: ThemeColours.lightText,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 28.0
+                  )
               )
             ),
-            Spacer(),
             TextButton.icon(
               onPressed: () {
                 Navigator.of(context).push(MaterialPageRoute(builder: (context) => RoutePreview(initialEnd: room,)));
