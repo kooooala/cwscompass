@@ -42,7 +42,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
     school.Route shortestRoute;
     if (start == null) {
       final location = ref.read(locationProvider).value!;
-      shortestRoute = mapData.school.locationToRoom(Coordinates(location.latitude, location.longitude), end);
+      shortestRoute = mapData.school.locationToRoom(Coordinates(0, location.latitude, location.longitude), end);
     } else {
       shortestRoute = mapData.school.shortestRoutePairing(start!.entrances, end.entrances);
     }

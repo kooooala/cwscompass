@@ -53,7 +53,7 @@ class RoomList extends ConsumerWidget {
                   Spacer(),
                   location.when<Widget>(
                     data: (coordinates) {
-                      return Text("${room.distanceFrom(Coordinates(coordinates.latitude, coordinates.longitude)).round()}m");
+                      return Text("${room.distanceFrom(Coordinates(0, coordinates.latitude, coordinates.longitude)).round()}m");
                     },
                     loading: () => Text(""),
                     error: (_, _) => Text(""),

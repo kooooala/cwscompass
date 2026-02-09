@@ -16,8 +16,10 @@ final mapDataProvider = FutureProvider<MapData>((ref) async {
   await mapData.load();
 
   ref.listen(locationProvider, (_, next) {
-    final location = Coordinates(next.value!.latitude, next.value!.longitude);
-    mapData.school.rooms.sort((a, b) {
+    // TODO: Implement pathfinding across floors
+    final currentFloor = 0;
+    final location = Coordinates(currentFloor, next.value!.latitude, next.value!.longitude);
+    mapData.school.floors[currentFloor].rooms.sort((a, b) {
       return a.distanceFrom(location).compareTo(b.distanceFrom(location));
     });
   });

@@ -124,6 +124,14 @@ class RoomInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    String floor;
+    if (room.floor == 0) {
+      floor = "G";
+    } else {
+      floor = room.floor.toString();
+    }
+    floor += "/F";
+
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -162,7 +170,7 @@ class RoomInfo extends StatelessWidget {
           ],
         ),
         Text(
-          "${room.subject.capitalise()} • Building",
+          "${room.subject.capitalise()} • $floor",
           style: TextStyle(
             color: ThemeColours.lightTextTint,
             fontWeight: FontWeight.w800,

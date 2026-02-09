@@ -43,7 +43,7 @@ class _NavigationState extends ConsumerState<Navigation> {
   void updateDirections() {
     displayRoute.directions.removeWhere((c) => !displayRoute.path.coordinates.contains(c.coordinates));
     ref.watch(locationProvider).whenData((position) {
-      final location = Coordinates(position.latitude, position.longitude);
+      final location = Coordinates(0, position.latitude, position.longitude);
 
       if (displayRoute.directions.isEmpty) {
         return;
@@ -71,8 +71,9 @@ class _NavigationState extends ConsumerState<Navigation> {
   
   void onLocationUpdate(Position position) {
     ref.watch(mapDataProvider).whenData((data) {
-      final location = Coordinates(position.latitude, position.longitude);
-      final closestNode = data.school.closestIntermediateNode(location);
+      final location = Coordinates(0, position.latitude, position.longitude);
+      // TODO: Implement pathfinding across floors
+      final closestNode = data.school.floors[0].closestIntermediateNode(location);
 
       // Recalculate route if closest node is not in the route
       if (!route.path.coordinates.contains(closestNode)) {

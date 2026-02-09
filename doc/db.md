@@ -30,5 +30,12 @@
 
 ## Coordinates
 - coordinates_id: primary key
+
 - latitude: decimal(8,6)
 - longitude: decimal(9,6)
+
+## Staircase
+- staircase_id: primary key
+- label: nullable string
+- landing1: coordinates
+- landing2: coordinates

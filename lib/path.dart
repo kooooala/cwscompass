@@ -6,9 +6,10 @@ import 'coordinates.dart';
 
 class Path {
   final String? label;
+  final int floor;
   final List<Coordinates> vertices;
 
-  Path(this.label, this.vertices);
+  Path(this.label, this.floor, this.vertices);
 
   static Future<List<int>> getPathList(Database db) async {
     final queryResults = await db.query("paths", columns: ["path_id"]);
@@ -24,7 +25,7 @@ class Path {
     final label = pathData["label"] as String;
 
     final vertices = await db.query("path_vertices",
-      columns: ["coordinates", "floor"],
+      columns: ["coordinates"],
       where: "path = ?",
       whereArgs: [pathId],
       orderBy: "sequence"
@@ -33,6 +34,6 @@ class Path {
     final coordinates = await Future.wait(vertices.map((vertex) async =>
         Coordinates.fromCoordinatesId(db, vertex["coordinates"] as int)));
 
-    return Path(label == "None" ? null : label, coordinates);
+    return Path(label == "None" ? null : label, coordinates[0].floor, coordinates);
   }
 }

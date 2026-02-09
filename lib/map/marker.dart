@@ -18,8 +18,9 @@ class Marker extends ConsumerWidget {
 
     return location.when(
       data: (position) {
-        final coordinates = Coordinates(position.latitude, position.longitude);
-        final closest = school.closestNode(coordinates);
+        final coordinates = Coordinates(0, position.latitude, position.longitude);
+        // TODO: Implement pathfinding across floors
+        final closest = school.floors[0].closestNode(coordinates);
         print("Closest node: ${closest.latitude}, ${closest.longitude}");
         final point = coordinates.point;
         final accuracy = position.accuracy;

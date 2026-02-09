@@ -91,7 +91,7 @@ Point<double> coordinatesToPoint(double latitude, double longitude) {
   return Point<double>(dx, dy);
 }
 
-Coordinates pointToCoordinates(Point<double> point) {
+Coordinates pointToCoordinates(Point<double> point, int floor) {
   final topLeft = Point<double>(-1.79278594, 51.55157938);
   final bottomRight = Point<double>(-1.78508911, 51.54750466);
 
@@ -103,7 +103,7 @@ Coordinates pointToCoordinates(Point<double> point) {
   final longitude = point.x * width / canvasSize + topLeft.x;
   final latitude = height + bottomRight.y - (height * point.y) / canvasSize;
 
-  return Coordinates(latitude, longitude);
+  return Coordinates(floor, latitude, longitude);
 }
 
 double computeZoomScale(Polygon polygon, double width, double height) {

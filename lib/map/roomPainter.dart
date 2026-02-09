@@ -7,8 +7,9 @@ import 'package:cwscompass/map_data.dart';
 
 class RoomPainter extends CustomPainter {
   final School school;
+  final int floor;
 
-  RoomPainter(this.school);
+  RoomPainter(this.school, this.floor);
 
   static Path pathFromRoom(Room room) {
     final vertices = room.vertices;
@@ -39,7 +40,7 @@ class RoomPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (final room in school.rooms) {
+    for (final room in school.floors[floor].rooms) {
       drawRoom(canvas, room);
     }
   }

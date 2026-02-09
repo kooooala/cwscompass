@@ -1,18 +1,24 @@
 # QGIS Entity Attributes
 
 ## Room
-At least one of the following: 
+### At least one of the following: 
 - number
-- label
+- name
 
 ## Room entrance
-Required:
+### Required:
 - room (corresponds to either the room number or name - has to be exact)
+### Optional: 
+- name
 
 ## Building
-Required: 
+### Required: 
 - name 
 
 ## Path
-Optional:
+### Optional:
 - name
+
+## Landing
+### Required: 
+- staircase (index in the list of staircases)

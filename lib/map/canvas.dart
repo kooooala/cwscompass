@@ -200,7 +200,8 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
   }
 
   void onTapUp(TapUpDetails details, school.School school) {
-    for (final room in school.rooms) {
+    // TODO: Implement pathfinding across floors
+    for (final room in school.floors[0].rooms) {
       if (room.intersects(Point(details.localPosition.dx, details.localPosition.dy))) {
         if (widget.controller.roomSelectable) {
           ref.read(selectedRoomProvider.notifier).set(room);
@@ -245,10 +246,10 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                   child: Stack(
                     children: <Widget>[
                       RepaintBoundary(
-                        child: CustomPaint(painter: RoomPainter(data.school)),
+                        child: CustomPaint(painter: RoomPainter(data.school, 0)),
                       ),
                       RepaintBoundary(
-                        child: CustomPaint(painter: LabelPainter(data.school)),
+                        child: CustomPaint(painter: LabelPainter(data.school, 0)),
                       ),
                       ListenableBuilder(
                         listenable: widget.controller.path,
@@ -277,7 +278,10 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
           );
         },
         loading: () => CircularProgressIndicator(),
-        error: (err, stack) => Text("Oops: $err"),
+        error: (err, stack) {
+          Text("Oops: $err");
+          return null;
+        },
       ),
     );
   }

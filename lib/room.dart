@@ -11,6 +11,8 @@ import 'coordinates.dart';
 class Room extends Polygon {
   final int roomId;
 
+  final int floor;
+
   final Color colour;
   final String subject;
   final String? number;
@@ -26,7 +28,7 @@ class Room extends Polygon {
 
   Point<double>? _centroid;
 
-  Room(this.roomId, this.colour, this.subject, this.number, this.label, this.entrances, this.coordinates)
+  Room(this.roomId, this.floor, this.colour, this.subject, this.number, this.label, this.entrances, this.coordinates)
     : name = label ?? "room $number",
       super(coordinates.map((c) => c.point).toList());
 
@@ -40,8 +42,8 @@ class Room extends Polygon {
   }
 
   double distanceFrom(Coordinates coordinates, {bool precise = false}) {
-    final double Function(Coordinates, Coordinates) distanceFunction = precise ? maths.haversineDistance : maths.equirectangularDistance;
-    return distanceFunction(coordinates, maths.pointToCoordinates(centroid));
+    final distanceFunction = precise ? maths.haversineDistance : maths.equirectangularDistance;
+    return distanceFunction(coordinates, maths.pointToCoordinates(centroid, floor));
   }
 
   // Check if point is inside polygon by using the ray casting algorithm: https://people.utm.my/shahabuddin/?p=6277
@@ -73,12 +75,13 @@ class Room extends Polygon {
 
   static Future<Room> fromRoomId(Database db, int roomId) async {
     final roomData = (await db.query("rooms",
-      columns: ["colour", "subject", "number", "label"],
+      columns: ["floor", "colour", "subject", "number", "label"],
       where: "room_id = ?",
       whereArgs: [roomId]
     ))[0];
     final number = roomData["number"] as String;
     final label = roomData["label"] as String;
+    final floor = roomData["floor"] as int;
 
     final vertices = await db.query("room_vertices",
       columns: ["coordinates"],
@@ -101,10 +104,11 @@ class Room extends Polygon {
     final entrances = await Future.wait(entranceData.map((entrance) async {
       final coordinates = await Coordinates.fromCoordinatesId(db, entrance["coordinates"] as int);
       final name = entrance["label"] as String == "None" ? null : label;
-      return Entrance(coordinates.latitude, coordinates.longitude, name);
+      return Entrance(floor, coordinates.latitude, coordinates.longitude, name);
     }));
 
     return Room(roomId,
+      floor,
       colour,
       roomData["subject"] as String,
       number == "None" ? null : number,

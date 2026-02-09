@@ -8,8 +8,9 @@ class DebugPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (final node in school.graph.keys) {
-      for (final edge in school.graph[node]!) {
+    // TODO: Implement pathfinding across floors
+    for (final node in school.floors[0].graph.keys) {
+      for (final edge in school.floors[0].graph[node]!) {
         for (int i = 0; i < edge.coordinates.length - 1; i++) {
           final point1 = edge.coordinates[i].point;
           final point2 = edge.coordinates[i + 1].point;

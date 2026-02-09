@@ -55,13 +55,13 @@ class Direction {
   Direction(this.turn, this.label, this.coordinates, this.distance);
 }
 
-class School {
+class Floor {
   final Map<Coordinates, List<EdgeWithLabel>> graph = {};
   // A map of the edge each intermediate node belongs to
   final Map<Coordinates, Edge> intermediateNodeEdge = {};
   final List<Room> rooms;
 
-  School(this.rooms, List<Path> _paths) {
+  Floor(this.rooms, List<Path> _paths) {
     Map<Coordinates, List<(Coordinates, String?)>> fullGraph = {};
 
     for (final path in _paths) {
@@ -78,7 +78,7 @@ class School {
 
     for (final room in rooms) {
       for (final entrance in room.entrances) {
-        final coordinates = Coordinates(entrance.latitude, entrance.longitude);
+        final coordinates = Coordinates(entrance.floor, entrance.latitude, entrance.longitude);
         fullGraph[coordinates]!.add((entrance, null));
         fullGraph[entrance] = [(coordinates, null)];
       }
@@ -97,8 +97,8 @@ class School {
       for (final child in children) {
         // Skip over ones we have already traversed
         if (visited.any((edge) =>
-          (edge[0] == junction && edge[1] == child.$1) ||
-          (edge[1] == junction && edge[0] == child.$1))) {
+        (edge[0] == junction && edge[1] == child.$1) ||
+            (edge[1] == junction && edge[0] == child.$1))) {
           continue;
         }
 
@@ -141,10 +141,6 @@ class School {
     Coordinates closest = graph.keys.first;
 
     for (final node in graph.keys) {
-      if (node is Entrance) {
-        continue;
-      }
-
       final distance = maths.equirectangularDistance(point, node);
       if (distance < minimum) {
         closest = node;
@@ -159,7 +155,11 @@ class School {
     // Find the closest non-intermediate node to point, then iterate
     // through its adjacent edges and from their nodes return the node closest
     // to point
-    final closestNonIntermediate = closestNode(point);
+    Coordinates closestNonIntermediate = closestNode(point);
+    if (closestNonIntermediate is Entrance) {
+      closestNonIntermediate = closestNonIntermediate as Coordinates;
+    }
+
 
     double minimum = maths.equirectangularDistance(point, closestNonIntermediate);
     Coordinates closest = closestNonIntermediate;
@@ -175,6 +175,21 @@ class School {
     }
 
     return closest;
+  }
+}
+
+class School {
+  final List<Floor> floors = [];
+  final List<Room> rooms;
+
+  School(this.rooms, List<Path> paths) {
+    // Determine the no. of floors by getting the room with the highest floor value
+    final floorCount = rooms.reduce((a, b) => a.floor > b.floor ? a : b).floor + 1;
+    for (int i = 0; i < floorCount; i++) {
+      final floorRooms = rooms.where((room) => room.floor == i).toList();
+      final floorPaths = paths.where((path) => path.floor == i).toList();
+      floors.add(Floor(floorRooms, floorPaths));
+    }
   }
 
   Direction getDirection(Coordinates previous, Coordinates current, Coordinates next) {
@@ -193,7 +208,10 @@ class School {
       turn = Turn.straight;
     }
 
-    final label = graph[current]!.firstWhere((e) => e.coordinates.contains(next)).label;
+    String? label;
+    if (current is! Entrance) {
+      label = floors[current.floor].graph[current]!.firstWhere((e) => e.coordinates.contains(next)).label;
+    }
     return Direction(turn, label, current, 0);
   }
 
@@ -214,7 +232,8 @@ class School {
         break;
       }
 
-      for (final nextEdge in graph[current]!) {
+      // TODO: Implement pathfinding across floors
+      for (final nextEdge in floors[0].graph[current]!) {
         final newCost = costSoFar[current]! + nextEdge.distance;
         final next = nextEdge.coordinates.first == current ? nextEdge.coordinates.last : nextEdge.coordinates.first;
         if (!costSoFar.keys.contains(next) || newCost < costSoFar[next]!) {
@@ -249,8 +268,9 @@ class School {
       route.add(current);
 
       // Add direction if current is a junction
-      if (graph.containsKey(current) && previous != null && next != null) {
-        if (graph[current]!.where((e) => e.coordinates.any((c) => c is Entrance)).isEmpty) {
+      // TODO: Implement pathfinding across floors
+      if (floors[0].graph.containsKey(current) && previous != null && next != null) {
+        if (floors[0].graph[current]!.where((e) => e.coordinates.any((c) => c is Entrance)).isEmpty) {
           directions.first.distance = distanceToNextJunction;
           directions.insert(0, getDirection(previous, current, next));
           distanceToNextJunction = 0;
@@ -258,7 +278,7 @@ class School {
       }
 
       previous = current;
-      current = cameFrom[previous]!;
+      current = cameFrom[current]!;
       next = cameFrom[current];
     }
     route.add(start);
@@ -284,7 +304,8 @@ class School {
   }
 
   List<Coordinates> intermediateToRegular(Coordinates intermediate, Coordinates regular) {
-    final edge = intermediateNodeEdge[intermediate]!;
+    // TODO: Implement pathfinding across floors
+    final edge = floors[0].intermediateNodeEdge[intermediate]!;
     final index = edge.coordinates.indexOf(intermediate);
     if (edge.coordinates.first == regular) {
       return edge.coordinates.sublist(0, index + 1).reversed.toList();
@@ -295,10 +316,11 @@ class School {
 
   Route shortestRouteFromIntermediateNode(Coordinates start, List<Coordinates> endNodes) {
     Route shortestRoute;
-    final startIsIntermediate = !graph.containsKey(start);
+    // TODO: Implement pathfinding across floors
+    final startIsIntermediate = !floors[0].graph.containsKey(start);
 
     if (startIsIntermediate) {
-      final edge = intermediateNodeEdge[start]!.coordinates;
+      final edge = floors[0].intermediateNodeEdge[start]!.coordinates;
 
       final route1 = shortestRoutePairing([edge.first], endNodes);
       final distance1 = route1.path.distance + Edge(intermediateToRegular(start, route1.start)).distance;
@@ -324,7 +346,8 @@ class School {
   }
 
   Route adjustRouteDisplay(Coordinates location, Route route) {
-    final closestNode = closestIntermediateNode(location);
+    // TODO: Implement pathfinding across floors
+    final closestNode = floors[0].closestIntermediateNode(location);
 
     final coordinates = route.path.coordinates;
     final closestNodeIndex = coordinates.indexOf(closestNode);
@@ -361,7 +384,8 @@ class School {
   }
 
   Route locationToRoom(Coordinates location, Room room) {
-    final closestNode = closestIntermediateNode(location);
+    // TODO: Implement pathfinding across floors
+    final closestNode = floors[0].closestIntermediateNode(location);
     final route = shortestRouteFromIntermediateNode(closestNode, room.entrances);
 
     return adjustRouteDisplay(location, route);
