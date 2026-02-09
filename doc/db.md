@@ -10,6 +10,7 @@
 
 ## Rooms
 - room_id: primary key
+- floor: int
 - type: room | building
 - colour: int (24 bit integer with 8 bit for each colour channel)
 - subject: nullable string (null if type == building)
@@ -30,7 +31,7 @@
 
 ## Coordinates
 - coordinates_id: primary key
-
+- floor: int
 - latitude: decimal(8,6)
 - longitude: decimal(9,6)
 
