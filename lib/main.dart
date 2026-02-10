@@ -62,15 +62,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         },
         child: Scaffold(
           body: Builder(
-            builder: (context) =>
-                Stack(children: [
-                  MapCanvas(
-                      width: MediaQuery.sizeOf(context).width,
-                      height: MediaQuery.sizeOf(context).height,
-                      controller: canvasController
-                  ),
-                  ExploreOverlay()
-                ]),
+            builder: (context) => ExploreOverlay()
           ),
         )
     );

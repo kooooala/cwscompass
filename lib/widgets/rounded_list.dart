@@ -1,4 +1,4 @@
-import 'package:cwscompass/theme_colours.dart';
+import 'package:cwscompass/common/theme_colours.dart';
 import 'package:flutter/material.dart';
 
 class RoundedList extends StatelessWidget {

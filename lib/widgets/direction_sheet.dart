@@ -4,7 +4,7 @@ import 'package:cwscompass/coordinates.dart';
 import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/school.dart';
 import 'package:cwscompass/room.dart';
-import 'package:cwscompass/theme_colours.dart';
+import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/rounded_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

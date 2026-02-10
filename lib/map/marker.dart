@@ -17,13 +17,11 @@ class Marker extends ConsumerWidget {
     final location = ref.watch(locationProvider);
 
     return location.when(
-      data: (position) {
-        final coordinates = Coordinates(0, position.latitude, position.longitude);
+      data: (coordinates) {
         // TODO: Implement pathfinding across floors
-        final closest = school.floors[0].closestNode(coordinates);
+        final closest = school.closestNode(coordinates);
         print("Closest node: ${closest.latitude}, ${closest.longitude}");
         final point = coordinates.point;
-        final accuracy = position.accuracy;
         return Stack(children: [
           Positioned(top: point.y - size / 2, left: point.x - size / 2, child: Icon(Icons.circle_rounded, color: Colors.blue, size: size,))
         ]);

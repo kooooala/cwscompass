@@ -1,6 +1,7 @@
 import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/room.dart';
-import 'package:cwscompass/theme_colours.dart';
+import 'package:cwscompass/common/theme_colours.dart';
+import 'package:cwscompass/widgets/floor_selector.dart';
 import 'package:cwscompass/widgets/info_sheet.dart';
 import 'package:cwscompass/widgets/search_page.dart';
 import 'package:flutter/material.dart';
@@ -20,14 +21,36 @@ class SelectedRoomNotifier extends Notifier<Room?> {
   }
 }
 
-class ExploreOverlay extends StatelessWidget {
+class ExploreOverlay extends ConsumerWidget {
   const ExploreOverlay({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final canvasController = MapCanvasController(
+        focusOnTap: true,
+        focusOnRoomSelect: true,
+        roomSelectable: true,
+        transformationController: ref.read(transformationControllerProvider)
+    );
     return Stack(
       children: [
-        FakeSearchBar(),
+        MapCanvas(
+            width: MediaQuery.sizeOf(context).width,
+            height: MediaQuery.sizeOf(context).height,
+            controller: canvasController
+        ),
+        Column(
+          children: [
+            FakeSearchBar(),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: EdgeInsets.only(top: 32.0, right: 28.0),
+                child: FloorSelector()
+              ),
+            )
+          ]
+        ),
         InfoSheet()
       ],
     );
@@ -40,11 +63,10 @@ class FakeSearchBar extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Padding(
-      padding: EdgeInsets.symmetric(vertical: MediaQuery.paddingOf(context).top + 16.0, horizontal: 28.0),
+      padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 16.0, left: 28.0, right: 28.0),
       child: GestureDetector(
         onTap: () async {
           final result = await Navigator.of(context).push<SearchResult>(MaterialPageRoute(builder: (context) => SearchPage()));
-
           if (result is SearchResultRoom) {
             ref.read(selectedRoomProvider.notifier).set(result.room);
           }

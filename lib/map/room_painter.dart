@@ -1,5 +1,5 @@
 import 'package:cwscompass/map/school.dart';
-import 'package:cwscompass/theme_colours.dart';
+import 'package:cwscompass/common/theme_colours.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cwscompass/room.dart';
@@ -40,11 +40,11 @@ class RoomPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (final room in school.floors[floor].rooms) {
+    for (final room in school.rooms[floor]) {
       drawRoom(canvas, room);
     }
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(RoomPainter old) => old.floor != floor;
 }

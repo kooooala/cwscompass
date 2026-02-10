@@ -17,6 +17,9 @@ class Coordinates extends Equatable {
   @override
   List<Object> get props => [latitude, longitude];
 
+  @override
+  String toString() => "($latitude, $longitude)";
+
   static Future<Coordinates> fromCoordinatesId(Database db, int coordinatesId) async {
     final result = (await db.query("coordinates",
         columns: ["latitude", "longitude", "floor"],

@@ -2,11 +2,12 @@ import 'dart:math';
 
 import 'package:cwscompass/common/maths.dart' as maths;
 import 'package:cwscompass/map/school.dart' as school;
-import 'package:cwscompass/theme_colours.dart';
+import 'package:cwscompass/common/theme_colours.dart';
 import 'package:flutter/material.dart';
 
 class PathPainter extends CustomPainter {
   final school.Route route;
+  final int floor;
   static const double betweenDots = 20;
 
   final bool drawStart, drawEnd;
@@ -15,6 +16,7 @@ class PathPainter extends CustomPainter {
 
   PathPainter({
     required this.route,
+    required this.floor,
     required this.transformations,
     this.drawStart = false,
     this.drawEnd = false,
@@ -28,9 +30,15 @@ class PathPainter extends CustomPainter {
     //  scale = 10;
     //}
     final actualBetweenDots = betweenDots / scale;
-    for (var i = 0; i < route.path.coordinates.length - 1; i++) {
-      final point1 = route.path.coordinates[i].point;
-      final point2 = route.path.coordinates[i + 1].point;
+
+    final floorPath = route.path.coordinates.where((c) => c.floor == floor).toList();
+    if (floorPath.isEmpty) {
+      return;
+    }
+
+    for (var i = 0; i < floorPath.length - 1; i++) {
+      final point1 = floorPath[i].point;
+      final point2 = floorPath[i + 1].point;
 
       // Skip over repeat points
       if (point1 == point2) {
@@ -58,13 +66,13 @@ class PathPainter extends CustomPainter {
     }
 
     if (drawStart) {
-      final startOffset = Offset(route.start.point.x, route.start.point.y);
+      final startOffset = Offset(floorPath.first.point.x, floorPath.first.point.y);
       canvas.drawCircle(startOffset, 7 / scale, Paint()..color = ThemeColours.accent);
       canvas.drawCircle(startOffset, 4 / scale, Paint()..color = Colors.white);
     }
 
     if (drawEnd) {
-      final endOffset = Offset(route.end.point.x, route.end.point.y);
+      final endOffset = Offset(floorPath.last.point.x, floorPath.last.point.y);
       canvas.drawCircle(endOffset, 7 / scale, Paint()..color = ThemeColours.accent);
       canvas.drawCircle(endOffset, 4 / scale, Paint()..color = Colors.white);
     }

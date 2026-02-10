@@ -1,15 +1,15 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:cwscompass/common/maths.dart';
-import 'package:cwscompass/map/debugPainter.dart';
+import 'package:cwscompass/map/debug_painter.dart';
 import 'package:cwscompass/polygon.dart';
 import 'package:cwscompass/widgets/overlays/explore.dart';
 import 'package:vector_math/vector_math_64.dart' as vectors;
 
-import 'package:cwscompass/coordinates.dart';
-import 'package:cwscompass/map/labelPainter.dart';
+import 'package:cwscompass/map/label_painter.dart';
 import 'package:cwscompass/map/marker.dart';
-import 'package:cwscompass/map/pathPainter.dart';
-import 'package:cwscompass/map/roomPainter.dart';
+import 'package:cwscompass/map/path_painter.dart';
+import 'package:cwscompass/map/room_painter.dart';
 import 'package:cwscompass/map/school.dart' as school;
 import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/room.dart';
@@ -40,6 +40,39 @@ class PointFocus extends FocusRequest {
 
   PointFocus(this.focus, this.scale);
 }
+
+class FloorSelection {
+  final int viewFloor, locationFloor;
+  final int floorCount;
+
+  FloorSelection(this.viewFloor, this.locationFloor, this.floorCount);
+}
+
+class SelectedFloorProvider extends AsyncNotifier<FloorSelection> {
+  @override
+  FutureOr<FloorSelection> build() async {
+    final data = await ref.watch(mapDataProvider.future);
+    return FloorSelection(0, 0, data.school.rooms.length);
+  }
+
+  void setView(int floor) {
+    final old = state.value;
+
+    if (old != null) {
+      state = AsyncData(FloorSelection(floor, old.locationFloor, old.floorCount));
+    }
+  }
+
+  void setLocation(int floor) {
+    final old = state.value;
+
+    if (old != null) {
+      state = AsyncData(FloorSelection(old.viewFloor, floor, old.floorCount));
+    }
+  }
+}
+
+final selectedFloorProvider = AsyncNotifierProvider<SelectedFloorProvider, FloorSelection>(SelectedFloorProvider.new);
 
 class MapCanvasController {
   bool focusOnTap;
@@ -141,7 +174,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     }
   }
 
-  void onRoomSelect(Room? previous, Room? next) {
+  void onRoomSelect(Room? _, Room? next) {
     if (next != null) {
       startFocusAnimation(next.centroid, computeZoomScale(next));
     }
@@ -200,20 +233,21 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
   }
 
   void onTapUp(TapUpDetails details, school.School school) {
-    // TODO: Implement pathfinding across floors
-    for (final room in school.floors[0].rooms) {
-      if (room.intersects(Point(details.localPosition.dx, details.localPosition.dy))) {
-        if (widget.controller.roomSelectable) {
-          ref.read(selectedRoomProvider.notifier).set(room);
+    ref.watch(selectedFloorProvider).whenData((selected) {
+      for (final room in school.rooms[selected.viewFloor]) {
+        if (room.intersects(Point(details.localPosition.dx, details.localPosition.dy))) {
+          if (widget.controller.roomSelectable) {
+            ref.read(selectedRoomProvider.notifier).set(room);
+          }
+          if (widget.controller.focusOnTap) {
+            startFocusAnimation(room.centroid, computeZoomScale(room));
+          }
+          return;
         }
-        if (widget.controller.focusOnTap) {
-          startFocusAnimation(room.centroid, computeZoomScale(room));
-        }
-        return;
       }
-    }
-    // Tapped on blank space
-    ref.read(selectedRoomProvider.notifier).set(null);
+      // Tapped on blank space
+      ref.read(selectedRoomProvider.notifier).set(null);
+    });
   }
 
   @override
@@ -243,38 +277,53 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                 child: SizedBox(
                   width: widget.width,
                   height: widget.height,
-                  child: Stack(
-                    children: <Widget>[
-                      RepaintBoundary(
-                        child: CustomPaint(painter: RoomPainter(data.school, 0)),
-                      ),
-                      RepaintBoundary(
-                        child: CustomPaint(painter: LabelPainter(data.school, 0)),
-                      ),
-                      ListenableBuilder(
-                        listenable: widget.controller.path,
-                        builder: (context, _) {
-                          if (widget.controller.path.value == null) {
-                            return SizedBox.shrink();
-                          } else {
-                            return CustomPaint(painter: PathPainter(
-                              drawStart: widget.controller.drawStart,
-                              drawEnd: widget.controller.drawEnd,
-                              route: widget.controller.path.value!,
-                              transformations: widget.controller.transformationController)
-                            );
-                          }
-                        }
-                      ),
-                      RepaintBoundary(
-                        child: CustomPaint(painter: DebugPainter(data.school)),
-                      ),
-                      Marker(2, data.school),
-                    ]
+                  child: ref.watch(selectedFloorProvider).when(
+                    data: (selected) {
+                      return Stack(
+                        children: [
+                          AnimatedSwitcher(
+                            duration: Duration(milliseconds: 150),
+                            child: Stack(
+                              key: ValueKey(selected.viewFloor),
+                              children: [
+                                RepaintBoundary(
+                                  child: CustomPaint(painter: RoomPainter(data.school, selected.viewFloor)),
+                                ),
+                                RepaintBoundary(
+                                    child: CustomPaint(painter: LabelPainter(data.school, selected.viewFloor))
+                                ),
+                                ListenableBuilder(
+                                    listenable: widget.controller.path,
+                                    builder: (context, _) {
+                                      if (widget.controller.path.value == null) {
+                                        return SizedBox.shrink();
+                                      } else {
+                                        return CustomPaint(painter: PathPainter(
+                                            drawStart: widget.controller.drawStart,
+                                            drawEnd: widget.controller.drawEnd,
+                                            route: widget.controller.path.value!,
+                                            floor: selected.viewFloor,
+                                            transformations: widget.controller.transformationController
+                                        ));
+                                      }
+                                    }
+                                )
+                              ],
+                            )
+                          ),
+                          RepaintBoundary(
+                            child: CustomPaint(painter: DebugPainter(data.school, selected.viewFloor)),
+                          ),
+                          Marker(2, data.school),
+                        ],
+                      );
+                    },
+                    loading: () => CircularProgressIndicator(),
+                    error: (err, stack) => Text("Oops: $err")
                   )
-                ),
-              )
-            ),
+                )
+              ),
+            )
           );
         },
         loading: () => CircularProgressIndicator(),

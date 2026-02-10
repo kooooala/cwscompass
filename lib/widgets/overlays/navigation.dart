@@ -5,6 +5,7 @@ import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/room.dart';
 import 'package:cwscompass/widgets/direction_sheet.dart';
+import 'package:cwscompass/widgets/floor_selector.dart';
 import 'package:cwscompass/widgets/overlays/route_preview.dart';
 import 'package:cwscompass/map/school.dart' as school;
 import 'package:flutter/material.dart';
@@ -42,9 +43,7 @@ class _NavigationState extends ConsumerState<Navigation> {
 
   void updateDirections() {
     displayRoute.directions.removeWhere((c) => !displayRoute.path.coordinates.contains(c.coordinates));
-    ref.watch(locationProvider).whenData((position) {
-      final location = Coordinates(0, position.latitude, position.longitude);
-
+    ref.watch(locationProvider).whenData((location) {
       if (displayRoute.directions.isEmpty) {
         return;
       }
@@ -69,11 +68,9 @@ class _NavigationState extends ConsumerState<Navigation> {
     widget.canvasController.path.value = displayRoute;
   }
   
-  void onLocationUpdate(Position position) {
+  void onLocationUpdate(Coordinates location) {
     ref.watch(mapDataProvider).whenData((data) {
-      final location = Coordinates(0, position.latitude, position.longitude);
-      // TODO: Implement pathfinding across floors
-      final closestNode = data.school.floors[0].closestIntermediateNode(location);
+      final closestNode = data.school.closestIntermediateNode(location);
 
       // Recalculate route if closest node is not in the route
       if (!route.path.coordinates.contains(closestNode)) {
@@ -109,6 +106,13 @@ class _NavigationState extends ConsumerState<Navigation> {
                 top: MediaQuery.paddingOf(context).top + 16.0
               ),
               child: RouteInfo(route: displayRoute, endRoom: widget.endRoom),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                  padding: EdgeInsets.only(top: 32.0, right: 28.0),
+                  child: FloorSelector()
+              ),
             )
           ],
         ),

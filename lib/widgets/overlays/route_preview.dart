@@ -5,7 +5,8 @@ import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/polygon.dart';
 import 'package:cwscompass/room.dart';
-import 'package:cwscompass/theme_colours.dart';
+import 'package:cwscompass/common/theme_colours.dart';
+import 'package:cwscompass/widgets/floor_selector.dart';
 import 'package:cwscompass/widgets/overlays/navigation.dart';
 import 'package:cwscompass/widgets/search_page.dart';
 import 'package:cwscompass/map/school.dart' as school;
@@ -42,7 +43,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
     school.Route shortestRoute;
     if (start == null) {
       final location = ref.read(locationProvider).value!;
-      shortestRoute = mapData.school.locationToRoom(Coordinates(0, location.latitude, location.longitude), end);
+      shortestRoute = mapData.school.locationToRoom(location, end);
     } else {
       shortestRoute = mapData.school.shortestRoutePairing(start!.entrances, end.entrances);
     }
@@ -81,7 +82,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
     widget.canvasController.path.value = shortestRoute;
   }
 
-  void onLocationUpdate(Position position) {
+  void onLocationUpdate(Coordinates _) {
     updateRoute(false);
   }
 
@@ -222,6 +223,13 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                     )
                   ),
                 ]
+              ),
+            ),
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                  padding: EdgeInsets.only(top: 32.0, right: 28.0),
+                  child: FloorSelector(locationChangeable: false)
               ),
             ),
             Spacer(),

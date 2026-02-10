@@ -1,6 +1,7 @@
+import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/room.dart';
-import 'package:cwscompass/theme_colours.dart';
+import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/room_list.dart';
 import 'package:cwscompass/widgets/rounded_list.dart';
 import 'package:flutter/material.dart';
@@ -110,7 +111,7 @@ class SearchPage extends ConsumerWidget {
                           size: 32.0,
                           color: ThemeColours.primary)
                       ],
-                      onChanged: (value) => search(value, data.school.rooms),
+                      onChanged: (value) => search(value, data.school.rooms.reduce((a, b) => a + b)),
                       backgroundColor: WidgetStateProperty.resolveWith((_) => Colors.white),
                       padding: WidgetStatePropertyAll<EdgeInsets>(EdgeInsets.symmetric(horizontal: 12.0)),
                     )
@@ -125,9 +126,7 @@ class SearchPage extends ConsumerWidget {
                       if (value.isNotEmpty) {
                         roomList = value;
                       } else {
-                        final rooms = data.school.rooms;
-                        final end = rooms.length > 5 ? 5 : rooms.length;
-                        roomList = rooms.sublist(0, end);
+                        roomList = data.nearbyRooms;
                       }
 
                       return AnimatedSwitcher(

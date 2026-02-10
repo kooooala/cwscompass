@@ -1,6 +1,9 @@
 import 'package:cwscompass/coordinates.dart';
 import 'package:cwscompass/location.dart';
+import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/map/school.dart';
+import 'package:cwscompass/staircase.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'dart:io';
@@ -15,14 +18,6 @@ final mapDataProvider = FutureProvider<MapData>((ref) async {
   final mapData = MapData("map.db");
   await mapData.load();
 
-  ref.listen(locationProvider, (_, next) {
-    // TODO: Implement pathfinding across floors
-    final currentFloor = 0;
-    final location = Coordinates(currentFloor, next.value!.latitude, next.value!.longitude);
-    mapData.school.floors[currentFloor].rooms.sort((a, b) {
-      return a.distanceFrom(location).compareTo(b.distanceFrom(location));
-    });
-  });
   return mapData;
 });
 
@@ -31,6 +26,8 @@ class MapData {
 
   late Database database;
   late School school;
+
+  List<Room> nearbyRooms = [];
 
   MapData(this.dbName);
 
@@ -51,6 +48,9 @@ class MapData {
     final roomList = await Room.getRoomList(database);
     final rooms = await Future.wait(roomList.map((room) async => await Room.fromRoomId(database, room)));
 
-    school = School(rooms, paths);
+    final staircaseList = await Staircase.getStaircaseList(database);
+    final staircases = await Future.wait(staircaseList.map((staircase) async => await Staircase.fromStaircaseId(database, staircase)));
+
+    school = School(rooms, paths, staircases);
   }
 }

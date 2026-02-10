@@ -5,7 +5,7 @@ import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/room.dart';
-import 'package:cwscompass/theme_colours.dart';
+import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/overlays/explore.dart';
 import 'package:cwscompass/widgets/overlays/route_preview.dart';
 import 'package:cwscompass/widgets/room_list.dart';
@@ -199,42 +199,31 @@ class NoneSelected extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mapData = ref.watch(mapDataProvider);
-    final location = ref.watch(locationProvider);
 
-    return location.when(
-      data: (locationData) {
-        return ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            Padding(
-              padding: EdgeInsets.only(bottom: 16.0),
-              child:  Text(
-                "Nearby",
-                style: TextStyle(
-                  color: ThemeColours.lightText,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 28.0
-                )
-              ),
-            ),
-            mapData.when(
-              data: (data) {
-                final rooms = data.school.rooms;
-
-                // Limit the number of nearby rooms shown to 10
-                final end = rooms.length > 5 ? 5 : rooms.length;
-                return RoomList(
-                  rooms: rooms.sublist(0, end),
-                );
-              },
-              loading: () => CircularProgressIndicator(),
-              error: (err, stack) => Text("Oops: $err")
+    return ListView(
+      padding: EdgeInsets.zero,
+      children: [
+        Padding(
+          padding: EdgeInsets.only(bottom: 16.0),
+          child:  Text(
+            "Nearby",
+            style: TextStyle(
+              color: ThemeColours.lightText,
+              fontWeight: FontWeight.w900,
+              fontSize: 28.0
             )
-          ],
-        );
-      },
-      loading: () => CircularProgressIndicator(),
-      error: (err, stack) => Text("Oops: $err")
+          ),
+        ),
+        mapData.when(
+          data: (data) {
+            return RoomList(
+              rooms: data.nearbyRooms,
+            );
+          },
+          loading: () => CircularProgressIndicator(),
+          error: (err, stack) => Text("Oops: $err")
+        )
+      ],
     );
   }
 }

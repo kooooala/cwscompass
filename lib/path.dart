@@ -1,5 +1,3 @@
-import 'dart:ui';
-import 'dart:math';
 import 'package:sqflite/sqflite.dart';
 
 import 'coordinates.dart';

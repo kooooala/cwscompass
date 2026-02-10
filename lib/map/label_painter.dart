@@ -14,7 +14,7 @@ class LabelPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
 
-    for (final room in school.floors[floor].rooms) {
+    for (final room in school.rooms[floor]) {
       final contrast = maths.contrastRatio(room.colour, Colors.black);
       final colour = contrast > 4.5 ? Colors.black : Colors.white;
 
@@ -38,5 +38,5 @@ class LabelPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(LabelPainter old) => old.floor != floor;
 }

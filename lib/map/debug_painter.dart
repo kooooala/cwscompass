@@ -3,14 +3,16 @@ import 'package:flutter/material.dart';
 
 class DebugPainter extends CustomPainter {
   final School school;
+  final int floor;
 
-  DebugPainter(this.school);
+  DebugPainter(this.school, this.floor);
 
   @override
   void paint(Canvas canvas, Size size) {
-    // TODO: Implement pathfinding across floors
-    for (final node in school.floors[0].graph.keys) {
-      for (final edge in school.floors[0].graph[node]!) {
+    final nodes = school.graph.simplified.keys.where((c) => c.floor == floor);
+
+    for (final node in nodes) {
+      for (final edge in school.graph.simplified[node]!) {
         for (int i = 0; i < edge.coordinates.length - 1; i++) {
           final point1 = edge.coordinates[i].point;
           final point2 = edge.coordinates[i + 1].point;
@@ -21,5 +23,5 @@ class DebugPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(DebugPainter old) => old.floor != floor;
 }

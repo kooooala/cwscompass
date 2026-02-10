@@ -7,31 +7,8 @@ import 'package:cwscompass/path.dart';
 import 'package:cwscompass/common/maths.dart' as maths;
 
 import 'package:collection/collection.dart';
+import 'package:cwscompass/staircase.dart';
 import 'package:vector_math/vector_math.dart';
-
-class Edge {
-  final List<Coordinates> coordinates;
-  late final double distance = calculateDistance();
-
-  Edge(this.coordinates);
-
-  double calculateDistance() {
-    double result = 0;
-    for (int i = 0; i < coordinates.length - 1; i++) {
-      if (coordinates[i].latitude == coordinates[i + 1].latitude && coordinates[i].longitude == coordinates[i + 1].longitude) {
-        continue;
-      }
-      result += maths.equirectangularDistance(coordinates[i], coordinates[i + 1]);
-    }
-    return result;
-  }
-}
-
-class EdgeWithLabel extends Edge {
-  final String? label;
-
-  EdgeWithLabel(super.coordinates, this.label);
-}
 
 class Route {
   final Coordinates start, end;
@@ -55,40 +32,54 @@ class Direction {
   Direction(this.turn, this.label, this.coordinates, this.distance);
 }
 
-class Floor {
-  final Map<Coordinates, List<EdgeWithLabel>> graph = {};
-  // A map of the edge each intermediate node belongs to
-  final Map<Coordinates, Edge> intermediateNodeEdge = {};
-  final List<Room> rooms;
+class Edge {
+  final List<Coordinates> coordinates;
+  late final double distance;
 
-  Floor(this.rooms, List<Path> _paths) {
-    Map<Coordinates, List<(Coordinates, String?)>> fullGraph = {};
+  Edge(this.coordinates, double? distance) {
+    this.distance = distance ?? calculateDistance();
+  }
 
-    for (final path in _paths) {
-      for (final (i, vertex) in path.vertices.sublist(0, path.vertices.length - 1).indexed) {
-        final next = path.vertices[i + 1];
-
-        fullGraph[vertex] ??= <(Coordinates, String?)>[];
-        fullGraph[vertex]!.add((next, path.label));
-
-        fullGraph[next] ??= <(Coordinates, String?)>[];
-        fullGraph[next]!.add((vertex, path.label));
+  double calculateDistance() {
+    double result = 0;
+    for (int i = 0; i < coordinates.length - 1; i++) {
+      if (coordinates[i].latitude == coordinates[i + 1].latitude && coordinates[i].longitude == coordinates[i + 1].longitude) {
+        continue;
       }
+      result += maths.equirectangularDistance(coordinates[i], coordinates[i + 1]);
     }
+    return result;
+  }
+}
 
-    for (final room in rooms) {
-      for (final entrance in room.entrances) {
-        final coordinates = Coordinates(entrance.floor, entrance.latitude, entrance.longitude);
-        fullGraph[coordinates]!.add((entrance, null));
-        fullGraph[entrance] = [(coordinates, null)];
-      }
-    }
+class EdgeWithLabel extends Edge {
+  final String? label;
+
+  EdgeWithLabel(super.coordinates, super.distance, this.label);
+}
+
+class Graph {
+  final Map<Coordinates, List<EdgeWithLabel>> simplified;
+  final Map<Coordinates, Edge> intermediateNodeEdge;
+
+  Graph(this.simplified, this.intermediateNodeEdge);
+}
+
+class School {
+  final List<List<Room>> rooms = [];
+  final Graph graph = Graph({}, {});
+  final List<Graph> floorGraphs = [];
+
+  static Graph simplifyGraph(Map<Coordinates, List<(Coordinates, String?)>> fullGraph) {
+    final graph = Graph({}, {});
 
     // Simplify the graph by 'collapsing' paths with no branches i.e. removing
     // intermediate nodes (nodes with degree 2)
 
     // Identify all nodes that are not intermediate (the ones we want to keep)
-    final junctions = fullGraph.keys.where((n) => fullGraph[n]!.length != 2).toList();
+    final junctions = fullGraph.keys
+        .where((n) => fullGraph[n]!.length != 2)
+        .toList();
     final visited = <List<Coordinates>>[];
 
     for (final junction in junctions) {
@@ -119,76 +110,77 @@ class Floor {
         visited.add([edgeNodes.last, edgeNodes[edgeNodes.length - 2]]);
 
         // Add the 'collapsed' path to our adjacency list
-        final edge = EdgeWithLabel(edgeNodes, child.$2);
+        final edge = EdgeWithLabel(edgeNodes, null, child.$2);
 
         if (edge.coordinates.length > 2) {
-          for (final intermediateNode in edge.coordinates.sublist(1, edge.coordinates.length - 1)) {
-            intermediateNodeEdge[intermediateNode] = edge;
+          for (final intermediateNode in edge.coordinates.sublist(
+              1, edge.coordinates.length - 1)) {
+            graph.intermediateNodeEdge[intermediateNode] = edge;
           }
         }
 
-        graph[edgeNodes.first] ??= <EdgeWithLabel>[];
-        graph[edgeNodes.first]!.add(edge);
+        graph.simplified[edgeNodes.first] ??= <EdgeWithLabel>[];
+        graph.simplified[edgeNodes.first]!.add(edge);
 
-        graph[edgeNodes.last] ??= <EdgeWithLabel>[];
-        graph[edgeNodes.last]!.add(edge);
-      }
-    }
-  }
-
-  Coordinates closestNode(Coordinates point) {
-    double minimum = double.infinity;
-    Coordinates closest = graph.keys.first;
-
-    for (final node in graph.keys) {
-      final distance = maths.equirectangularDistance(point, node);
-      if (distance < minimum) {
-        closest = node;
-        minimum = distance;
+        graph.simplified[edgeNodes.last] ??= <EdgeWithLabel>[];
+        graph.simplified[edgeNodes.last]!.add(edge);
       }
     }
 
-    return closest;
+    return graph;
   }
 
-  Coordinates closestIntermediateNode(Coordinates point) {
-    // Find the closest non-intermediate node to point, then iterate
-    // through its adjacent edges and from their nodes return the node closest
-    // to point
-    Coordinates closestNonIntermediate = closestNode(point);
-    if (closestNonIntermediate is Entrance) {
-      closestNonIntermediate = closestNonIntermediate as Coordinates;
-    }
+  static Graph floorGraph(List<Room> rooms, List<Path> paths) {
+    Map<Coordinates, List<(Coordinates, String?)>> fullGraph = {};
 
+    for (final path in paths) {
+      for (final (i, vertex) in path.vertices.sublist(0, path.vertices.length - 1).indexed) {
+        final next = path.vertices[i + 1];
 
-    double minimum = maths.equirectangularDistance(point, closestNonIntermediate);
-    Coordinates closest = closestNonIntermediate;
+        fullGraph[vertex] ??= <(Coordinates, String?)>[];
+        fullGraph[vertex]!.add((next, path.label));
 
-    for (final edge in graph[closestNonIntermediate]!) {
-      for (final node in edge.coordinates) {
-        final distance = maths.equirectangularDistance(point, node);
-        if (distance < minimum) {
-          closest = node;
-          minimum = distance;
-        }
+        fullGraph[next] ??= <(Coordinates, String?)>[];
+        fullGraph[next]!.add((vertex, path.label));
       }
     }
 
-    return closest;
+    for (final room in rooms) {
+      for (final entrance in room.entrances) {
+        final coordinates = Coordinates(entrance.floor, entrance.latitude, entrance.longitude);
+        fullGraph[coordinates]!.add((entrance, null));
+        fullGraph[entrance] = [(coordinates, null)];
+      }
+    }
+
+    return simplifyGraph(fullGraph);
   }
-}
 
-class School {
-  final List<Floor> floors = [];
-  final List<Room> rooms;
-
-  School(this.rooms, List<Path> paths) {
+  School(List<Room> allRooms, List<Path> paths, List<Staircase> staircases) {
     // Determine the no. of floors by getting the room with the highest floor value
-    final floorCount = rooms.reduce((a, b) => a.floor > b.floor ? a : b).floor + 1;
+    final floorCount = allRooms.reduce((a, b) => a.floor > b.floor ? a : b).floor + 1;
     for (int i = 0; i < floorCount; i++) {
-      final floorRooms = rooms.where((room) => room.floor == i).toList();
+      final floorRooms = allRooms.where((room) => room.floor == i).toList();
+      rooms.add(floorRooms);
       final floorPaths = paths.where((path) => path.floor == i).toList();
-      floors.add(Floor(floorRooms, floorPaths));
+      floorGraphs.add(floorGraph(floorRooms, floorPaths));
+    }
+
+    // Merge the floor graphs into one
+    for (final floorGraph in floorGraphs) {
+      graph.simplified.addAll(floorGraph.simplified);
+      graph.intermediateNodeEdge.addAll(floorGraph.intermediateNodeEdge);
+    }
+
+    // Join the floor graphs with staircases
+    for (final staircase in staircases) {
+      final landing1Node = graph.simplified[Coordinates(staircase.coordinates[0].floor, staircase.coordinates[0].latitude, staircase.coordinates[0].longitude)];
+      final landing2Node = graph.simplified[Coordinates(staircase.coordinates[1].floor, staircase.coordinates[1].latitude, staircase.coordinates[1].longitude)];
+      if (landing1Node == null || landing2Node == null) {
+        throw Exception("Staircase with landings ${staircase.coordinates[0]} and ${staircase.coordinates[1]} is not connected to the rest of the graph");
+      }
+      landing1Node.add(staircase);
+      landing2Node.add(staircase);
     }
   }
 
@@ -209,8 +201,8 @@ class School {
     }
 
     String? label;
-    if (current is! Entrance) {
-      label = floors[current.floor].graph[current]!.firstWhere((e) => e.coordinates.contains(next)).label;
+    if (current is! Entrance && current.floor == next.floor) {
+      label = graph.simplified[current]!.firstWhere((e) => e.coordinates.contains(next)).label;
     }
     return Direction(turn, label, current, 0);
   }
@@ -232,8 +224,7 @@ class School {
         break;
       }
 
-      // TODO: Implement pathfinding across floors
-      for (final nextEdge in floors[0].graph[current]!) {
+      for (final nextEdge in graph.simplified[current]!) {
         final newCost = costSoFar[current]! + nextEdge.distance;
         final next = nextEdge.coordinates.first == current ? nextEdge.coordinates.last : nextEdge.coordinates.first;
         if (!costSoFar.keys.contains(next) || newCost < costSoFar[next]!) {
@@ -268,9 +259,8 @@ class School {
       route.add(current);
 
       // Add direction if current is a junction
-      // TODO: Implement pathfinding across floors
-      if (floors[0].graph.containsKey(current) && previous != null && next != null) {
-        if (floors[0].graph[current]!.where((e) => e.coordinates.any((c) => c is Entrance)).isEmpty) {
+      if (graph.simplified.containsKey(current) && previous != null && next != null) {
+        if (graph.simplified[current]!.where((e) => e.coordinates.any((c) => c is Entrance)).isEmpty) {
           directions.first.distance = distanceToNextJunction;
           directions.insert(0, getDirection(previous, current, next));
           distanceToNextJunction = 0;
@@ -283,7 +273,50 @@ class School {
     }
     route.add(start);
 
-    return Route(start, end, directions.toList(), Edge(route.reversed.toList()));
+    return Route(start, end, directions.toList(), Edge(route.reversed.toList(), null));
+  }
+
+  Coordinates closestNode(Coordinates point) {
+    double minimum = double.infinity;
+    Coordinates closest = graph.simplified.keys.first;
+
+    // Get the closest node that is on the same floor as point
+    for (final node in floorGraphs[point.floor].simplified.keys) {
+      final distance = maths.equirectangularDistance(point, node);
+      if (distance < minimum) {
+        closest = node;
+        minimum = distance;
+      }
+    }
+
+    return closest;
+  }
+
+  Coordinates closestIntermediateNode(Coordinates point) {
+    // Find the closest non-intermediate node to point, then iterate
+    // through its adjacent edges and from their nodes return the node closest
+    // to point
+    Coordinates closestNonIntermediate = closestNode(point);
+    if (closestNonIntermediate is Entrance) {
+      closestNonIntermediate = closestNonIntermediate as Coordinates;
+    }
+
+
+    double minimum = maths.equirectangularDistance(point, closestNonIntermediate);
+    Coordinates closest = closestNonIntermediate;
+
+    // Get the closest node that is on the same floor as point
+    for (final edge in floorGraphs[point.floor].simplified[closestNonIntermediate]!) {
+      for (final node in edge.coordinates) {
+        final distance = maths.equirectangularDistance(point, node);
+        if (distance < minimum) {
+          closest = node;
+          minimum = distance;
+        }
+      }
+    }
+
+    return closest;
   }
 
   Route shortestRoutePairing(List<Coordinates> startNodes, List<Coordinates> endNodes) {
@@ -304,8 +337,7 @@ class School {
   }
 
   List<Coordinates> intermediateToRegular(Coordinates intermediate, Coordinates regular) {
-    // TODO: Implement pathfinding across floors
-    final edge = floors[0].intermediateNodeEdge[intermediate]!;
+    final edge = graph.intermediateNodeEdge[intermediate]!;
     final index = edge.coordinates.indexOf(intermediate);
     if (edge.coordinates.first == regular) {
       return edge.coordinates.sublist(0, index + 1).reversed.toList();
@@ -316,17 +348,16 @@ class School {
 
   Route shortestRouteFromIntermediateNode(Coordinates start, List<Coordinates> endNodes) {
     Route shortestRoute;
-    // TODO: Implement pathfinding across floors
-    final startIsIntermediate = !floors[0].graph.containsKey(start);
+    final startIsIntermediate = !graph.simplified.containsKey(start);
 
     if (startIsIntermediate) {
-      final edge = floors[0].intermediateNodeEdge[start]!.coordinates;
+      final edge = graph.intermediateNodeEdge[start]!.coordinates;
 
       final route1 = shortestRoutePairing([edge.first], endNodes);
-      final distance1 = route1.path.distance + Edge(intermediateToRegular(start, route1.start)).distance;
+      final distance1 = route1.path.distance + Edge(intermediateToRegular(start, route1.start), null).distance;
 
       final route2 = shortestRoutePairing([edge.last], endNodes);
-      final distance2 = route2.path.distance + Edge(intermediateToRegular(start, route2.start)).distance;
+      final distance2 = route2.path.distance + Edge(intermediateToRegular(start, route2.start), null).distance;
 
       if (distance1 < distance2) {
         shortestRoute = route1;
@@ -342,12 +373,11 @@ class School {
       fullPath = intermediateToRegular(start, shortestRoute.start) + fullPath.sublist(1);
     }
 
-    return Route(start, shortestRoute.end, shortestRoute.directions, Edge(fullPath));
+    return Route(start, shortestRoute.end, shortestRoute.directions, Edge(fullPath, null));
   }
 
   Route adjustRouteDisplay(Coordinates location, Route route) {
-    // TODO: Implement pathfinding across floors
-    final closestNode = floors[0].closestIntermediateNode(location);
+    final closestNode = closestIntermediateNode(location);
 
     final coordinates = route.path.coordinates;
     final closestNodeIndex = coordinates.indexOf(closestNode);
@@ -380,12 +410,11 @@ class School {
     }
 
     final path = [location] + coordinates.sublist(lastDisplayNodeIndex, coordinates.length);
-    return Route(path.first, path.last, route.directions, Edge(path));
+    return Route(path.first, path.last, route.directions, Edge(path, null));
   }
 
   Route locationToRoom(Coordinates location, Room room) {
-    // TODO: Implement pathfinding across floors
-    final closestNode = floors[0].closestIntermediateNode(location);
+    final closestNode = closestIntermediateNode(location);
     final route = shortestRouteFromIntermediateNode(closestNode, room.entrances);
 
     return adjustRouteDisplay(location, route);
