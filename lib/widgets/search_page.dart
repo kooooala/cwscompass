@@ -1,3 +1,5 @@
+import 'package:cwscompass/loading.dart';
+import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/map_data.dart';
 import 'package:cwscompass/room.dart';
@@ -121,39 +123,34 @@ class SearchPage extends ConsumerWidget {
                 Expanded(
                   child: ValueListenableBuilder(
                     valueListenable: searchResults,
-                    builder: (context, value, _) {
-                      List<Room> roomList;
-                      if (value.isNotEmpty) {
-                        roomList = value;
-                      } else {
-                        roomList = data.nearbyRooms;
-                      }
-
-                      return AnimatedSwitcher(
-                        duration: Duration(milliseconds: 150),
-                        child: ListView(
-                          key: ValueKey(value),
-                          padding: EdgeInsets.zero,
-                          children: [
-                            Padding(
-                              padding: EdgeInsets.only(bottom: 4.0),
-                              child: Text(
-                                value.isNotEmpty ? "Results" : "Nearby",
-                                style: TextStyle(
-                                  color: ThemeColours.lightText,
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 24.0
-                                )
+                    builder: (context, value, _) => AnimatedSwitcher(
+                      duration: Duration(milliseconds: 150),
+                      child: ListView(
+                        key: ValueKey(value),
+                        padding: EdgeInsets.zero,
+                        children: [
+                          Padding(
+                            padding: EdgeInsets.only(bottom: 4.0),
+                            child: Text(
+                              value.isNotEmpty ? "Results" : "Nearby",
+                              style: TextStyle(
+                                color: ThemeColours.lightText,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 24.0
                               )
-                            ),
-                            RoomList(
-                              rooms: roomList,
-                              onRoomTap: (room) => Navigator.of(context).pop<SearchResult>(SearchResultRoom(room)),
                             )
-                          ]
-                        )
-                      );
-                    }
+                          ),
+                          ref.watch(nearbyRoomsProvider).when(
+                            data: (nearbyRooms) => RoomList(
+                              rooms: value.isNotEmpty ? value : nearbyRooms,
+                              onRoomTap: (room) => Navigator.of(context).pop<SearchResult>(SearchResultRoom(room)),
+                            ),
+                            loading: () => Loading(colour: Colors.white),
+                            error: (err, stack) => Text("Oops: $err"),
+                          )
+                        ]
+                      )
+                    )
                   )
                 )
               ]

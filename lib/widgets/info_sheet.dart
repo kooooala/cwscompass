@@ -1,6 +1,7 @@
 import 'package:cwscompass/common/capital_extension.dart';
 import 'package:cwscompass/common/maths.dart';
 import 'package:cwscompass/coordinates.dart';
+import 'package:cwscompass/loading.dart';
 import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/canvas.dart';
 import 'package:cwscompass/map_data.dart';
@@ -198,8 +199,6 @@ class NoneSelected extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final mapData = ref.watch(mapDataProvider);
-
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -214,13 +213,18 @@ class NoneSelected extends ConsumerWidget {
             )
           ),
         ),
-        mapData.when(
-          data: (data) {
-            return RoomList(
-              rooms: data.nearbyRooms,
-            );
-          },
-          loading: () => CircularProgressIndicator(),
+        ref.watch(nearbyRoomsProvider).when(
+          data: (nearbyRooms) => AnimatedSwitcher(
+            duration: Duration(milliseconds: 150),
+            child: RoomList(
+              key: ValueKey(nearbyRooms[0].floor),
+              onRoomTap: (room) {
+                ref.read(selectedRoomProvider.notifier).set(room);
+              },
+              rooms: nearbyRooms,
+            ),
+          ),
+          loading: () => Loading(colour: Colors.white),
           error: (err, stack) => Text("Oops: $err")
         )
       ],

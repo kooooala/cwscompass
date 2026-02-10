@@ -27,8 +27,6 @@ class MapData {
   late Database database;
   late School school;
 
-  List<Room> nearbyRooms = [];
-
   MapData(this.dbName);
 
   Future load() async {

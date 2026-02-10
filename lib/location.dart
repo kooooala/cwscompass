@@ -1,11 +1,15 @@
+import 'dart:async';
+
 import 'package:cwscompass/coordinates.dart';
 import 'package:cwscompass/map/canvas.dart';
-import 'package:cwscompass/map_data.dart';
+import 'package:cwscompass/room.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final locationProvider = StreamProvider.autoDispose<Coordinates>((ref) async* {
+import 'map_data.dart';
+
+final rawLocationProvider = StreamProvider.autoDispose<Coordinates>((ref) async* {
   final serviceEnabled = await Geolocator.isLocationServiceEnabled();
   var permission = await Geolocator.checkPermission();
 
@@ -20,19 +24,23 @@ final locationProvider = StreamProvider.autoDispose<Coordinates>((ref) async* {
   final stream = Geolocator.getPositionStream();
 
   await for (final value in stream) {
-    final selected = ref.read(selectedFloorProvider).value;
-    final floor = selected ?? FloorSelection(0, 0, 1);
-
-    final location = Coordinates(floor.locationFloor, value.latitude, value.longitude);
-
-    ref.read(mapDataProvider).whenData((mapData) {
-      mapData.school.rooms[floor.locationFloor].sort((a, b) {
-        return a.distanceFrom(location).compareTo(b.distanceFrom(location));
-      });
-      mapData.nearbyRooms = mapData.school.rooms[floor.locationFloor].sublist(0, 5);
-      debugPrint("Nearby room list updated.");
-    });
-
-    yield location;
+    yield Coordinates(-1, value.latitude, value.longitude);
   }
+});
+
+final locationProvider = FutureProvider.autoDispose<Coordinates>((ref) async {
+  final location = await ref.watch(rawLocationProvider.future);
+  final floor = await ref.watch(selectedFloorProvider.future);
+  return Coordinates(floor.locationFloor, location.latitude, location.longitude);
+});
+
+final nearbyRoomsProvider = FutureProvider.autoDispose<List<Room>>((ref) async {
+  final location = await ref.watch(locationProvider.future);
+  final mapData = await ref.watch(mapDataProvider.future);
+
+  mapData.school.rooms[location.floor].sort((a, b) {
+    return a.distanceFrom(location).compareTo(b.distanceFrom(location));
+  });
+  debugPrint("Nearby room list updated.");
+  return mapData.school.rooms[location.floor].sublist(0, 5);
 });
