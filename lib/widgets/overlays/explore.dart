@@ -18,6 +18,10 @@ class SelectedRoomNotifier extends Notifier<Room?> {
 
   void set(Room? room) {
     state = room;
+
+    if (room != null) {
+      ref.read(selectedFloorProvider.notifier).setView(room.floor);
+    }
   }
 }
 

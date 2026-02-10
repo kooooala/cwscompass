@@ -31,19 +31,19 @@ class PathPainter extends CustomPainter {
     //}
     final actualBetweenDots = betweenDots / scale;
 
-    final floorPath = route.path.coordinates.where((c) => c.floor == floor).toList();
-    if (floorPath.isEmpty) {
-      return;
-    }
+    final path = route.path.coordinates;
 
-    for (var i = 0; i < floorPath.length - 1; i++) {
-      final point1 = floorPath[i].point;
-      final point2 = floorPath[i + 1].point;
+    for (var i = 0; i < path.length - 1; i++) {
+      final point1 = path[i].point;
+      final point2 = path[i + 1].point;
 
       // Skip over repeat points
       if (point1 == point2) {
         continue;
       }
+
+      final isCurrent = path[i + 1].floor == floor && path[i].floor == floor;
+      final colour = isCurrent ? ThemeColours.accent : ThemeColours.accent.withAlpha(64);
 
       final magnitude = maths.pythagoras(point1, point2);
       final count = (magnitude + spillover) ~/ actualBetweenDots;
@@ -59,21 +59,23 @@ class PathPainter extends CustomPainter {
           break;
         }
 
-        canvas.drawCircle(Offset(x, y), 5 / scale, Paint()..color = ThemeColours.accent);
+        canvas.drawCircle(Offset(x, y), 5 / scale, Paint()..color = colour);
       }
 
       spillover = actualBetweenDots - ((magnitude - spillover) % actualBetweenDots);
     }
 
     if (drawStart) {
-      final startOffset = Offset(floorPath.first.point.x, floorPath.first.point.y);
-      canvas.drawCircle(startOffset, 7 / scale, Paint()..color = ThemeColours.accent);
+      final startOffset = Offset(path.first.point.x, path.first.point.y);
+      final colour = path.first.floor == floor ? ThemeColours.accent : ThemeColours.accent.withAlpha(64);
+      canvas.drawCircle(startOffset, 7 / scale, Paint()..color = colour);
       canvas.drawCircle(startOffset, 4 / scale, Paint()..color = Colors.white);
     }
 
     if (drawEnd) {
-      final endOffset = Offset(floorPath.last.point.x, floorPath.last.point.y);
-      canvas.drawCircle(endOffset, 7 / scale, Paint()..color = ThemeColours.accent);
+      final endOffset = Offset(path.last.point.x, path.last.point.y);
+      final colour = path.last.floor == floor ? ThemeColours.accent : ThemeColours.accent.withAlpha(64);
+      canvas.drawCircle(endOffset, 7 / scale, Paint()..color = colour);
       canvas.drawCircle(endOffset, 4 / scale, Paint()..color = Colors.white);
     }
   }

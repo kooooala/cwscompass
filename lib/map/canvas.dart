@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:cwscompass/common/maths.dart';
 import 'package:cwscompass/map/debug_painter.dart';
+import 'package:cwscompass/map/staircase_painter.dart';
 import 'package:cwscompass/polygon.dart';
 import 'package:cwscompass/widgets/overlays/explore.dart';
 import 'package:vector_math/vector_math_64.dart' as vectors;
@@ -307,7 +308,10 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                                         ));
                                       }
                                     }
-                                )
+                                ),
+                                RepaintBoundary(
+                                  child: CustomPaint(painter: StaircasePainter(data.school, selected.viewFloor, 0.5)),
+                                ),
                               ],
                             )
                           ),

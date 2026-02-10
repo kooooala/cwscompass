@@ -4,7 +4,9 @@ import 'package:sqflite/sqflite.dart';
 import 'coordinates.dart';
 
 class Landing extends Coordinates {
-  Landing(super.floor, super.latitude, super.longitude);
+  final String? label;
+
+  Landing(super.floor, super.latitude, super.longitude, this.label);
 }
 
 class Staircase extends EdgeWithLabel {

@@ -80,6 +80,9 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
     );
     route = shortestRoute;
     widget.canvasController.path.value = shortestRoute;
+    ref.read(locationProvider).whenData((location) {
+      ref.read(selectedFloorProvider.notifier).setView(location.floor);
+    });
   }
 
   void onLocationUpdate(Coordinates _) {

@@ -69,6 +69,7 @@ class School {
   final List<List<Room>> rooms = [];
   final Graph graph = Graph({}, {});
   final List<Graph> floorGraphs = [];
+  final List<Staircase> staircases;
 
   static Graph simplifyGraph(Map<Coordinates, List<(Coordinates, String?)>> fullGraph) {
     final graph = Graph({}, {});
@@ -156,7 +157,7 @@ class School {
     return simplifyGraph(fullGraph);
   }
 
-  School(List<Room> allRooms, List<Path> paths, List<Staircase> staircases) {
+  School(List<Room> allRooms, List<Path> paths, this.staircases) {
     // Determine the no. of floors by getting the room with the highest floor value
     final floorCount = allRooms.reduce((a, b) => a.floor > b.floor ? a : b).floor + 1;
     for (int i = 0; i < floorCount; i++) {

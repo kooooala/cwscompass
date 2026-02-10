@@ -11,7 +11,7 @@ class RoomPainter extends CustomPainter {
 
   RoomPainter(this.school, this.floor);
 
-  static Path pathFromRoom(Room room) {
+  static Path roomOutline(Room room) {
     final vertices = room.vertices;
 
     final path = Path();
@@ -25,7 +25,7 @@ class RoomPainter extends CustomPainter {
   }
 
   static void drawRoom(Canvas canvas, Room room) {
-    final path = pathFromRoom(room);
+    final outline = roomOutline(room);
     final fill = Paint()
       ..style = PaintingStyle.fill
       ..color = room.colour;
@@ -34,8 +34,8 @@ class RoomPainter extends CustomPainter {
       ..strokeWidth = 0.05
       ..color = ThemeColours.darkText;
 
-    canvas.drawPath(path, fill);
-    canvas.drawPath(path, stroke);
+    canvas.drawPath(outline, fill);
+    canvas.drawPath(outline, stroke);
   }
 
   @override
