@@ -20,13 +20,18 @@ class RoomList extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final location = ref.watch(locationProvider);
+    final length = rooms.isEmpty ? 5 : rooms.length;
 
     return RoundedList(
       radius: 12.0,
-      children: List<Widget>.generate(rooms.length, (i) {
-        final room = rooms[i];
+      children: List<Widget>.generate(length, (i) {
+        final room = rooms.isNotEmpty ? rooms[i] : null;
         return GestureDetector(
-          onTap: () => onRoomTap(room),
+          onTap: () {
+            if (rooms.isNotEmpty) {
+              onRoomTap(room!);
+            }
+          },
           child: Container(
             color: Colors.white,
             child: Padding(
@@ -37,14 +42,14 @@ class RoomList extends ConsumerWidget {
                 spacing: 8.0,
                 children: [
                   Text(
-                    room.name.capitalise(),
+                    rooms.isEmpty ? "Loading..." : room!.name.capitalise(),
                     style: TextStyle(
                         color: ThemeColours.darkText,
                         fontSize: 18.0
                     )
                   ),
                   Text(
-                    room.subject.capitalise(),
+                    rooms.isEmpty ? "" : room!.subject.capitalise(),
                     style: TextStyle(
                         color: ThemeColours.darkTextTint,
                         fontSize: 14.0
@@ -53,7 +58,11 @@ class RoomList extends ConsumerWidget {
                   Spacer(),
                   location.when<Widget>(
                     data: (coordinates) {
-                      return Text("${room.distanceFrom(Coordinates(0, coordinates.latitude, coordinates.longitude)).round()}m");
+                      if (rooms.isNotEmpty) {
+                        return Text("${room!.distanceFrom(Coordinates(0, coordinates.latitude, coordinates.longitude)).round()}m");
+                      } else {
+                        return Text("");
+                      }
                     },
                     loading: () => Text(""),
                     error: (_, _) => Text(""),

@@ -213,19 +213,22 @@ class NoneSelected extends ConsumerWidget {
             )
           ),
         ),
-        ref.watch(nearbyRoomsProvider).when(
-          data: (nearbyRooms) => AnimatedSwitcher(
-            duration: Duration(milliseconds: 150),
-            child: RoomList(
+        AnimatedSwitcher(
+          duration: Duration(milliseconds: 300),
+          child: ref.watch(nearbyRoomsProvider).when(
+            data: (nearbyRooms) => RoomList(
               key: ValueKey(nearbyRooms[0].floor),
               onRoomTap: (room) {
                 ref.read(selectedRoomProvider.notifier).set(room);
               },
               rooms: nearbyRooms,
             ),
-          ),
-          loading: () => Loading(colour: Colors.white),
-          error: (err, stack) => Text("Oops: $err")
+            loading: () => RoomList(
+              key: ValueKey(0),
+              rooms: [],
+            ),
+            error: (err, stack) => Text("Oops: $err")
+          )
         )
       ],
     );

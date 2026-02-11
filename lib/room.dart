@@ -9,8 +9,6 @@ import 'common/maths.dart' as maths;
 import 'coordinates.dart';
 
 class Room extends Polygon {
-  final int roomId;
-
   final int floor;
 
   final Color colour;
@@ -28,7 +26,7 @@ class Room extends Polygon {
 
   Point<double>? _centroid;
 
-  Room(this.roomId, this.floor, this.colour, this.subject, this.number, this.label, this.entrances, this.coordinates)
+  Room(this.floor, this.colour, this.subject, this.number, this.label, this.entrances, this.coordinates)
     : name = label ?? "room $number",
       super(coordinates.map((c) => c.point).toList());
 
@@ -107,7 +105,7 @@ class Room extends Polygon {
       return Entrance(floor, coordinates.latitude, coordinates.longitude, name);
     }));
 
-    return Room(roomId,
+    return Room(
       floor,
       colour,
       roomData["subject"] as String,
