@@ -315,9 +315,9 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                               ],
                             )
                           ),
-                          RepaintBoundary(
-                            child: CustomPaint(painter: DebugPainter(data.school, selected.viewFloor)),
-                          ),
+                          //RepaintBoundary(
+                          //  child: CustomPaint(painter: DebugPainter(data.school, selected.viewFloor)),
+                          //),
                           Marker(2, data.school),
                         ],
                       );

@@ -1,15 +1,60 @@
 import 'package:cwscompass/common/capital_extension.dart';
-import 'package:cwscompass/common/maths.dart';
-import 'package:cwscompass/coordinates.dart';
-import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/school.dart';
 import 'package:cwscompass/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';
+import 'package:cwscompass/widgets/floor_selector.dart';
 import 'package:cwscompass/widgets/rounded_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:smooth_sheets/smooth_sheets.dart';
+
+Widget turnToIcon(Turn turn, Color colour, double size) {
+  final icon = switch (turn) {
+    Turn.left => PhosphorIconsBold.arrowBendUpLeft,
+    Turn.right => PhosphorIconsBold.arrowBendUpRight,
+    Turn.straight => PhosphorIconsBold.arrowUp,
+    Turn.destination => Icons.location_on_rounded,
+    Turn.stairsUp || Turn.stairsDown => PhosphorIconsBold.steps,
+  };
+
+  return Stack(
+    children: [
+      PhosphorIcon(
+        icon,
+        color: colour,
+        size: size,
+      )
+    ],
+  );
+}
+
+String directionToString(Direction direction, String destName) {
+  String string = switch (direction.turn) {
+    Turn.left => "Turn left",
+    Turn.right => "Turn right",
+    Turn.straight => "Continue straight",
+    Turn.destination => destName.capitalise(),
+    Turn.stairsDown => "Go downstairs to ${floorToString(direction.coordinates.floor)}/F",
+    Turn.stairsUp => "Go upstairs to ${floorToString(direction.coordinates.floor)}/F",
+  };
+
+  if (direction.label != null) {
+    final label = direction.label!.capitalise();
+    switch (direction.turn) {
+      case Turn.left || Turn.right:
+        string += "onto $label";
+        break;
+      case Turn.straight:
+        string += "on $label";
+        break;
+      default:
+        break;
+    }
+  }
+
+  return string;
+}
 
 class DirectionSheet extends StatelessWidget {
   final List<Direction> directions;
@@ -85,23 +130,6 @@ class NextDirectionCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    String text = switch (direction.turn) {
-      Turn.left => "Turn left",
-      Turn.right => "Turn right",
-      Turn.straight => "Continue straight",
-      Turn.destination => endRoom.name.capitalise()
-    };
-    if (direction.label != null && direction.turn != Turn.straight) {
-      text += " onto ${direction.label}";
-    }
-
-    final icon = switch (direction.turn) {
-      Turn.left => PhosphorIconsBold.arrowBendUpLeft,
-      Turn.right => PhosphorIconsBold.arrowBendUpRight,
-      Turn.straight => PhosphorIconsBold.arrowUp,
-      Turn.destination => Icons.location_on_rounded,
-    };
-
     return Material(
       borderRadius: BorderRadius.circular(16.0),
       color: Colors.white,
@@ -116,16 +144,11 @@ class NextDirectionCard extends ConsumerWidget {
                 color: ThemeColours.accent,
                 child: Padding(
                     padding: EdgeInsets.all(8.0),
-                    child: PhosphorIcon(
-                      icon,
-                      color: ThemeColours.lightText,
-                      size: 28.0,
-                      weight: 100,
-                    )
+                    child: turnToIcon(direction.turn, ThemeColours.lightText, 28.0)
                 ),
               ),
               Text(
-                text,
+                directionToString(direction, endRoom.name),
                 style: TextStyle(
                     color: ThemeColours.darkText,
                     fontWeight: FontWeight.w900,
@@ -163,23 +186,6 @@ class DirectionList extends StatelessWidget {
         (i) {
           final direction = directions[i + 1];
 
-          String text = switch (direction.turn) {
-            Turn.left => "Turn left",
-            Turn.right => "Turn right",
-            Turn.straight => "Continue straight",
-            Turn.destination => endRoom.name.capitalise()
-          };
-          if (direction.label != null && direction.turn != Turn.straight) {
-            text += " onto ${direction.label}";
-          }
-
-          final icon = switch (direction.turn) {
-            Turn.left => PhosphorIconsBold.arrowBendUpLeft,
-            Turn.right => PhosphorIconsBold.arrowBendUpRight,
-            Turn.straight => PhosphorIconsBold.arrowUp,
-            Turn.destination => Icons.location_on_rounded,
-          };
-
           double distance = 0;
           for (int j = 0; j <= i + 1; j++) {
             distance += directions[j].distance;
@@ -192,13 +198,9 @@ class DirectionList extends StatelessWidget {
               child: Row(
                 spacing: 8.0,
                 children: [
-                  PhosphorIcon(
-                    icon,
-                    size: 16.0,
-                    color: ThemeColours.accent,
-                  ),
+                  turnToIcon(direction.turn, ThemeColours.accent, 16.0),
                   Text(
-                    text,
+                    directionToString(direction, endRoom.name),
                     style: TextStyle(
                         color: ThemeColours.darkTextTint,
                         fontSize: 16.0

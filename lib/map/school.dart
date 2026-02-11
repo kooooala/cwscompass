@@ -19,7 +19,7 @@ class Route {
 }
 
 enum Turn {
-  left, right, straight, destination
+  left, right, straight, destination, stairsUp, stairsDown
 }
 
 class Direction {
@@ -185,7 +185,7 @@ class School {
     }
   }
 
-  Direction getDirection(Coordinates previous, Coordinates current, Coordinates next) {
+  Direction getDirectionSameFloor(Coordinates previous, Coordinates current, Coordinates next) {
     final vector1 = Vector2(current.longitude - previous.longitude, current.latitude - previous.latitude);
     final vector2 = Vector2(next.longitude - current.longitude, next.latitude - current.latitude);
     final crossProduct = vector1.cross(vector2);
@@ -202,10 +202,24 @@ class School {
     }
 
     String? label;
-    if (current is! Entrance && current.floor == next.floor) {
+    if (current is! Entrance) {
       label = graph.simplified[current]!.firstWhere((e) => e.coordinates.contains(next)).label;
     }
     return Direction(turn, label, current, 0);
+  }
+
+  Direction getDirectionElevation(Coordinates current, Coordinates next) {
+    final turn = next.floor > current.floor ? Turn.stairsDown : Turn.stairsUp;
+    final label = staircases.firstWhere((staircase) => staircase.coordinates.contains(current)).label;
+    return Direction(turn, label, current, 0);
+  }
+
+  Direction getDirection(Coordinates previous, Coordinates current, Coordinates next) {
+    if (current.floor != next.floor) {
+      return getDirectionElevation(current, next);
+    } else {
+      return getDirectionSameFloor(previous, current, next);
+    }
   }
 
   Route shortestRoute(Coordinates start, Coordinates end) {
@@ -269,6 +283,9 @@ class School {
       }
 
       previous = current;
+      if (cameFrom[current] == null) {
+        int i = 0;
+      }
       current = cameFrom[current]!;
       next = cameFrom[current];
     }
@@ -404,7 +421,8 @@ class School {
     }
 
     int lastDisplayNodeIndex;
-    if (previousDistanceProportion > nextDistanceProportion) {
+    // Only adjust if the new node and the location are on the same floor
+    if (previousDistanceProportion > nextDistanceProportion && coordinates[closestNodeIndex + 1].floor == location.floor) {
       lastDisplayNodeIndex = closestNodeIndex + 1;
     } else {
       lastDisplayNodeIndex = closestNodeIndex;

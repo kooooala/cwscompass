@@ -4,6 +4,8 @@ import 'package:cwscompass/map/canvas.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+String floorToString(int floor) => floor == 0 ? "G" : floor.toString();
+
 class FloorSelector extends ConsumerStatefulWidget {
   final bool locationChangeable;
 
@@ -28,9 +30,8 @@ class _FloorSelectorState extends ConsumerState<FloorSelector> {
               spacing: 8.0,
               children: List.generate(selected.floorCount, (i) {
                 final floor = selected.floorCount - 1 - i;
-                final text = floor == 0 ? "G" : floor.toString();
                 final textWidget = Text(
-                  text,
+                  floorToString(floor),
                   style: TextStyle(
                     fontSize: 20.0,
                     fontWeight: FontWeight.w900,
