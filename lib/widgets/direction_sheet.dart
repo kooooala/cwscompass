@@ -1,4 +1,5 @@
 import 'package:cwscompass/common/capital_extension.dart';
+import 'package:cwscompass/entrance.dart';
 import 'package:cwscompass/map/school.dart';
 import 'package:cwscompass/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';
@@ -14,6 +15,8 @@ Widget turnToIcon(Turn turn, Color colour, double size) {
     Turn.left => PhosphorIconsBold.arrowBendUpLeft,
     Turn.right => PhosphorIconsBold.arrowBendUpRight,
     Turn.straight => PhosphorIconsBold.arrowUp,
+    Turn.enterBuilding => PhosphorIconsBold.signIn,
+    Turn.exitBuilding => PhosphorIconsBold.signOut,
     Turn.destination => Icons.location_on_rounded,
     Turn.stairsUp || Turn.stairsDown => PhosphorIconsBold.steps,
   };
@@ -34,6 +37,8 @@ String directionToString(Direction direction, String destName) {
     Turn.left => "Turn left",
     Turn.right => "Turn right",
     Turn.straight => "Continue straight",
+    Turn.enterBuilding => "Enter ${(direction.coordinates as BuildingEntrance).building.name}",
+    Turn.exitBuilding => "Exit ${(direction.coordinates as BuildingEntrance).building.name}",
     Turn.destination => destName.capitalise(),
     Turn.stairsDown => "Go downstairs to ${floorToString(direction.coordinates.floor)}/F",
     Turn.stairsUp => "Go upstairs to ${floorToString(direction.coordinates.floor)}/F",

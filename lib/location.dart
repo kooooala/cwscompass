@@ -38,9 +38,10 @@ final nearbyRoomsProvider = FutureProvider.autoDispose<List<Room>>((ref) async {
   final location = await ref.watch(locationProvider.future);
   final mapData = await ref.watch(mapDataProvider.future);
 
-  mapData.school.rooms[location.floor].sort((a, b) {
+  final rooms = mapData.school.floors[location.floor].rooms;
+  rooms.sort((a, b) {
     return a.distanceFrom(location).compareTo(b.distanceFrom(location));
   });
   debugPrint("Nearby room list updated.");
-  return mapData.school.rooms[location.floor].sublist(0, 5);
+  return rooms.sublist(0, 5);
 });

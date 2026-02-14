@@ -1,18 +1,18 @@
+import 'package:cwscompass/structure.dart';
 import 'package:cwscompass/map/school.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:flutter/material.dart';
 
-import 'package:cwscompass/room.dart';
-import 'package:cwscompass/map_data.dart';
-
-class RoomPainter extends CustomPainter {
-  final School school;
+class StructurePainter extends CustomPainter {
+  final List<Structure> structures;
   final int floor;
 
-  RoomPainter(this.school, this.floor);
+  final bool nameVisible;
 
-  static Path roomOutline(Room room) {
-    final vertices = room.vertices;
+  StructurePainter({required this.structures, required this.floor, this.nameVisible = true});
+
+  static Path structureOutline(Structure structure) {
+    final vertices = structure.coordinates.map((c) => c.point).toList();
 
     final path = Path();
 
@@ -24,11 +24,11 @@ class RoomPainter extends CustomPainter {
     return path;
   }
 
-  static void drawRoom(Canvas canvas, Room room) {
-    final outline = roomOutline(room);
+  static void drawRoom(Canvas canvas, Structure structure) {
+    final outline = structureOutline(structure);
     final fill = Paint()
       ..style = PaintingStyle.fill
-      ..color = room.colour;
+      ..color = structure.colour;
     final stroke = Paint()
       ..style = PaintingStyle.stroke
       ..strokeWidth = 0.05
@@ -40,11 +40,11 @@ class RoomPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (final room in school.rooms[floor]) {
-      drawRoom(canvas, room);
+    for (final structure in structures) {
+      drawRoom(canvas, structure);
     }
   }
 
   @override
-  bool shouldRepaint(RoomPainter old) => old.floor != floor;
+  bool shouldRepaint(StructurePainter old) => old.floor != floor;
 }

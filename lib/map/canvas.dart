@@ -53,7 +53,7 @@ class SelectedFloorProvider extends AsyncNotifier<FloorSelection> {
   @override
   FutureOr<FloorSelection> build() async {
     final data = await ref.watch(mapDataProvider.future);
-    return FloorSelection(0, 0, data.school.rooms.length);
+    return FloorSelection(0, 0, data.school.floors.length);
   }
 
   void setView(int floor) {
@@ -139,7 +139,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     widget.controller.focusRequest.addListener(onFocusRequest);
 
     if (widget.controller.zoomToPath && widget.controller.path.value != null) {
-      final polygon = Polygon(widget.controller.path.value!.path.coordinates.map((c) => c.point).toList());
+      final polygon = Polygon(widget.controller.path.value!.path.coordinates);
       startFocusAnimation(average(polygon), computeZoomScale(polygon));
     }
   }
@@ -235,7 +235,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
 
   void onTapUp(TapUpDetails details, school.School school) {
     ref.watch(selectedFloorProvider).whenData((selected) {
-      for (final room in school.rooms[selected.viewFloor]) {
+      for (final room in school.floors[selected.viewFloor].rooms) {
         if (room.intersects(Point(details.localPosition.dx, details.localPosition.dy))) {
           if (widget.controller.roomSelectable) {
             ref.read(selectedRoomProvider.notifier).set(room);
@@ -288,7 +288,17 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                               key: ValueKey(selected.viewFloor),
                               children: [
                                 RepaintBoundary(
-                                  child: CustomPaint(painter: RoomPainter(data.school, selected.viewFloor)),
+                                  child: CustomPaint(painter: StructurePainter(
+                                    structures: data.school.floors[selected.viewFloor].buildings,
+                                    floor: selected.viewFloor,
+                                    nameVisible: false
+                                  )),
+                                ),
+                                RepaintBoundary(
+                                  child: CustomPaint(painter: StructurePainter(
+                                    structures: data.school.floors[selected.viewFloor].rooms,
+                                    floor: selected.viewFloor
+                                  )),
                                 ),
                                 RepaintBoundary(
                                     child: CustomPaint(painter: LabelPainter(data.school, selected.viewFloor))

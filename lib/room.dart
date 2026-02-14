@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'dart:math';
+import 'package:cwscompass/structure.dart';
 import 'package:cwscompass/common/bounding_box.dart';
 import 'package:cwscompass/entrance.dart';
 import 'package:cwscompass/polygon.dart';
@@ -8,66 +9,22 @@ import 'package:sqflite/sqflite.dart';
 import 'common/maths.dart' as maths;
 import 'coordinates.dart';
 
-class Room extends Polygon {
-  final int floor;
-
-  final Color colour;
+class Room extends Structure {
   final String subject;
   final String? number;
   final String? label;
-  final String name;
 
   late final MapEntry<String, Room> searchEntry = MapEntry("room$subject$number$label", this);
 
-  final List<Entrance> entrances;
-
-  /// Coordinates of the room using the WGS 84 Web Mercator projection (map projection used by Google Maps).
-  final List<Coordinates> coordinates;
-
-  Point<double>? _centroid;
-
-  Room(this.floor, this.colour, this.subject, this.number, this.label, this.entrances, this.coordinates)
-    : name = label ?? "room $number",
-      super(coordinates.map((c) => c.point).toList());
-
-  Point<double> get centroid {
-    if (_centroid != null) {
-      return _centroid!;
-    }
-
-    _centroid = maths.centroid(this);
-    return _centroid!;
-  }
-
-  double distanceFrom(Coordinates coordinates, {bool precise = false}) {
-    final distanceFunction = precise ? maths.haversineDistance : maths.equirectangularDistance;
-    return distanceFunction(coordinates, maths.pointToCoordinates(centroid, floor));
-  }
-
-  // Check if point is inside polygon by using the ray casting algorithm: https://people.utm.my/shahabuddin/?p=6277
-  bool intersects(Point<double> point) {
-    // Quickly check if point is within bounding box
-    if (point.x < boundingBox.topLeft.x || point.x > boundingBox.bottomRight.x ||
-      point.y < boundingBox.topLeft.y || point.y > boundingBox.bottomRight.y) {
-      return false;
-    }
-
-    int intersections = 0;
-
-    for (int i = 0; i < vertices.length; i++) {
-      final current = vertices[i];
-      final next = vertices[(i + 1) % vertices.length];
-
-      if (((current.y > point.y) != (next.y > point.y)) && (point.x < (next.x - current.x) * (point.y - current.y) / (next.y - current.y) + current.x)) {
-        intersections++;
-      }
-    }
-
-    return intersections % 2 == 1;
-  }
+  Room(int floor, Color colour, this.subject, this.number, this.label, List<Entrance> entrances, List<Coordinates> coordinates)
+      : super(floor, colour, label ?? "room $number", entrances, coordinates);
 
   static Future<List<int>> getRoomList(Database db) async {
-    final queryResults = await db.query("rooms", columns: ["room_id"]);
+    final queryResults = await db.query("rooms",
+      columns: ["room_id"],
+      where: "type = ?",
+      whereArgs: ["room"]
+    );
     return queryResults.map((room) => room["room_id"] as int).toList();
   }
 

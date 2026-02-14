@@ -7,7 +7,7 @@ import 'package:vector_math/vector_math.dart';
 
 /// Computes the area of a polygon using the shoelace formula.
 double polygonArea(Polygon polygon) {
-  final vertices = polygon.vertices;
+  final vertices = polygon.coordinates.map((c) => c.point).toList();
   double sum = 0;
   for (var i = 0; i < vertices.length; i++) {
     sum += vertices[i].x * vertices[(i + 1) % vertices.length].y - vertices[(i + 1) % vertices.length].x * vertices[i].y;
@@ -21,7 +21,7 @@ Point<double> centroid(Polygon polygon) {
   final area = polygonArea(polygon);
   double x = 0, y = 0;
 
-  final vertices = polygon.vertices;
+  final vertices = polygon.coordinates.map((c) => c.point).toList();
   for (var i = 0; i < vertices.length; i++) {
     final current = vertices[i], next = vertices[(i + 1) % vertices.length];
     x += (current.x + next.x) * (current.x * next.y - next.x * current.y);
@@ -35,8 +35,8 @@ Point<double> centroid(Polygon polygon) {
 
 /// Computes the arithmetic mean of the vertices of [polygon]
 Point<double> average(Polygon polygon) {
-  final xMean = polygon.vertices.map((v) => v.x).reduce((a, b) => a + b) / polygon.vertices.length;
-  final yMean = polygon.vertices.map((v) => v.y).reduce((a, b) => a + b) / polygon.vertices.length;
+  final xMean = polygon.coordinates.map((v) => v.point.x).reduce((a, b) => a + b) / polygon.coordinates.length;
+  final yMean = polygon.coordinates.map((v) => v.point.y).reduce((a, b) => a + b) / polygon.coordinates.length;
   return Point(xMean, yMean);
 }
 

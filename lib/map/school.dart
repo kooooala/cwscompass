@@ -1,5 +1,8 @@
+import 'dart:io';
 import 'dart:math';
 
+import 'package:cwscompass/building.dart';
+import 'package:cwscompass/structure.dart';
 import 'package:cwscompass/coordinates.dart';
 import 'package:cwscompass/entrance.dart';
 import 'package:cwscompass/room.dart';
@@ -19,7 +22,7 @@ class Route {
 }
 
 enum Turn {
-  left, right, straight, destination, stairsUp, stairsDown
+  left, right, straight, enterBuilding, exitBuilding, destination, stairsUp, stairsDown
 }
 
 class Direction {
@@ -65,10 +68,17 @@ class Graph {
   Graph(this.simplified, this.intermediateNodeEdge);
 }
 
+class Floor {
+  List<Room> rooms;
+  List<Structure> buildings;
+  Graph graph;
+
+  Floor(this.rooms, this.buildings, this.graph);
+}
+
 class School {
-  final List<List<Room>> rooms = [];
   final Graph graph = Graph({}, {});
-  final List<Graph> floorGraphs = [];
+  final List<Floor> floors = [];
   final List<Staircase> staircases;
 
   static Graph simplifyGraph(Map<Coordinates, List<(Coordinates, String?)>> fullGraph) {
@@ -79,7 +89,8 @@ class School {
 
     // Identify all nodes that are not intermediate (the ones we want to keep)
     final junctions = fullGraph.keys
-        .where((n) => fullGraph[n]!.length != 2)
+        .where((n) => n is BuildingEntrance || fullGraph[n]!.length != 2)
+        //.map((c) => Coordinates(c.floor, c.latitude, c.longitude))
         .toList();
     final visited = <List<Coordinates>>[];
 
@@ -89,7 +100,7 @@ class School {
       for (final child in children) {
         // Skip over ones we have already traversed
         if (visited.any((edge) =>
-        (edge[0] == junction && edge[1] == child.$1) ||
+            (edge[0] == junction && edge[1] == child.$1) ||
             (edge[1] == junction && edge[0] == child.$1))) {
           continue;
         }
@@ -131,18 +142,28 @@ class School {
     return graph;
   }
 
-  static Graph floorGraph(List<Room> rooms, List<Path> paths) {
+  static Graph floorGraph(List<Room> rooms, List<Building> buildings, List<Path> paths) {
     Map<Coordinates, List<(Coordinates, String?)>> fullGraph = {};
+    Map<Coordinates, BuildingEntrance> coordinatesToBuilding = {};
+    for (final building in buildings) {
+      for (final entrance in building.entrances) {
+        final coordinates = Coordinates(entrance.floor, entrance.latitude, entrance.longitude);
+        coordinatesToBuilding[coordinates] = BuildingEntrance(building, entrance.floor, entrance.latitude, entrance.longitude);
+      }
+    }
 
     for (final path in paths) {
-      for (final (i, vertex) in path.vertices.sublist(0, path.vertices.length - 1).indexed) {
-        final next = path.vertices[i + 1];
+      for (final (i, c1) in path.vertices.sublist(0, path.vertices.length - 1).indexed) {
+        final c2 = path.vertices[i + 1];
 
-        fullGraph[vertex] ??= <(Coordinates, String?)>[];
-        fullGraph[vertex]!.add((next, path.label));
+        final current = coordinatesToBuilding[c1] ?? c1;
+        final next = coordinatesToBuilding[c2] ?? c2;
+
+        fullGraph[current] ??= <(Coordinates, String?)>[];
+        fullGraph[current]!.add((next, path.label));
 
         fullGraph[next] ??= <(Coordinates, String?)>[];
-        fullGraph[next]!.add((vertex, path.label));
+        fullGraph[next]!.add((current, path.label));
       }
     }
 
@@ -157,18 +178,19 @@ class School {
     return simplifyGraph(fullGraph);
   }
 
-  School(List<Room> allRooms, List<Path> paths, this.staircases) {
+  School(List<Room> rooms, List<Building> buildings, List<Path> paths, this.staircases) {
     // Determine the no. of floors by getting the room with the highest floor value
-    final floorCount = allRooms.reduce((a, b) => a.floor > b.floor ? a : b).floor + 1;
+    final floorCount = rooms.reduce((a, b) => a.floor > b.floor ? a : b).floor + 1;
     for (int i = 0; i < floorCount; i++) {
-      final floorRooms = allRooms.where((room) => room.floor == i).toList();
-      rooms.add(floorRooms);
+      final floorRooms = rooms.where((room) => room.floor == i).toList();
+      final floorBuildings = buildings.where((building) => building.floor == i).toList();
       final floorPaths = paths.where((path) => path.floor == i).toList();
-      floorGraphs.add(floorGraph(floorRooms, floorPaths));
+
+      floors.add(Floor(floorRooms, floorBuildings, floorGraph(floorRooms, floorBuildings, floorPaths)));
     }
 
     // Merge the floor graphs into one
-    for (final floorGraph in floorGraphs) {
+    for (final floorGraph in floors.map((f) => f.graph)) {
       graph.simplified.addAll(floorGraph.simplified);
       graph.intermediateNodeEdge.addAll(floorGraph.intermediateNodeEdge);
     }
@@ -215,7 +237,10 @@ class School {
   }
 
   Direction getDirection(Coordinates previous, Coordinates current, Coordinates next) {
-    if (current.floor != next.floor) {
+    if (current is BuildingEntrance) {
+      final isEntering = current.building.intersects(previous.point);
+      return Direction(isEntering ? Turn.enterBuilding : Turn.exitBuilding, current.building.name, current, 0);
+    } else if (current.floor != next.floor) {
       return getDirectionElevation(current, next);
     } else {
       return getDirectionSameFloor(previous, current, next);
@@ -299,7 +324,7 @@ class School {
     Coordinates closest = graph.simplified.keys.first;
 
     // Get the closest node that is on the same floor as point
-    for (final node in floorGraphs[point.floor].simplified.keys) {
+    for (final node in floors[point.floor].graph.simplified.keys) {
       final distance = maths.equirectangularDistance(point, node);
       if (distance < minimum) {
         closest = node;
@@ -324,7 +349,7 @@ class School {
     Coordinates closest = closestNonIntermediate;
 
     // Get the closest node that is on the same floor as point
-    for (final edge in floorGraphs[point.floor].simplified[closestNonIntermediate]!) {
+    for (final edge in floors[point.floor].graph.simplified[closestNonIntermediate]!) {
       for (final node in edge.coordinates) {
         final distance = maths.equirectangularDistance(point, node);
         if (distance < minimum) {

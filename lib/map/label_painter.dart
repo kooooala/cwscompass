@@ -14,7 +14,7 @@ class LabelPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
 
-    for (final room in school.rooms[floor]) {
+    for (final room in school.floors[floor].rooms) {
       final contrast = maths.contrastRatio(room.colour, Colors.black);
       final colour = contrast > 4.5 ? Colors.black : Colors.white;
 

@@ -113,7 +113,7 @@ class SearchPage extends ConsumerWidget {
                           size: 32.0,
                           color: ThemeColours.primary)
                       ],
-                      onChanged: (value) => search(value, data.school.rooms.reduce((a, b) => a + b)),
+                      onChanged: (value) => search(value, data.school.floors.map((f) => f.rooms).reduce((a, b) => a + b)),
                       backgroundColor: WidgetStateProperty.resolveWith((_) => Colors.white),
                       padding: WidgetStatePropertyAll<EdgeInsets>(EdgeInsets.symmetric(horizontal: 12.0)),
                     )

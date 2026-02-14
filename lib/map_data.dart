@@ -1,3 +1,5 @@
+import 'package:cwscompass/building.dart';
+import 'package:cwscompass/structure.dart';
 import 'package:cwscompass/coordinates.dart';
 import 'package:cwscompass/location.dart';
 import 'package:cwscompass/map/canvas.dart';
@@ -46,9 +48,12 @@ class MapData {
     final roomList = await Room.getRoomList(database);
     final rooms = await Future.wait(roomList.map((room) async => await Room.fromRoomId(database, room)));
 
+    final buildingList = await Building.getBuildingList(database);
+    final buildings = await Future.wait(buildingList.map((building) async => await Building.fromBuildingId(database, building)));
+
     final staircaseList = await Staircase.getStaircaseList(database);
     final staircases = await Future.wait(staircaseList.map((staircase) async => await Staircase.fromStaircaseId(database, staircase)));
 
-    school = School(rooms, paths, staircases);
+    school = School(rooms, buildings, paths, staircases);
   }
 }

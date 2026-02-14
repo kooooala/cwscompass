@@ -55,7 +55,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
     final shortestRoute = calculateRoute();
 
     if (focus) {
-      final routePolygon = Polygon(shortestRoute.path.coordinates.map((c) => c.point).toList());
+      final routePolygon = Polygon(shortestRoute.path.coordinates);
       widget.canvasController.focusPolygon(routePolygon, ZoomFocus.average);
     }
     widget.canvasController.path.value = shortestRoute;
