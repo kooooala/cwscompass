@@ -1,7 +1,8 @@
 import 'package:cwscompass/common/capital_extension.dart';
-import 'package:cwscompass/entrance.dart';
+import 'package:cwscompass/data/entrance.dart';
+import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/map/school.dart';
-import 'package:cwscompass/room.dart';
+import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/floor_selector.dart';
 import 'package:cwscompass/widgets/rounded_list.dart';
@@ -63,7 +64,7 @@ String directionToString(Direction direction, String destName) {
 
 class DirectionSheet extends StatelessWidget {
   final List<Direction> directions;
-  final Room endRoom;
+  final Interactable endRoom;
 
   const DirectionSheet({super.key, required this.directions, required this.endRoom});
 
@@ -129,7 +130,7 @@ class DirectionSheet extends StatelessWidget {
 
 class NextDirectionCard extends ConsumerWidget {
   final Direction direction;
-  final Room endRoom;
+  final Interactable endRoom;
 
   const NextDirectionCard({super.key, required this.direction, required this.endRoom});
 
@@ -178,7 +179,7 @@ class NextDirectionCard extends ConsumerWidget {
 
 class DirectionList extends StatelessWidget {
   final List<Direction> directions;
-  final Room endRoom;
+  final Interactable endRoom;
 
   const DirectionList({super.key, required this.directions, required this.endRoom});
 

@@ -1,7 +1,5 @@
-import 'dart:math';
-
 import 'package:cwscompass/common/bounding_box.dart';
-import 'package:cwscompass/coordinates.dart';
+import 'package:cwscompass/data/coordinates.dart';
 
 class Polygon {
   final List<Coordinates> coordinates;

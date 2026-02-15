@@ -1,10 +1,10 @@
 import 'package:cwscompass/map/school.dart';
 import 'package:cwscompass/common/theme_colours.dart';
-import 'package:cwscompass/staircase.dart';
+import 'package:cwscompass/data/staircase.dart';
 import 'package:flutter/material.dart';
 
-import 'package:cwscompass/room.dart';
-import 'package:cwscompass/map_data.dart';
+import 'package:cwscompass/data/structures/room.dart';
+import 'package:cwscompass/data/map_data.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class StaircasePainter extends CustomPainter {

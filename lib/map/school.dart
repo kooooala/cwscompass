@@ -1,16 +1,18 @@
 import 'dart:io';
 import 'dart:math';
 
-import 'package:cwscompass/building.dart';
-import 'package:cwscompass/structure.dart';
-import 'package:cwscompass/coordinates.dart';
-import 'package:cwscompass/entrance.dart';
-import 'package:cwscompass/room.dart';
-import 'package:cwscompass/path.dart';
+import 'package:cwscompass/data/structures/building.dart';
+import 'package:cwscompass/data/structures/inaccessible.dart';
+import 'package:cwscompass/data/structures/structure.dart';
+import 'package:cwscompass/data/coordinates.dart';
+import 'package:cwscompass/data/entrance.dart';
+import 'package:cwscompass/data/structures/room.dart';
+import 'package:cwscompass/data/path.dart';
 import 'package:cwscompass/common/maths.dart' as maths;
 
 import 'package:collection/collection.dart';
-import 'package:cwscompass/staircase.dart';
+import 'package:cwscompass/data/staircase.dart';
+import 'package:cwscompass/data/structures/toilet.dart';
 import 'package:vector_math/vector_math.dart';
 
 class Route {
@@ -69,11 +71,31 @@ class Graph {
 }
 
 class Floor {
-  List<Room> rooms;
-  List<Structure> buildings;
+  final List<Structure> structures;
   Graph graph;
 
-  Floor(this.rooms, this.buildings, this.graph);
+  final List<Room> rooms;
+  final List<Building> buildings;
+  final List<Inaccessible> inaccessible;
+  final List<Toilet> toilets;
+
+  Floor(this.structures, this.graph)
+      : rooms = structures.whereType<Room>().toList(),
+        buildings = structures.whereType<Building>().toList(),
+        inaccessible = structures.whereType<Inaccessible>().toList(),
+        toilets = structures.whereType<Toilet>().toList();
+
+  static String floorString(int floor) {
+    String result;
+    if (floor == 0) {
+      result = "G";
+    } else {
+      result = floor.toString();
+    }
+    result += "/F";
+
+    return result;
+  }
 }
 
 class School {
@@ -90,7 +112,6 @@ class School {
     // Identify all nodes that are not intermediate (the ones we want to keep)
     final junctions = fullGraph.keys
         .where((n) => n is BuildingEntrance || fullGraph[n]!.length != 2)
-        //.map((c) => Coordinates(c.floor, c.latitude, c.longitude))
         .toList();
     final visited = <List<Coordinates>>[];
 
@@ -142,13 +163,16 @@ class School {
     return graph;
   }
 
-  static Graph floorGraph(List<Room> rooms, List<Building> buildings, List<Path> paths) {
+  static Graph floorGraph(List<Structure> structures, List<Path> paths) {
+    final buildings = structures.whereType<Building>();
+    final interactables = structures.whereType<Interactable>();
+
     Map<Coordinates, List<(Coordinates, String?)>> fullGraph = {};
-    Map<Coordinates, BuildingEntrance> coordinatesToBuilding = {};
+    Map<Coordinates, BuildingEntrance> coordinatesToBuildingEntrance = {};
     for (final building in buildings) {
       for (final entrance in building.entrances) {
         final coordinates = Coordinates(entrance.floor, entrance.latitude, entrance.longitude);
-        coordinatesToBuilding[coordinates] = BuildingEntrance(building, entrance.floor, entrance.latitude, entrance.longitude);
+        coordinatesToBuildingEntrance[coordinates] = entrance;
       }
     }
 
@@ -156,8 +180,8 @@ class School {
       for (final (i, c1) in path.vertices.sublist(0, path.vertices.length - 1).indexed) {
         final c2 = path.vertices[i + 1];
 
-        final current = coordinatesToBuilding[c1] ?? c1;
-        final next = coordinatesToBuilding[c2] ?? c2;
+        final current = coordinatesToBuildingEntrance[c1] ?? c1;
+        final next = coordinatesToBuildingEntrance[c2] ?? c2;
 
         fullGraph[current] ??= <(Coordinates, String?)>[];
         fullGraph[current]!.add((next, path.label));
@@ -167,8 +191,8 @@ class School {
       }
     }
 
-    for (final room in rooms) {
-      for (final entrance in room.entrances) {
+    for (final interactable in interactables) {
+      for (final entrance in interactable.entrances) {
         final coordinates = Coordinates(entrance.floor, entrance.latitude, entrance.longitude);
         fullGraph[coordinates]!.add((entrance, null));
         fullGraph[entrance] = [(coordinates, null)];
@@ -178,15 +202,14 @@ class School {
     return simplifyGraph(fullGraph);
   }
 
-  School(List<Room> rooms, List<Building> buildings, List<Path> paths, this.staircases) {
+  School(List<Structure> structures, List<Path> paths, this.staircases) {
     // Determine the no. of floors by getting the room with the highest floor value
-    final floorCount = rooms.reduce((a, b) => a.floor > b.floor ? a : b).floor + 1;
+    final floorCount = structures.reduce((a, b) => a.floor > b.floor ? a : b).floor + 1;
     for (int i = 0; i < floorCount; i++) {
-      final floorRooms = rooms.where((room) => room.floor == i).toList();
-      final floorBuildings = buildings.where((building) => building.floor == i).toList();
-      final floorPaths = paths.where((path) => path.floor == i).toList();
+      final floorStructures = structures.where((s) => s.floor == i).toList();
+      final floorPaths = paths.where((p) => p.floor == i).toList();
 
-      floors.add(Floor(floorRooms, floorBuildings, floorGraph(floorRooms, floorBuildings, floorPaths)));
+      floors.add(Floor(floorStructures, floorGraph(floorStructures, floorPaths)));
     }
 
     // Merge the floor graphs into one
@@ -457,9 +480,9 @@ class School {
     return Route(path.first, path.last, route.directions, Edge(path, null));
   }
 
-  Route locationToRoom(Coordinates location, Room room) {
+  Route locationToRoom(Coordinates location, Interactable interactable) {
     final closestNode = closestIntermediateNode(location);
-    final route = shortestRouteFromIntermediateNode(closestNode, room.entrances);
+    final route = shortestRouteFromIntermediateNode(closestNode, interactable.entrances);
 
     return adjustRouteDisplay(location, route);
   }

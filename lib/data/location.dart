@@ -1,8 +1,8 @@
 import 'dart:async';
 
-import 'package:cwscompass/coordinates.dart';
+import 'package:cwscompass/data/coordinates.dart';
 import 'package:cwscompass/map/canvas.dart';
-import 'package:cwscompass/room.dart';
+import 'package:cwscompass/data/structures/room.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

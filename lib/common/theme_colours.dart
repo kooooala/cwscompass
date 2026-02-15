@@ -1,5 +1,7 @@
 import 'dart:ui';
 
+import 'package:flutter/material.dart';
+
 class ThemeColours {
   static const Color primary = Color(0xFF465D91);
 
@@ -16,4 +18,7 @@ class ThemeColours {
   static const Color divider = Color(0xFFC5C6D0);
 
   static const Color disabled = Color(0xFF757780);
+
+  static const Color maleToilet = Color(0xFF90CAF9);
+  static const Color femaleToilet = Color(0xFFF48FB1);
 }

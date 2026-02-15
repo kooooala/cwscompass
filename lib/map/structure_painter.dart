@@ -1,15 +1,16 @@
-import 'package:cwscompass/structure.dart';
+import 'package:cwscompass/common/capital_extension.dart';
+import 'package:cwscompass/data/structures/room.dart';
+import 'package:cwscompass/data/structures/structure.dart';
+import 'package:cwscompass/data/structures/toilet.dart';
 import 'package:cwscompass/map/school.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:flutter/material.dart';
 
 class StructurePainter extends CustomPainter {
-  final List<Structure> structures;
+  final Iterable<Structure> structures;
   final int floor;
 
-  final bool nameVisible;
-
-  StructurePainter({required this.structures, required this.floor, this.nameVisible = true});
+  StructurePainter({required this.structures, required this.floor});
 
   static Path structureOutline(Structure structure) {
     final vertices = structure.coordinates.map((c) => c.point).toList();

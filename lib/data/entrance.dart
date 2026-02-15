@@ -1,5 +1,5 @@
-import 'package:cwscompass/building.dart';
-import 'package:cwscompass/coordinates.dart';
+import 'package:cwscompass/data/structures/building.dart';
+import 'package:cwscompass/data/coordinates.dart';
 
 class Entrance extends Coordinates {
   final String? label;

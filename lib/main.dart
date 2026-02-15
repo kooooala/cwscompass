@@ -1,7 +1,7 @@
-import 'package:cwscompass/coordinates.dart';
-import 'package:cwscompass/location.dart';
+import 'package:cwscompass/data/coordinates.dart';
+import 'package:cwscompass/data/location.dart';
 import 'package:cwscompass/map/canvas.dart';
-import 'package:cwscompass/map_data.dart';
+import 'package:cwscompass/data/map_data.dart';
 import 'package:cwscompass/widgets/overlays/explore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';

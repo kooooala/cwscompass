@@ -1,19 +1,21 @@
 import 'dart:async';
 import 'dart:math';
 import 'package:cwscompass/common/maths.dart';
+import 'package:cwscompass/data/structures/inaccessible.dart';
+import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/map/debug_painter.dart';
 import 'package:cwscompass/map/staircase_painter.dart';
-import 'package:cwscompass/polygon.dart';
+import 'package:cwscompass/common/polygon.dart';
 import 'package:cwscompass/widgets/overlays/explore.dart';
 import 'package:vector_math/vector_math_64.dart' as vectors;
 
 import 'package:cwscompass/map/label_painter.dart';
 import 'package:cwscompass/map/marker.dart';
 import 'package:cwscompass/map/path_painter.dart';
-import 'package:cwscompass/map/room_painter.dart';
+import 'package:cwscompass/map/structure_painter.dart';
 import 'package:cwscompass/map/school.dart' as school;
-import 'package:cwscompass/map_data.dart';
-import 'package:cwscompass/room.dart';
+import 'package:cwscompass/data/map_data.dart';
+import 'package:cwscompass/data/structures/room.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -175,7 +177,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     }
   }
 
-  void onRoomSelect(Room? _, Room? next) {
+  void onRoomSelect(Interactable? _, Interactable? next) {
     if (next != null) {
       startFocusAnimation(next.centroid, computeZoomScale(next));
     }
@@ -235,7 +237,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
 
   void onTapUp(TapUpDetails details, school.School school) {
     ref.watch(selectedFloorProvider).whenData((selected) {
-      for (final room in school.floors[selected.viewFloor].rooms) {
+      for (final room in school.floors[selected.viewFloor].structures.whereType<Interactable>()) {
         if (room.intersects(Point(details.localPosition.dx, details.localPosition.dy))) {
           if (widget.controller.roomSelectable) {
             ref.read(selectedRoomProvider.notifier).set(room);
@@ -256,7 +258,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     final school = ref.watch(mapDataProvider);
 
     if (widget.controller.focusOnRoomSelect) {
-      ref.listen<Room?>(selectedRoomProvider, onRoomSelect);
+      ref.listen<Interactable?>(selectedRoomProvider, onRoomSelect);
     }
 
     return Center(
@@ -291,17 +293,31 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                                   child: CustomPaint(painter: StructurePainter(
                                     structures: data.school.floors[selected.viewFloor].buildings,
                                     floor: selected.viewFloor,
-                                    nameVisible: false
                                   )),
                                 ),
                                 RepaintBoundary(
-                                  child: CustomPaint(painter: StructurePainter(
-                                    structures: data.school.floors[selected.viewFloor].rooms,
-                                    floor: selected.viewFloor
-                                  )),
+                                    child: CustomPaint(
+                                        painter: StructurePainter(
+                                          structures: data.school.floors[selected.viewFloor].structures.whereType<Interactable>(),
+                                          floor: selected.viewFloor,
+                                        )
+                                    )
                                 ),
                                 RepaintBoundary(
-                                    child: CustomPaint(painter: LabelPainter(data.school, selected.viewFloor))
+                                    child: CustomPaint(
+                                        painter: StructurePainter(
+                                          structures: data.school.floors[selected.viewFloor].inaccessible,
+                                          floor: selected.viewFloor,
+                                        )
+                                    )
+                                ),
+                                RepaintBoundary(
+                                    child: CustomPaint(
+                                        painter: LabelPainter(
+                                            data.school.floors[selected.viewFloor].structures.whereType<Interactable>(),
+                                            selected.viewFloor
+                                        )
+                                    )
                                 ),
                                 ListenableBuilder(
                                     listenable: widget.controller.path,

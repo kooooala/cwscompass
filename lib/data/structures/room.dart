@@ -1,0 +1,18 @@
+import 'dart:ui';
+import 'package:cwscompass/common/capital_extension.dart';
+import 'package:cwscompass/data/structures/structure.dart';
+import 'package:cwscompass/data/entrance.dart';
+import 'package:cwscompass/data/coordinates.dart';
+import 'package:cwscompass/map/school.dart';
+
+class Room extends Interactable<Room> {
+  final String subject;
+  final String? number;
+  final String? label;
+
+  @override
+  MapEntry<String, Room> get searchEntry => MapEntry("room$subject$number$label${Floor.floorString(floor)}", this);
+
+  Room(int floor, Color colour, this.subject, this.number, this.label, List<Entrance> entrances, List<Coordinates> coordinates)
+      : super(floor, colour, coordinates, label ?? "room $number", "${subject.capitalise()} • ${Floor.floorString(floor)}", entrances);
+}

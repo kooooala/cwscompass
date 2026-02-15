@@ -17,7 +17,11 @@
 
 ## Room entrance
 ### Required:
-- room (corresponds to either the room number or name - has to be exact)
+Room type is not toilet: 
+- room (corresponds to either the room number or name - has to be exact) 
+
+Room type is toilet: 
+- room = "_toilet"
 ### Optional: 
 - name
 

@@ -1,5 +1,5 @@
 import 'package:cwscompass/common/theme_colours.dart';
-import 'package:cwscompass/location.dart';
+import 'package:cwscompass/data/location.dart';
 import 'package:cwscompass/map/canvas.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

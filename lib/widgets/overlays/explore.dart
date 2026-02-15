@@ -1,5 +1,6 @@
+import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/map/canvas.dart';
-import 'package:cwscompass/room.dart';
+import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/floor_selector.dart';
 import 'package:cwscompass/widgets/info_sheet.dart';
@@ -7,16 +8,16 @@ import 'package:cwscompass/widgets/search_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final selectedRoomProvider = NotifierProvider<SelectedRoomNotifier, Room?>(SelectedRoomNotifier.new);
+final selectedRoomProvider = NotifierProvider<SelectedRoomNotifier, Interactable?>(SelectedRoomNotifier.new);
 
-class SelectedRoomNotifier extends Notifier<Room?> {
+class SelectedRoomNotifier extends Notifier<Interactable?> {
   @override
-  Room? build() {
+  Interactable? build() {
     // Initial value
     return null;
   }
 
-  void set(Room? room) {
+  void set(Interactable? room) {
     state = room;
 
     if (room != null) {

@@ -1,19 +1,16 @@
 import 'dart:math';
 
 import 'package:cwscompass/common/maths.dart' as maths;
-import 'package:cwscompass/coordinates.dart';
-import 'package:cwscompass/entrance.dart';
-import 'package:cwscompass/polygon.dart';
+import 'package:cwscompass/data/coordinates.dart';
+import 'package:cwscompass/data/entrance.dart';
+import 'package:cwscompass/common/polygon.dart';
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 
-abstract class Structure extends Polygon {
+class Structure extends Polygon {
   final int floor;
 
   final Color colour;
-  final String name;
-
-  final List<Entrance> entrances;
 
   Point<double>? _centroid;
 
@@ -26,7 +23,7 @@ abstract class Structure extends Polygon {
     return _centroid!;
   }
 
-  Structure(this.floor, this.colour, this.name, this.entrances, super.coordinates);
+  Structure(this.floor, this.colour, super.coordinates);
 
   double distanceFrom(Coordinates coordinates, {bool precise = false}) {
     final distanceFunction = precise ? maths.haversineDistance : maths.equirectangularDistance;
@@ -54,4 +51,15 @@ abstract class Structure extends Polygon {
 
     return intersections % 2 == 1;
   }
+}
+
+abstract class Interactable<T extends Structure> extends Structure {
+  final String name;
+  final String description;
+
+  final List<Entrance> entrances;
+
+  MapEntry<String, T> get searchEntry;
+
+  Interactable(super.floor, super.colour, super.coordinates, this.name, this.description, this.entrances);
 }

@@ -1,23 +1,22 @@
 import 'package:cwscompass/common/maths.dart';
-import 'package:cwscompass/coordinates.dart';
-import 'package:cwscompass/location.dart';
+import 'package:cwscompass/data/coordinates.dart';
+import 'package:cwscompass/data/location.dart';
+import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/map/canvas.dart';
-import 'package:cwscompass/map_data.dart';
-import 'package:cwscompass/room.dart';
+import 'package:cwscompass/data/map_data.dart';
 import 'package:cwscompass/widgets/direction_sheet.dart';
 import 'package:cwscompass/widgets/floor_selector.dart';
 import 'package:cwscompass/widgets/overlays/route_preview.dart';
 import 'package:cwscompass/map/school.dart' as school;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 
 class Navigation extends ConsumerStatefulWidget{
   late final MapCanvasController canvasController;
   final school.Route initialRoute;
-  final Room endRoom;
+  final Interactable end;
 
-  Navigation({super.key, required this.initialRoute, required this.endRoom});
+  Navigation({super.key, required this.initialRoute, required this.end});
 
   @override
   ConsumerState<ConsumerStatefulWidget> createState() => _NavigationState();
@@ -74,7 +73,7 @@ class _NavigationState extends ConsumerState<Navigation> {
 
       // Recalculate route if closest node is not in the route
       if (!route.path.coordinates.contains(closestNode)) {
-        final newRoute = data.school.locationToRoom(location, widget.endRoom);
+        final newRoute = data.school.locationToRoom(location, widget.end);
         setState(() => route = newRoute);
         updateDisplayRoute(newRoute);
         debugPrint("Route recalculated");
@@ -105,7 +104,7 @@ class _NavigationState extends ConsumerState<Navigation> {
                 right: 28.0,
                 top: MediaQuery.paddingOf(context).top + 16.0
               ),
-              child: RouteInfo(route: displayRoute, endRoom: widget.endRoom),
+              child: RouteInfo(route: displayRoute, endRoom: widget.end),
             ),
             Align(
               alignment: Alignment.centerRight,
@@ -116,7 +115,7 @@ class _NavigationState extends ConsumerState<Navigation> {
             )
           ],
         ),
-        DirectionSheet(directions: displayRoute.directions, endRoom: widget.endRoom,)
+        DirectionSheet(directions: displayRoute.directions, endRoom: widget.end,)
       ],
     );
   }

@@ -1,10 +1,11 @@
 import 'package:cwscompass/common/capital_extension.dart';
-import 'package:cwscompass/coordinates.dart';
-import 'package:cwscompass/location.dart';
+import 'package:cwscompass/data/coordinates.dart';
+import 'package:cwscompass/data/location.dart';
+import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/map/canvas.dart';
-import 'package:cwscompass/map_data.dart';
-import 'package:cwscompass/polygon.dart';
-import 'package:cwscompass/room.dart';
+import 'package:cwscompass/data/map_data.dart';
+import 'package:cwscompass/common/polygon.dart';
+import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/floor_selector.dart';
 import 'package:cwscompass/widgets/overlays/navigation.dart';
@@ -17,7 +18,7 @@ import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class RoutePreview extends ConsumerStatefulWidget {
-  final Room initialEnd;
+  final Interactable initialEnd;
   late final MapCanvasController canvasController;
   
   RoutePreview({super.key, required this.initialEnd});
@@ -27,8 +28,8 @@ class RoutePreview extends ConsumerStatefulWidget {
 }
 
 class _RoutePreviewState extends ConsumerState<RoutePreview> {
-  Room? start;
-  late Room end;
+  Interactable? start;
+  late Interactable end;
   late school.Route route;
 
   double swapRotation = 0.0;
@@ -244,7 +245,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => Navigation(initialRoute: route, endRoom: end)
+                        builder: (_) => Navigation(initialRoute: route, end: end)
                       )
                     );
                   },
@@ -340,7 +341,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
 
 class RouteInfo extends StatelessWidget {
   final school.Route route;
-  final Room? endRoom;
+  final Interactable? endRoom;
 
   const RouteInfo({super.key, required this.route, required this.endRoom});
 

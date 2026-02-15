@@ -1,11 +1,12 @@
 import 'package:cwscompass/common/capital_extension.dart';
 import 'package:cwscompass/common/maths.dart';
-import 'package:cwscompass/coordinates.dart';
-import 'package:cwscompass/loading.dart';
-import 'package:cwscompass/location.dart';
+import 'package:cwscompass/data/coordinates.dart';
+import 'package:cwscompass/data/structures/structure.dart';
+import 'package:cwscompass/widgets/loading.dart';
+import 'package:cwscompass/data/location.dart';
 import 'package:cwscompass/map/canvas.dart';
-import 'package:cwscompass/map_data.dart';
-import 'package:cwscompass/room.dart';
+import 'package:cwscompass/data/map_data.dart';
+import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/overlays/explore.dart';
 import 'package:cwscompass/widgets/overlays/route_preview.dart';
@@ -38,7 +39,7 @@ class InfoSheetState extends ConsumerState<InfoSheet> {
     );
   }
 
-  void onRoomSelect(Room? previous, Room? next) {
+  void onRoomSelect(Interactable? previous, Interactable? next) {
     final newSize = next == null ? nearbySize : minSize;
     animateSizeChange(newSize);
   }
@@ -57,7 +58,7 @@ class InfoSheetState extends ConsumerState<InfoSheet> {
     final snapSizes = [minSize, nearbySize, maxSize].map((s) => SheetOffset(s)).toList();
     currentSize = nearbySize;
 
-    ref.listen<Room?>(selectedRoomProvider, onRoomSelect);
+    ref.listen<Interactable?>(selectedRoomProvider, onRoomSelect);
 
     return SheetViewport(
       child: Sheet(
@@ -100,8 +101,8 @@ class InfoSheetState extends ConsumerState<InfoSheet> {
                   key: ValueKey(selectedRoom)
                 );
               } else {
-                content = RoomInfo(
-                  room: selectedRoom,
+                content = InteractableInfo(
+                  interactable: selectedRoom,
                   key: ValueKey(selectedRoom)
                 );
               }
@@ -118,18 +119,18 @@ class InfoSheetState extends ConsumerState<InfoSheet> {
   }
 }
 
-class RoomInfo extends StatelessWidget {
-  final Room room;
+class InteractableInfo extends StatelessWidget {
+  final Interactable interactable;
 
-  const RoomInfo({super.key, required this.room});
+  const InteractableInfo({super.key, required this.interactable});
 
   @override
   Widget build(BuildContext context) {
     String floor;
-    if (room.floor == 0) {
+    if (interactable.floor == 0) {
       floor = "G";
     } else {
-      floor = room.floor.toString();
+      floor = interactable.floor.toString();
     }
     floor += "/F";
 
@@ -140,7 +141,7 @@ class RoomInfo extends StatelessWidget {
           children: [
             Expanded(
               child: Text(
-                  room.name.capitalise(),
+                  interactable.name.capitalise(),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
@@ -152,7 +153,7 @@ class RoomInfo extends StatelessWidget {
             ),
             TextButton.icon(
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => RoutePreview(initialEnd: room,)));
+                Navigator.of(context).push(MaterialPageRoute(builder: (context) => RoutePreview(initialEnd: interactable,)));
               },
               style: ButtonStyle(
                 backgroundColor: WidgetStateProperty.resolveWith((_) => ThemeColours.accent),
@@ -174,7 +175,7 @@ class RoomInfo extends StatelessWidget {
           ],
         ),
         Text(
-          "${room.subject.capitalise()} • $floor",
+          interactable.description.capitalise(),
           style: TextStyle(
             color: ThemeColours.lightTextTint,
             fontWeight: FontWeight.w800,

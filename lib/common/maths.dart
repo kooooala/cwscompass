@@ -1,9 +1,8 @@
 import 'dart:math';
 import 'dart:ui';
 
-import 'package:cwscompass/coordinates.dart';
-import 'package:cwscompass/polygon.dart';
-import 'package:vector_math/vector_math.dart';
+import 'package:cwscompass/data/coordinates.dart';
+import 'package:cwscompass/common/polygon.dart';
 
 /// Computes the area of a polygon using the shoelace formula.
 double polygonArea(Polygon polygon) {
