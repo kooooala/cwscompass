@@ -15,7 +15,7 @@ class Coordinates extends Equatable {
   Coordinates(this.floor, this.latitude, this.longitude) : point = coordinatesToPoint(latitude, longitude);
 
   @override
-  List<Object> get props => [latitude, longitude];
+  List<Object> get props => [floor, latitude, longitude];
 
   @override
   String toString() => "($latitude, $longitude)";

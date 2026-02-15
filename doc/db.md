@@ -11,11 +11,20 @@
 ## Rooms
 - room_id: primary key
 - floor: int
-- type: room | building
+- type: room | toilet | area | building | inaccessible
+- toilet_type: toilet type enum
 - colour: int (24 bit integer with 8 bit for each colour channel)
-- subject: nullable string (null if type == building)
-- number: nullable string (null if type == building)
+- subject: nullable string (null if type != classroom)
+- number: nullable string (null if type != classroom)
 - label: nullable string 
+
+### Toilet type
+- -1 - non-toilet structures
+- 0 - male
+- 1 - female
+- 2 - gender_neutral
+- 3 - accessible
+- 4 - staff
 
 ## Room Vertices
 - room_vertex_id: primary key

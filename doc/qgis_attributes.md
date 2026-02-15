@@ -5,6 +5,16 @@
 - number
 - name
 
+## Toilet
+### Required: 
+- type 
+### Toilet type
+- 0 - male
+- 1 - female
+- 2 - gender_neutral
+- 3 - accessible
+- 4 - staff
+
 ## Room entrance
 ### Required:
 - room (corresponds to either the room number or name - has to be exact)
