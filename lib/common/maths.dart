@@ -75,17 +75,28 @@ double pythagoras(Point p1, Point p2) {
   return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2));
 }
 
+Point<double> epsg4326To3857(double latitude, double longitude) {
+  double x = longitude * 20037508.34 / 180;
+  double y = log(tan(((90 + latitude) * pi) / 360)) / (pi / 180);
+  y = y * 20037508.34 / 180;
+
+  return Point(x, y);
+}
+
 Point<double> coordinatesToPoint(double latitude, double longitude) {
-  final topLeft = Point<double>(-1.79278594, 51.55157938);
-  final bottomRight = Point<double>(-1.78508911, 51.54750466);
+  final topLeft = epsg4326To3857(51.55157938, -1.79278594);
+  final bottomRight = epsg4326To3857(51.54750466, -1.78508911);
 
-  final canvasSize = 512;
+  final width = (bottomRight.x - topLeft.x).abs();
+  final height = (topLeft.y - bottomRight.y).abs();
 
-  final width = bottomRight.x - topLeft.x;
-  final height = topLeft.y - bottomRight.y;
+  const canvasSize = 512;
+  final maxAxis = max(width, height);
 
-  final dx = (longitude - topLeft.x) / width * canvasSize;
-  final dy = ((1 - (latitude - bottomRight.y) / height) * canvasSize); // with latitude, positive = up
+  final epsg3857 = epsg4326To3857(latitude, longitude);
+
+  final dx = (epsg3857.x - topLeft.x) / maxAxis * canvasSize;
+  final dy = ((1 - (epsg3857.y - bottomRight.y) / maxAxis) * canvasSize); // with latitude, positive = up
 
   return Point<double>(dx, dy);
 }

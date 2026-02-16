@@ -374,6 +374,10 @@ class School {
     // Get the closest node that is on the same floor as point
     for (final edge in floors[point.floor].graph.simplified[closestNonIntermediate]!) {
       for (final node in edge.coordinates) {
+        if (node.floor != point.floor) {
+          continue;
+        }
+
         final distance = maths.equirectangularDistance(point, node);
         if (distance < minimum) {
           closest = node;
