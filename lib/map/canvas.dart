@@ -253,6 +253,67 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     });
   }
 
+  Widget baseLayer(int floor, school.School school) {
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          CustomPaint(
+            painter: StructurePainter(
+              structures: school.floors[floor].buildings,
+              floor: floor,
+            )
+          ),
+          CustomPaint(
+            painter: StructurePainter(
+              structures: school.floors[floor].structures.whereType<Interactable>(),
+              floor: floor,
+            )
+          ),
+          CustomPaint(
+            painter: StructurePainter(
+              structures: school.floors[floor].inaccessible,
+              floor: floor,
+            )
+          ),
+          CustomPaint(
+            painter: LabelPainter(
+              school.floors[floor].structures.whereType<Interactable>(),
+              floor
+            )
+          ),
+          CustomPaint(painter: StaircasePainter(school, floor, 0.5))
+        ],
+      ),
+    );
+  }
+
+  Widget buildingOverlay(double scale, int floor, school.School school) {
+    final startFade = 4.0, endFade = 7.0;
+    return Opacity(
+      opacity: (1 - (scale.clamp(startFade, endFade) - startFade) / (endFade - startFade)).clamp(0, 0.9),
+      child: ColoredBox(
+          color: Colors.white,
+          child: Stack(
+            children: [
+              CustomPaint(
+                painter: StructurePainter(
+                  structures: school.floors[floor].buildings,
+                  floor: floor,
+                ),
+                size: Size.infinite,
+              ),
+              CustomPaint(
+                painter: LabelPainter(
+                    school.floors[floor].buildings,
+                    floor
+                ),
+              )
+            ],
+          )
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final school = ref.watch(mapDataProvider);
@@ -289,51 +350,26 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                             child: Stack(
                               key: ValueKey(selected.viewFloor),
                               children: [
-                                RepaintBoundary(
-                                  child: CustomPaint(painter: StructurePainter(
-                                    structures: data.school.floors[selected.viewFloor].buildings,
-                                    floor: selected.viewFloor,
-                                  )),
-                                ),
-                                RepaintBoundary(
-                                    child: CustomPaint(
-                                        painter: StructurePainter(
-                                          structures: data.school.floors[selected.viewFloor].structures.whereType<Interactable>(),
-                                          floor: selected.viewFloor,
-                                        )
-                                    )
-                                ),
-                                RepaintBoundary(
-                                    child: CustomPaint(
-                                        painter: StructurePainter(
-                                          structures: data.school.floors[selected.viewFloor].inaccessible,
-                                          floor: selected.viewFloor,
-                                        )
-                                    )
-                                ),
-                                RepaintBoundary(
-                                    child: CustomPaint(
-                                        painter: LabelPainter(
-                                            data.school.floors[selected.viewFloor].structures.whereType<Interactable>(),
-                                            selected.viewFloor
-                                        )
-                                    )
+                                baseLayer(selected.viewFloor, data.school),
+                                ListenableBuilder(
+                                  listenable: widget.controller.transformationController,
+                                  builder: (_, _) => buildingOverlay(widget.controller.transformationController.value.getMaxScaleOnAxis(), selected.viewFloor, data.school)
                                 ),
                                 ListenableBuilder(
-                                    listenable: widget.controller.path,
-                                    builder: (context, _) {
-                                      if (widget.controller.path.value == null) {
-                                        return SizedBox.shrink();
-                                      } else {
-                                        return CustomPaint(painter: PathPainter(
-                                            drawStart: widget.controller.drawStart,
-                                            drawEnd: widget.controller.drawEnd,
-                                            route: widget.controller.path.value!,
-                                            floor: selected.viewFloor,
-                                            transformations: widget.controller.transformationController
-                                        ));
-                                      }
+                                  listenable: widget.controller.path,
+                                  builder: (context, _) {
+                                    if (widget.controller.path.value == null) {
+                                      return SizedBox.shrink();
+                                    } else {
+                                      return CustomPaint(painter: PathPainter(
+                                        drawStart: widget.controller.drawStart,
+                                        drawEnd: widget.controller.drawEnd,
+                                        route: widget.controller.path.value!,
+                                        floor: selected.viewFloor,
+                                        transformations: widget.controller.transformationController
+                                      ));
                                     }
+                                  }
                                 ),
                                 RepaintBoundary(
                                   child: CustomPaint(painter: StaircasePainter(data.school, selected.viewFloor, 0.5)),

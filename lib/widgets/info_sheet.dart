@@ -217,16 +217,16 @@ class NoneSelected extends ConsumerWidget {
         AnimatedSwitcher(
           duration: Duration(milliseconds: 300),
           child: ref.watch(nearbyRoomsProvider).when(
-            data: (nearbyRooms) => RoomList(
+            data: (nearbyRooms) => InteractableList(
               key: ValueKey(nearbyRooms[0].floor),
-              onRoomTap: (room) {
+              onTap: (room) {
                 ref.read(selectedRoomProvider.notifier).set(room);
               },
-              rooms: nearbyRooms,
+              interactables: nearbyRooms,
             ),
-            loading: () => RoomList(
+            loading: () => InteractableList(
               key: ValueKey(0),
-              rooms: [],
+              interactables: [],
             ),
             error: (err, stack) => Text("Oops: $err")
           )

@@ -25,6 +25,7 @@ class LabelPainter extends CustomPainter {
 
       if (structure is Room) {
         label = structure.name.capitalise();
+
         final contrast = maths.contrastRatio(structure.colour, ThemeColours.darkText);
         final colour = contrast > 4.5 ? ThemeColours.darkText : ThemeColours.lightText;
 
@@ -32,6 +33,13 @@ class LabelPainter extends CustomPainter {
           color: colour,
           fontWeight: FontWeight.w500,
           fontSize: 1.0,
+        );
+      } else if (structure is Building) {
+        label = structure.name.capitalise();
+        style = GoogleFonts.nunito(
+          color: ThemeColours.darkText,
+          fontWeight: FontWeight.w700,
+          fontSize: 3.0,
         );
       } else if (structure is Toilet) {
         final icon = Toilet.toiletTypeIcon(structure.type);

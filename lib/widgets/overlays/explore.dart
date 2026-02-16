@@ -72,8 +72,8 @@ class FakeSearchBar extends ConsumerWidget {
       child: GestureDetector(
         onTap: () async {
           final result = await Navigator.of(context).push<SearchResult>(MaterialPageRoute(builder: (context) => SearchPage()));
-          if (result is SearchResultRoom) {
-            ref.read(selectedRoomProvider.notifier).set(result.room);
+          if (result is SearchResultInteractable) {
+            ref.read(selectedRoomProvider.notifier).set(result.interactable);
           }
         },
         child: Hero(

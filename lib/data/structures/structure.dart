@@ -56,10 +56,11 @@ class Structure extends Polygon {
 abstract class Interactable<T extends Structure> extends Structure {
   final String name;
   final String description;
+  final String shortDescription;
 
   final List<Entrance> entrances;
 
   MapEntry<String, T> get searchEntry;
 
-  Interactable(super.floor, super.colour, super.coordinates, this.name, this.description, this.entrances);
+  Interactable(super.floor, super.colour, super.coordinates, this.name, this.description, this.shortDescription, this.entrances);
 }

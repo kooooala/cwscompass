@@ -131,8 +131,8 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                                       case SearchResultDeviceLocation _:
                                         setState(() => start = null);
                                         break;
-                                      case SearchResultRoom r:
-                                        setState(() => start = r.room);
+                                      case SearchResultInteractable r:
+                                        setState(() => start = r.interactable);
                                         break;
                                     }
                                     updateRoute(true);
@@ -187,8 +187,8 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                                     case SearchResultNone _:
                                     case SearchResultDeviceLocation _:
                                       return;
-                                    case SearchResultRoom r:
-                                      setState(() => end = r.room);
+                                    case SearchResultInteractable r:
+                                      setState(() => end = r.interactable);
                                       break;
                                   }
                                   updateRoute(true);

@@ -8,6 +8,7 @@
 ## Toilet
 ### Required: 
 - type 
+- name
 ### Toilet type
 - 0 - male
 - 1 - female
@@ -21,7 +22,7 @@ Room type is not toilet:
 - room (corresponds to either the room number or name - has to be exact) 
 
 Room type is toilet: 
-- room = "_toilet"
+- room = toilet room fid 
 ### Optional: 
 - name
 

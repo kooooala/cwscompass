@@ -10,6 +10,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 void main() async {
   debugPaintSizeEnabled = false;
+  debugRepaintRainbowEnabled = false;
 
   runApp(const ProviderScope(child: MyApp()));
 }

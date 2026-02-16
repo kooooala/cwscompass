@@ -14,5 +14,5 @@ class Room extends Interactable<Room> {
   MapEntry<String, Room> get searchEntry => MapEntry("room$subject$number$label${Floor.floorString(floor)}", this);
 
   Room(int floor, Color colour, this.subject, this.number, this.label, List<Entrance> entrances, List<Coordinates> coordinates)
-      : super(floor, colour, coordinates, label ?? "room $number", "${subject.capitalise()} • ${Floor.floorString(floor)}", entrances);
+      : super(floor, colour, coordinates, label ?? "room $number", "$subject • ${Floor.floorString(floor)}", subject, entrances);
 }

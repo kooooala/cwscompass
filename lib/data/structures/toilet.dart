@@ -17,10 +17,10 @@ class Toilet extends Interactable<Toilet> {
   final ToiletType type;
 
   @override
-  MapEntry<String, Toilet> get searchEntry => MapEntry("toilet${toiletTypeString(type)}${Floor.floorString(floor)}", this);
+  MapEntry<String, Toilet> get searchEntry => MapEntry("toilet$name${toiletTypeString(type)}${Floor.floorString(floor)}", this);
 
   Toilet(int floor, Color colour, List<Coordinates> coordinates, String name, Entrance entrance, this.type)
-      : super(floor, colour, coordinates, name, "${toiletTypeString(type).capitalise()} • ${Floor.floorString(floor)}", [entrance]);
+      : super(floor, colour, coordinates, name, "${toiletTypeString(type)} • ${Floor.floorString(floor)}", toiletTypeString(type), [entrance]);
 
   static IconData toiletTypeIcon(ToiletType type) {
     return switch (type) {

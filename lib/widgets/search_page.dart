@@ -1,3 +1,4 @@
+import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/widgets/loading.dart';
 import 'package:cwscompass/data/location.dart';
 import 'package:cwscompass/map/canvas.dart';
@@ -14,27 +15,27 @@ abstract class SearchResult {}
 
 class SearchResultNone extends SearchResult {}
 class SearchResultDeviceLocation extends SearchResult {}
-class SearchResultRoom extends SearchResult {
-  final Room room;
+class SearchResultInteractable extends SearchResult {
+  final Interactable interactable;
 
-  SearchResultRoom(this.room);
+  SearchResultInteractable(this.interactable);
 }
 
 class SearchPage extends ConsumerWidget {
-  final searchResults = ValueNotifier<List<Room>>([]);
+  final searchResults = ValueNotifier<List<Interactable>>([]);
   final bool myLocationSelectable;
 
   SearchPage({super.key, this.myLocationSelectable = false});
 
-  void search(String query, List<Room> rooms) async {
-    final roomEntries = Map.fromEntries(rooms.map((room) => room.searchEntry));
+  void search(String query, Iterable<Interactable> interactables) async {
+    final roomEntries = Map.fromEntries(interactables.map((i) => i.searchEntry));
     final results = extractAllSorted(
       query: query,
       choices: roomEntries.keys.toList(),
       cutoff: 60,
     );
 
-    searchResults.value = results.map((key) => roomEntries[key.choice]!).toList();
+    searchResults.value = results.map((key) => roomEntries[key.choice]! as Interactable).toList();
   }
 
   @override
@@ -113,7 +114,7 @@ class SearchPage extends ConsumerWidget {
                           size: 32.0,
                           color: ThemeColours.primary)
                       ],
-                      onChanged: (value) => search(value, data.school.floors.map((f) => f.rooms).reduce((a, b) => a + b)),
+                      onChanged: (value) => search(value, data.school.floors.map((f) => f.structures.whereType<Interactable>().toList()).reduce((a, b) => a + b)),
                       backgroundColor: WidgetStateProperty.resolveWith((_) => Colors.white),
                       padding: WidgetStatePropertyAll<EdgeInsets>(EdgeInsets.symmetric(horizontal: 12.0)),
                     )
@@ -141,9 +142,9 @@ class SearchPage extends ConsumerWidget {
                             )
                           ),
                           ref.watch(nearbyRoomsProvider).when(
-                            data: (nearbyRooms) => RoomList(
-                              rooms: value.isNotEmpty ? value : nearbyRooms,
-                              onRoomTap: (room) => Navigator.of(context).pop<SearchResult>(SearchResultRoom(room)),
+                            data: (nearbyRooms) => InteractableList(
+                              interactables: value.isNotEmpty ? value : nearbyRooms,
+                              onTap: (room) => Navigator.of(context).pop<SearchResult>(SearchResultInteractable(room)),
                             ),
                             loading: () => Loading(colour: Colors.white),
                             error: (err, stack) => Text("Oops: $err"),
