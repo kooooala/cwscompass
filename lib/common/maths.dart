@@ -84,8 +84,8 @@ Point<double> epsg4326To3857(double latitude, double longitude) {
 }
 
 Point<double> coordinatesToPoint(double latitude, double longitude) {
-  final topLeft = epsg4326To3857(51.55157938, -1.79278594);
-  final bottomRight = epsg4326To3857(51.54750466, -1.78508911);
+  final topLeft = epsg4326To3857(51.552167, -1.791815);
+  final bottomRight = epsg4326To3857(51.548247, -1.786249);
 
   final width = (bottomRight.x - topLeft.x).abs();
   final height = (topLeft.y - bottomRight.y).abs();

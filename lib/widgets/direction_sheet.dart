@@ -153,15 +153,18 @@ class NextDirectionCard extends ConsumerWidget {
                     child: turnToIcon(direction.turn, ThemeColours.lightText, 28.0)
                 ),
               ),
-              Text(
-                directionToString(direction, endRoom.name),
-                style: TextStyle(
-                    color: ThemeColours.darkText,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 24.0
+              Expanded(
+                child: Text(
+                  directionToString(direction, endRoom.name),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      color: ThemeColours.darkText,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 24.0
+                  ),
                 ),
               ),
-              Spacer(),
               Text(
                 "${direction.distance.round()}m",
                 style: TextStyle(
@@ -205,14 +208,17 @@ class DirectionList extends StatelessWidget {
                 spacing: 8.0,
                 children: [
                   turnToIcon(direction.turn, ThemeColours.accent, 16.0),
-                  Text(
-                    directionToString(direction, endRoom.name),
-                    style: TextStyle(
-                        color: ThemeColours.darkTextTint,
-                        fontSize: 16.0
+                  Expanded(
+                    child: Text(
+                      directionToString(direction, endRoom.name),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          color: ThemeColours.darkTextTint,
+                          fontSize: 16.0
+                      ),
                     ),
                   ),
-                  Spacer(),
                   Text(
                       "${distance.round()}m",
                       style: TextStyle(

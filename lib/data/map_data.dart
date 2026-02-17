@@ -20,6 +20,11 @@ import 'path.dart';
 import 'structures/room.dart';
 
 final mapDataProvider = FutureProvider<MapData>((ref) async {
+  ref.onDispose(() => print("DEBUG: mapDataProvider is being DISPOSED"));
+  ref.onResume(() => print("DEBUG: mapDataProvider RESUMED"));
+
+  ref.keepAlive();
+
   final mapData = MapData("map.db");
   await mapData.load();
 

@@ -42,11 +42,15 @@ class InteractableList extends ConsumerWidget {
                 textBaseline: TextBaseline.alphabetic,
                 spacing: 8.0,
                 children: [
-                  Text(
-                    interactables.isEmpty ? "Loading..." : interactable!.name.capitalise(),
-                    style: TextStyle(
-                        color: ThemeColours.darkText,
-                        fontSize: 18.0
+                  Expanded(
+                    child: Text(
+                        interactables.isEmpty ? "Loading..." : interactable!.name.capitalise(),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                            color: ThemeColours.darkText,
+                            fontSize: 18.0
+                        )
                     )
                   ),
                   Text(
@@ -56,7 +60,6 @@ class InteractableList extends ConsumerWidget {
                         fontSize: 14.0
                     )
                   ),
-                  Spacer(),
                   location.when<Widget>(
                     data: (coordinates) {
                       if (interactables.isNotEmpty) {

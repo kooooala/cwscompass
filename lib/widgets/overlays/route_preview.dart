@@ -367,45 +367,48 @@ class RouteInfo extends StatelessWidget {
                   child: Row(
                     key: ValueKey(route.start.hashCode + route.end.hashCode),
                     children: [
-                      Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                                "To $endName",
-                                style: TextStyle(
-                                    color: ThemeColours.lightText,
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700
-                                )
-                            ),
-                            Row(
-                              crossAxisAlignment: CrossAxisAlignment.baseline,
-                              textBaseline: TextBaseline.alphabetic,
-                              children: [
-                                Text(
-                                  "${travelTimeMin < 1 ? "< 1" : travelTimeMin} min",
+                      Expanded(
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  "To $endName",
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
                                   style: TextStyle(
                                       color: ThemeColours.lightText,
-                                      fontSize: 26.0,
-                                      fontWeight: FontWeight.w900
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w700
+                                  )
+                              ),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.baseline,
+                                textBaseline: TextBaseline.alphabetic,
+                                children: [
+                                  Text(
+                                    "${travelTimeMin < 1 ? "< 1" : travelTimeMin} min",
+                                    style: TextStyle(
+                                        color: ThemeColours.lightText,
+                                        fontSize: 26.0,
+                                        fontWeight: FontWeight.w900
+                                    ),
                                   ),
-                                ),
-                                Padding(
-                                    padding: EdgeInsets.only(left: 8.0),
-                                    child: Text(
-                                        "/ ETA $formattedEta",
-                                        style: TextStyle(
-                                            color: ThemeColours.lightTextTint,
-                                            fontSize: 18.0,
-                                            fontWeight: FontWeight.w600
-                                        )
-                                    )
-                                )
-                              ],
-                            )
-                          ]
+                                  Padding(
+                                      padding: EdgeInsets.only(left: 8.0),
+                                      child: Text(
+                                          "/ ETA $formattedEta",
+                                          style: TextStyle(
+                                              color: ThemeColours.lightTextTint,
+                                              fontSize: 18.0,
+                                              fontWeight: FontWeight.w600
+                                          )
+                                      )
+                                  )
+                                ],
+                              )
+                            ]
+                        )
                       ),
-                      Spacer(),
                       Text(
                         "${route.path.distance.round()}m",
                         style: TextStyle(
