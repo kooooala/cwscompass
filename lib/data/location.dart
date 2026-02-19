@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:cwscompass/data/coordinates.dart';
-import 'package:cwscompass/map/canvas.dart';
+import 'package:cwscompass/widgets/map/canvas.dart';
 import 'package:cwscompass/data/structures/room.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';

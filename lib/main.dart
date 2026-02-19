@@ -1,8 +1,5 @@
-import 'package:cwscompass/data/coordinates.dart';
-import 'package:cwscompass/data/location.dart';
-import 'package:cwscompass/map/canvas.dart';
-import 'package:cwscompass/data/map_data.dart';
-import 'package:cwscompass/widgets/overlays/explore.dart';
+import 'package:cwscompass/widgets/map/canvas.dart';
+import 'package:cwscompass/widgets/pages/explore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -63,7 +60,7 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
         },
         child: Scaffold(
           body: Builder(
-            builder: (context) => ExploreOverlay()
+            builder: (context) => Explore()
           ),
         )
     );

@@ -1,7 +1,7 @@
 import 'dart:math';
 
 import 'package:cwscompass/common/maths.dart' as maths;
-import 'package:cwscompass/map/school.dart' as school;
+import 'package:cwscompass/data/school.dart' as school;
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:flutter/material.dart';
 
@@ -42,27 +42,23 @@ class PathPainter extends CustomPainter {
         continue;
       }
 
+      // Tint the path if it's not on the floor shown on the map
       final isCurrent = path[i + 1].floor == floor && path[i].floor == floor;
       final colour = isCurrent ? ThemeColours.accent : ThemeColours.accent.withAlpha(64);
 
       final magnitude = maths.pythagoras(point1, point2);
-      final count = (magnitude + spillover) ~/ actualBetweenDots;
-
       final angle = atan2(point2.y - point1.y, point2.x - point1.x);
 
-      for (var j = 0; j <= count; j++) {
-        final x = spillover * cos(angle) + (point2.x - point1.x) * (actualBetweenDots / magnitude) * j + point1.x;
-        final y = spillover * sin(angle) + (point2.y - point1.y) * (actualBetweenDots / magnitude) * j + point1.y;
-
-        // FIXME I have no idea why this is needed
-        if (maths.pythagoras(point1, Point(x, y)) > magnitude) {
-          break;
-        }
+      double distanceSoFar = spillover;
+      while (distanceSoFar < magnitude) {
+        final x = point1.x + distanceSoFar * cos(angle);
+        final y = point1.y + distanceSoFar * sin(angle);
+        distanceSoFar += actualBetweenDots;
 
         canvas.drawCircle(Offset(x, y), 5 / scale, Paint()..color = colour);
       }
 
-      spillover = actualBetweenDots - ((magnitude - spillover) % actualBetweenDots);
+      spillover = distanceSoFar - magnitude;
     }
 
     if (drawStart) {

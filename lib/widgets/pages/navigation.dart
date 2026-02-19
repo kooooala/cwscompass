@@ -2,12 +2,12 @@ import 'package:cwscompass/common/maths.dart';
 import 'package:cwscompass/data/coordinates.dart';
 import 'package:cwscompass/data/location.dart';
 import 'package:cwscompass/data/structures/structure.dart';
-import 'package:cwscompass/map/canvas.dart';
+import 'package:cwscompass/widgets/map/canvas.dart';
 import 'package:cwscompass/data/map_data.dart';
 import 'package:cwscompass/widgets/direction_sheet.dart';
 import 'package:cwscompass/widgets/floor_selector.dart';
-import 'package:cwscompass/widgets/overlays/route_preview.dart';
-import 'package:cwscompass/map/school.dart' as school;
+import 'package:cwscompass/widgets/pages/route_preview.dart';
+import 'package:cwscompass/data/school.dart' as school;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 

@@ -1,4 +1,4 @@
-import 'package:cwscompass/map/school.dart';
+import 'package:cwscompass/data/school.dart';
 import 'package:flutter/material.dart';
 
 class DebugPainter extends CustomPainter {
@@ -12,6 +12,7 @@ class DebugPainter extends CustomPainter {
     final nodes = school.graph.simplified.keys.where((c) => c.floor == floor);
 
     for (final node in nodes) {
+      canvas.drawCircle(Offset(node.point.x, node.point.y), 1, Paint()..color = Colors.yellow);
       for (final edge in school.graph.simplified[node]!) {
         for (int i = 0; i < edge.coordinates.length - 1; i++) {
           final point1 = edge.coordinates[i].point;

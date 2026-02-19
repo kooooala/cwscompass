@@ -1,5 +1,5 @@
 import 'package:cwscompass/data/structures/structure.dart';
-import 'package:cwscompass/map/canvas.dart';
+import 'package:cwscompass/widgets/map/canvas.dart';
 import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/floor_selector.dart';
@@ -26,8 +26,8 @@ class SelectedRoomNotifier extends Notifier<Interactable?> {
   }
 }
 
-class ExploreOverlay extends ConsumerWidget {
-  const ExploreOverlay({super.key});
+class Explore extends ConsumerWidget {
+  const Explore({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

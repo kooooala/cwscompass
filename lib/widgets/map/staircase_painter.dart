@@ -1,4 +1,4 @@
-import 'package:cwscompass/map/school.dart';
+import 'package:cwscompass/data/school.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/data/staircase.dart';
 import 'package:flutter/material.dart';

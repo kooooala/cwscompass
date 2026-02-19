@@ -1,7 +1,7 @@
 import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/widgets/loading.dart';
 import 'package:cwscompass/data/location.dart';
-import 'package:cwscompass/map/canvas.dart';
+import 'package:cwscompass/widgets/map/canvas.dart';
 import 'package:cwscompass/data/map_data.dart';
 import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';

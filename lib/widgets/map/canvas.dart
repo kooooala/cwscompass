@@ -3,17 +3,17 @@ import 'dart:math';
 import 'package:cwscompass/common/maths.dart';
 import 'package:cwscompass/data/structures/inaccessible.dart';
 import 'package:cwscompass/data/structures/structure.dart';
-import 'package:cwscompass/map/debug_painter.dart';
-import 'package:cwscompass/map/staircase_painter.dart';
+import 'package:cwscompass/widgets/map/debug_painter.dart';
+import 'package:cwscompass/widgets/map/staircase_painter.dart';
 import 'package:cwscompass/common/polygon.dart';
-import 'package:cwscompass/widgets/overlays/explore.dart';
+import 'package:cwscompass/widgets/pages/explore.dart';
 import 'package:vector_math/vector_math_64.dart' as vectors;
 
-import 'package:cwscompass/map/label_painter.dart';
-import 'package:cwscompass/map/marker.dart';
-import 'package:cwscompass/map/path_painter.dart';
-import 'package:cwscompass/map/structure_painter.dart';
-import 'package:cwscompass/map/school.dart' as school;
+import 'package:cwscompass/widgets/map/label_painter.dart';
+import 'package:cwscompass/widgets/map/marker.dart';
+import 'package:cwscompass/widgets/map/path_painter.dart';
+import 'package:cwscompass/widgets/map/structure_painter.dart';
+import 'package:cwscompass/data/school.dart' as school;
 import 'package:cwscompass/data/map_data.dart';
 import 'package:cwscompass/data/structures/room.dart';
 import 'package:flutter/material.dart';
@@ -188,9 +188,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
       cancelAnimation();
     }
 
-    if (scale >= widget.controller.maxAnimationScale) {
-      scale = widget.controller.maxAnimationScale;
-    }
+    scale = scale.clamp(1.0, widget.controller.maxAnimationScale);
 
     final x = -focus.x * scale + widget.width / 2;
     final y = -focus.y * scale + widget.height / 2 - widget.controller.focusYOffset;
@@ -377,9 +375,9 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                               ],
                             )
                           ),
-                          //RepaintBoundary(
-                          //  child: CustomPaint(painter: DebugPainter(data.school, selected.viewFloor)),
-                          //),
+                          RepaintBoundary(
+                            child: CustomPaint(painter: DebugPainter(data.school, selected.viewFloor)),
+                          ),
                           Marker(2, data.school),
                         ],
                       );

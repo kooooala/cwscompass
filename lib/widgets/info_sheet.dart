@@ -4,12 +4,12 @@ import 'package:cwscompass/data/coordinates.dart';
 import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/widgets/loading.dart';
 import 'package:cwscompass/data/location.dart';
-import 'package:cwscompass/map/canvas.dart';
+import 'package:cwscompass/widgets/map/canvas.dart';
 import 'package:cwscompass/data/map_data.dart';
 import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';
-import 'package:cwscompass/widgets/overlays/explore.dart';
-import 'package:cwscompass/widgets/overlays/route_preview.dart';
+import 'package:cwscompass/widgets/pages/explore.dart';
+import 'package:cwscompass/widgets/pages/route_preview.dart';
 import 'package:cwscompass/widgets/room_list.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -126,14 +126,6 @@ class InteractableInfo extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String floor;
-    if (interactable.floor == 0) {
-      floor = "G";
-    } else {
-      floor = interactable.floor.toString();
-    }
-    floor += "/F";
-
     return ListView(
       padding: EdgeInsets.zero,
       children: [

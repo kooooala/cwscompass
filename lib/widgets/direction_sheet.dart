@@ -1,7 +1,7 @@
 import 'package:cwscompass/common/capital_extension.dart';
 import 'package:cwscompass/data/entrance.dart';
 import 'package:cwscompass/data/structures/structure.dart';
-import 'package:cwscompass/map/school.dart';
+import 'package:cwscompass/data/school.dart';
 import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/floor_selector.dart';
@@ -71,6 +71,7 @@ class DirectionSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final height = MediaQuery.of(context).size.height;
+    final bottomPadding = MediaQuery.paddingOf(context).bottom;
     final maxSize = (height - MediaQuery.paddingOf(context).top) / height;
 
     return SheetViewport(
@@ -93,12 +94,14 @@ class DirectionSheet extends StatelessWidget {
                     damping: 100
                 )
             ),
+
             child: GestureDetector(
                 onTap: () {
                 },
-                child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 24.0),
-                    child: Column(
+                child: ListView(
+                  padding: EdgeInsets.only(left: 24.0, right: 24.0, top: 24.0, bottom: 64.0 + bottomPadding),
+                  children: [
+                    Column(
                         spacing: 8.0,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -114,13 +117,13 @@ class DirectionSheet extends StatelessWidget {
                               ? NextDirectionCard(direction: directions.first, endRoom: endRoom,)
                               : SizedBox.shrink(),
                           Padding(
-                            padding: EdgeInsets.only(top: 8.0),
-                            child: directions.length > 1
-                                ? DirectionList(directions: directions, endRoom: endRoom,)
-                                : SizedBox.shrink()
+                              padding: EdgeInsets.only(top: 8.0),
+                              child: directions.length > 1
+                                  ? DirectionList(directions: directions, endRoom: endRoom,)
+                                  : SizedBox.shrink()
                           )
                         ]
-                    )
+                    )],
                 )
             )
         )

@@ -4,6 +4,14 @@ extension CapitalExtension on String {
       return this;
     }
 
-    return this[0].toUpperCase() + this.substring(1);
+    final capitalised = this.split(' ').map((s) {
+      if (s.length == 1) {
+        return s;
+      }
+
+      return s[0].toUpperCase() + s.substring(1);
+    });
+
+    return capitalised.join(' ');
   }
 }

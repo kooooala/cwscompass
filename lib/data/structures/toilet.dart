@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:cwscompass/common/capital_extension.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/data/entrance.dart';
-import 'package:cwscompass/map/school.dart';
+import 'package:cwscompass/data/school.dart';
 import 'package:cwscompass/data/coordinates.dart';
 import 'package:cwscompass/data/structures/structure.dart';
 import 'package:flutter/material.dart';

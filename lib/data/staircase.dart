@@ -1,4 +1,4 @@
-import 'package:cwscompass/map/school.dart';
+import 'package:cwscompass/data/school.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'coordinates.dart';
