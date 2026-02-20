@@ -20,9 +20,6 @@ import 'path.dart';
 import 'structures/room.dart';
 
 final mapDataProvider = FutureProvider<MapData>((ref) async {
-  ref.onDispose(() => print("DEBUG: mapDataProvider is being DISPOSED"));
-  ref.onResume(() => print("DEBUG: mapDataProvider RESUMED"));
-
   ref.keepAlive();
 
   final mapData = MapData("map.db");
@@ -58,16 +55,16 @@ class MapData {
   }
   
   Future<Structure> parseStructure(Map<String, Object?> structureData) async {
-    final structureId = structureData["room_id"] as int;
+    final structureId = structureData["structure_id"] as int;
 
     final floor = structureData["floor"] as int;
     
     final colourHex = structureData["colour"] as int;
     final colour = Color.fromARGB(0xFF, colourHex >> 16, (colourHex >> 8) & 0xFF, colourHex & 0xFF);
 
-    final vertices = await _database.query("room_vertices",
+    final vertices = await _database.query("structure_vertices",
       columns: ["coordinates"],
-      where: "room = ?",
+      where: "structure = ?",
       whereArgs: [structureId],
       orderBy: "sequence"
     );
@@ -76,9 +73,9 @@ class MapData {
   }
 
   Future<List<Entrance>> parseEntrances(int structureId, String structureLabel) async {
-    final entranceData = await _database.query("room_entrances",
+    final entranceData = await _database.query("entrances",
         columns: ["label", "coordinates"],
-        where: "room = ?",
+        where: "structure = ?",
         whereArgs: [structureId]
     );
     final entrances = await Future.wait(entranceData.map((entrance) async {
@@ -91,7 +88,7 @@ class MapData {
   }
   
   Future<Room> parseRoom(Map<String, Object?> roomData) async {
-    final structureId = roomData["room_id"] as int;
+    final structureId = roomData["structure_id"] as int;
     final structure = await parseStructure(roomData);
 
     final number = roomData["number"] as String;
@@ -111,7 +108,7 @@ class MapData {
   }
 
   Future<Toilet> parseToilet(Map<String, Object?> toiletData) async {
-    final structureId = toiletData["room_id"] as int;
+    final structureId = toiletData["structure_id"] as int;
     final structure = await parseStructure(toiletData);
 
     final type = switch (toiletData["toilet_type"] as String) {
@@ -138,7 +135,7 @@ class MapData {
   }
 
   Future<Building> parseBuilding(Map<String, Object?> buildingData) async {
-    final structureId = buildingData["room_id"] as int;
+    final structureId = buildingData["structure_id"] as int;
     final structure = await parseStructure(buildingData);
 
     final label = buildingData["label"] as String;
@@ -155,7 +152,7 @@ class MapData {
   }
 
   Future<List<Structure>> parseStructures() async {
-    final results = await _database.query("rooms");
+    final results = await _database.query("structures");
 
     List<Structure> structures = [];
     for (final row in results) {
