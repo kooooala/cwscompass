@@ -41,15 +41,19 @@ class Edge {
   final List<Coordinates> coordinates;
   late final double distance;
 
-  Edge(this.coordinates, double? distance) {
-    this.distance = distance ?? calculateDistance();
+  Edge(this.coordinates) {
+    distance = calculateDistance();
   }
 
   double calculateDistance() {
     double result = 0;
     for (int i = 0; i < coordinates.length - 1; i++) {
-      if (coordinates[i].latitude == coordinates[i + 1].latitude && coordinates[i].longitude == coordinates[i + 1].longitude) {
+      if (coordinates[i] == coordinates[i + 1]) {
         continue;
+      }
+
+      if (coordinates[i].floor != coordinates[i + 1].floor) {
+        result += Staircase.cost;
       }
       result += maths.equirectangularDistance(coordinates[i], coordinates[i + 1]);
     }
@@ -60,7 +64,7 @@ class Edge {
 class EdgeWithLabel extends Edge {
   final String? label;
 
-  EdgeWithLabel(super.coordinates, super.distance, this.label);
+  EdgeWithLabel(super.coordinates, this.label);
 }
 
 class Graph {
@@ -143,7 +147,7 @@ class School {
         visited.add([edgeNodes.last, edgeNodes[edgeNodes.length - 2]]);
 
         // Add the 'collapsed' path to our adjacency list
-        final edge = EdgeWithLabel(edgeNodes, null, child.$2);
+        final edge = EdgeWithLabel(edgeNodes, child.$2);
 
         if (edge.coordinates.length > 2) {
           for (final intermediateNode in edge.coordinates.sublist(
@@ -270,6 +274,43 @@ class School {
     }
   }
 
+  static double heuristic(Coordinates c1, Coordinates c2) {
+    // An additional cost is added to the distance for each floor change to make
+    // sure the route finding won't get stuck exploring just one floor
+    final floorChange = (c1.floor - c2.floor).abs();
+    return maths.equirectangularDistance(c1, c2) + floorChange * Staircase.cost;
+  }
+
+  Route reconstruct(Map<Coordinates, Coordinates?> cameFrom, Coordinates start, Coordinates end) {
+    Coordinates current = end;
+    Coordinates? previous, next;
+    final route = <Coordinates>[];
+    List<Direction> directions = [Direction(Turn.destination, null, end, 0)];
+    double distanceToNextJunction = 0;
+    while (current != start) {
+      if (previous != null) {
+        distanceToNextJunction += maths.equirectangularDistance(current, previous);
+      }
+      route.add(current);
+
+      // Add direction if current is a junction
+      if (graph.simplified.containsKey(current) && previous != null && next != null) {
+        if (graph.simplified[current]!.where((e) => e.coordinates.any((c) => c is Entrance)).isEmpty) {
+          directions.first.distance = distanceToNextJunction;
+          directions.insert(0, getDirection(previous, current, next));
+          distanceToNextJunction = 0;
+        }
+      }
+
+      previous = current;
+      current = cameFrom[current]!;
+      next = cameFrom[current];
+    }
+    route.add(start);
+
+    return Route(start, end, directions, Edge(route.reversed.toList()));
+  }
+
   Route shortestRoute(Coordinates start, Coordinates end) {
     // Use A* search algorithm to find the shortest route between two points;
     // implementation based on https://theory.stanford.edu/~amitp/GameProgramming/ImplementationNotes.html
@@ -292,8 +333,7 @@ class School {
         final next = nextEdge.coordinates.first == current ? nextEdge.coordinates.last : nextEdge.coordinates.first;
         if (!costSoFar.keys.contains(next) || newCost < costSoFar[next]!) {
           costSoFar[next] = newCost;
-          // Use the distance from the end node as the heuristic function
-          final priority = newCost + maths.equirectangularDistance(next, end);
+          final priority = newCost + heuristic(next, end);
           frontier.add((next, priority));
 
           // Since an edge is made up of smaller intermediate edges, they will
@@ -309,37 +349,7 @@ class School {
       }
     }
 
-    // Reconstruct shortest route
-    Coordinates current = end;
-    Coordinates? previous, next;
-    final route = <Coordinates>[];
-    List<Direction> directions = [Direction(Turn.destination, null, end, 0)];
-    double distanceToNextJunction = 0;
-    while (current != start) {
-      if (previous != null) {
-        distanceToNextJunction += maths.equirectangularDistance(current, previous);
-      }
-      route.add(current);
-
-      // Add direction if current is a junction
-      if (graph.simplified.containsKey(current) && previous != null && next != null) {
-        if (graph.simplified[current]!.where((e) => e.coordinates.any((c) => c is Entrance)).isEmpty) {
-          directions.first.distance = distanceToNextJunction;
-          directions.insert(0, getDirection(previous, current, next));
-          distanceToNextJunction = 0;
-        }
-      }
-
-      previous = current;
-      if (cameFrom[current] == null) {
-        int i = 0;
-      }
-      current = cameFrom[current]!;
-      next = cameFrom[current];
-    }
-    route.add(start);
-
-    return Route(start, end, directions.toList(), Edge(route.reversed.toList(), null));
+    return reconstruct(cameFrom, start, end);
   }
 
   Coordinates closestNode(Coordinates point) {
@@ -424,10 +434,10 @@ class School {
       final edge = graph.intermediateNodeEdge[start]!.coordinates;
 
       final route1 = shortestRoutePairing([edge.first], endNodes);
-      final distance1 = route1.path.distance + Edge(intermediateToRegular(start, route1.start), null).distance;
+      final distance1 = route1.path.distance + Edge(intermediateToRegular(start, route1.start)).distance;
 
       final route2 = shortestRoutePairing([edge.last], endNodes);
-      final distance2 = route2.path.distance + Edge(intermediateToRegular(start, route2.start), null).distance;
+      final distance2 = route2.path.distance + Edge(intermediateToRegular(start, route2.start)).distance;
 
       if (distance1 < distance2) {
         shortestRoute = route1;
@@ -443,7 +453,7 @@ class School {
       fullPath = intermediateToRegular(start, shortestRoute.start) + fullPath.sublist(1);
     }
 
-    return Route(start, shortestRoute.end, shortestRoute.directions, Edge(fullPath, null));
+    return Route(start, shortestRoute.end, shortestRoute.directions, Edge(fullPath));
   }
 
   Route adjustRouteDisplay(Coordinates location, Route route) {
@@ -481,7 +491,7 @@ class School {
     }
 
     final path = [location] + coordinates.sublist(lastDisplayNodeIndex, coordinates.length);
-    return Route(path.first, path.last, route.directions, Edge(path, null));
+    return Route(path.first, path.last, route.directions, Edge(path));
   }
 
   Route locationToRoom(Coordinates location, Interactable interactable) {

@@ -10,8 +10,10 @@ class Landing extends Coordinates {
 }
 
 class Staircase extends EdgeWithLabel {
+  static double cost = 10.0;
+
   Staircase(List<Coordinates> coordinates, String? label)
-      : super(coordinates, 10, label);
+      : super(coordinates, label);
 
   static Future<List<int>> getStaircaseList(Database db) async {
     final queryResults = await db.query("staircases", columns: ["staircase_id"]);
