@@ -47,11 +47,11 @@ class _NavigationState extends ConsumerState<Navigation> {
         return;
       }
 
-      double firstDistance = equirectangularDistance(location, displayRoute.path.coordinates[1]);
+      double firstDistance = fastDistance(location, displayRoute.path.coordinates[1]);
       Coordinates node = displayRoute.path.coordinates[1];
       int i = 1;
       while (node != displayRoute.directions.first.coordinates) {
-        firstDistance += equirectangularDistance(displayRoute.path.coordinates[i], displayRoute.path.coordinates[i + 1]);
+        firstDistance += fastDistance(displayRoute.path.coordinates[i], displayRoute.path.coordinates[i + 1]);
         node = displayRoute.path.coordinates[i + 1];
         i++;
       }
@@ -73,7 +73,7 @@ class _NavigationState extends ConsumerState<Navigation> {
 
       // Recalculate route if closest node is not in the route
       if (!route.path.coordinates.contains(closestNode)) {
-        final newRoute = data.school.locationToRoom(location, widget.end);
+        final newRoute = data.school.locationToInteractable(location, widget.end);
         setState(() => route = newRoute);
         updateDisplayRoute(newRoute);
         debugPrint("Route recalculated");

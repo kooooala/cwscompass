@@ -15,7 +15,6 @@ import 'package:cwscompass/widgets/map/path_painter.dart';
 import 'package:cwscompass/widgets/map/structure_painter.dart';
 import 'package:cwscompass/data/school.dart' as school;
 import 'package:cwscompass/data/map_data.dart';
-import 'package:cwscompass/data/structures/room.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -275,8 +274,8 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
           ),
           CustomPaint(
             painter: LabelPainter(
-              school.floors[floor].structures.whereType<Interactable>(),
-              floor
+              structures: school.floors[floor].structures.whereType<Interactable>(),
+              floor: floor
             )
           ),
           CustomPaint(painter: StaircasePainter(school, floor, 0.5))
@@ -302,8 +301,8 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
               ),
               CustomPaint(
                 painter: LabelPainter(
-                    school.floors[floor].buildings,
-                    floor
+                  structures: school.floors[floor].buildings,
+                  floor: floor
                 ),
               )
             ],
@@ -332,6 +331,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
             },
             minScale: 1,
             maxScale: 64,
+            boundaryMargin: EdgeInsets.symmetric(horizontal: widget.width / 2, vertical: widget.height / 2),
             child: GestureDetector(
               onTapUp: (details) => onTapUp(details, data.school),
               child: Container(
@@ -351,7 +351,10 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                                 baseLayer(selected.viewFloor, data.school),
                                 ListenableBuilder(
                                   listenable: widget.controller.transformationController,
-                                  builder: (_, _) => buildingOverlay(widget.controller.transformationController.value.getMaxScaleOnAxis(), selected.viewFloor, data.school)
+                                  builder: (_, _) {
+                                    final scale = widget.controller.transformationController.value.getMaxScaleOnAxis();
+                                    return buildingOverlay(scale, selected.viewFloor, data.school);
+                                  }
                                 ),
                                 ListenableBuilder(
                                   listenable: widget.controller.path,
@@ -369,16 +372,12 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                                     }
                                   }
                                 ),
-                                RepaintBoundary(
-                                  child: CustomPaint(painter: StaircasePainter(data.school, selected.viewFloor, 0.5)),
-                                ),
+                                CustomPaint(painter: StaircasePainter(data.school, selected.viewFloor, 0.5)),
                               ],
                             )
                           ),
-                          RepaintBoundary(
-                            child: CustomPaint(painter: DebugPainter(data.school, selected.viewFloor)),
-                          ),
-                          Marker(2, data.school),
+                          //CustomPaint(painter: DebugPainter(data.school, selected.viewFloor)),
+                          Marker(20.0, widget.controller.transformationController, data.school),
                         ],
                       );
                     },

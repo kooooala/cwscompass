@@ -26,30 +26,8 @@ class Structure extends Polygon {
   Structure(this.floor, this.colour, super.coordinates);
 
   double distanceFrom(Coordinates coordinates, {bool precise = false}) {
-    final distanceFunction = precise ? maths.haversineDistance : maths.equirectangularDistance;
+    final distanceFunction = precise ? maths.haversineDistance : maths.fastDistance;
     return distanceFunction(coordinates, maths.pointToCoordinates(centroid, floor));
-  }
-
-  // Check if point is inside polygon by using the ray casting algorithm: https://people.utm.my/shahabuddin/?p=6277
-  bool intersects(Point<double> point) {
-    // Quickly check if point is within bounding box
-    if (point.x < boundingBox.topLeft.x || point.x > boundingBox.bottomRight.x ||
-        point.y < boundingBox.topLeft.y || point.y > boundingBox.bottomRight.y) {
-      return false;
-    }
-
-    int intersections = 0;
-
-    for (int i = 0; i < coordinates.length; i++) {
-      final current = coordinates[i].point;
-      final next = coordinates[(i + 1) % coordinates.length].point;
-
-      if (((current.y > point.y) != (next.y > point.y)) && (point.x < (next.x - current.x) * (point.y - current.y) / (next.y - current.y) + current.x)) {
-        intersections++;
-      }
-    }
-
-    return intersections % 2 == 1;
   }
 }
 

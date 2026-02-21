@@ -128,7 +128,7 @@ class MapData {
       structure.floor,
       structure.colour,
       structure.coordinates,
-      label,
+      label == "None" ? null : label,
       entrance.first, // There should only be one entrance
       type
     );

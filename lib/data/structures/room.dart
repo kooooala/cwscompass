@@ -1,9 +1,8 @@
 import 'dart:ui';
-import 'package:cwscompass/common/capital_extension.dart';
+import 'package:cwscompass/data/floor.dart';
 import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/data/entrance.dart';
 import 'package:cwscompass/data/coordinates.dart';
-import 'package:cwscompass/data/school.dart';
 
 class Room extends Interactable<Room> {
   final String subject;

@@ -26,9 +26,7 @@ class PathPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     double spillover = 0;
     double scale = transformations.value.getMaxScaleOnAxis();
-    //if (scale < 10) {
-    //  scale = 10;
-    //}
+
     final actualBetweenDots = betweenDots / scale;
 
     final path = route.path.coordinates;

@@ -1,3 +1,4 @@
+import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/data/coordinates.dart';
 import 'package:cwscompass/data/location.dart';
 import 'package:cwscompass/widgets/map/canvas.dart';
@@ -5,13 +6,15 @@ import 'package:cwscompass/data/school.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class Marker extends ConsumerWidget {
   final double size;
+  final TransformationController transformations;
 
   final School school;
 
-  const Marker(this.size, this.school, {super.key});
+  const Marker(this.size, this.transformations, this.school, {super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -22,12 +25,42 @@ class Marker extends ConsumerWidget {
             return const SizedBox.shrink();
           }
 
-          final closest = school.closestNode(location);
-          debugPrint("Closest node: ${closest.latitude}, ${closest.longitude}");
           final point = location.point;
-          return Stack(children: [
-            Positioned(top: point.y - size / 2, left: point.x - size / 2, child: Icon(Icons.circle_rounded, color: Colors.blue, size: size,))
-          ]);
+          return ListenableBuilder(
+            listenable: transformations,
+            builder: (_, _) {
+              final scale = transformations.value.getMaxScaleOnAxis();
+              return Positioned(
+                top: point.y,
+                left: point.x,
+                child: FractionalTranslation(
+                  translation: Offset(-0.5, -0.5),
+                  child: Transform.scale(
+                    scale: 1.0 / scale,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        PhysicalModel(
+                          shape: BoxShape.circle,
+                          color: ThemeColours.primary,
+                          elevation: 1.0 / scale,
+                          child: SizedBox(width: size, height: size),
+                        ),
+                        Container(
+                          width: size * 0.6,
+                          height: size * 0.6,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white
+                          ),
+                        )
+                      ]
+                    )
+                  ),
+                ),
+              );
+            }
+          );
         },
         loading: () => const SizedBox.shrink(),
         error: (object, stack) => const SizedBox.shrink(),

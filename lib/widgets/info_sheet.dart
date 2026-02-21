@@ -1,12 +1,7 @@
 import 'package:cwscompass/common/capital_extension.dart';
 import 'package:cwscompass/common/maths.dart';
-import 'package:cwscompass/data/coordinates.dart';
 import 'package:cwscompass/data/structures/structure.dart';
-import 'package:cwscompass/widgets/loading.dart';
 import 'package:cwscompass/data/location.dart';
-import 'package:cwscompass/widgets/map/canvas.dart';
-import 'package:cwscompass/data/map_data.dart';
-import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/pages/explore.dart';
 import 'package:cwscompass/widgets/pages/route_preview.dart';
@@ -119,13 +114,13 @@ class InfoSheetState extends ConsumerState<InfoSheet> {
   }
 }
 
-class InteractableInfo extends StatelessWidget {
+class InteractableInfo extends ConsumerWidget {
   final Interactable interactable;
 
   const InteractableInfo({super.key, required this.interactable});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
@@ -145,7 +140,23 @@ class InteractableInfo extends StatelessWidget {
             ),
             TextButton.icon(
               onPressed: () {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => RoutePreview(initialEnd: interactable,)));
+                ref.read(locationProvider).whenData((location) {
+                  if (!canvasBounds.contains(location.point)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text("You're too far away from the school!"),
+                        behavior: SnackBarBehavior.floating,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(24.0)
+                        ),
+                        margin: EdgeInsets.symmetric(horizontal: 64.0, vertical: 128.0),
+                      )
+                    );
+                    return;
+                  }
+
+                  Navigator.of(context).push(MaterialPageRoute(builder: (context) => RoutePreview(initialEnd: interactable)));
+                });
               },
               style: ButtonStyle(
                 backgroundColor: WidgetStateProperty.resolveWith((_) => ThemeColours.accent),

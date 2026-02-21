@@ -13,7 +13,7 @@ class LabelPainter extends CustomPainter {
   final Iterable<Structure> structures;
   final int floor;
   
-  LabelPainter(this.structures, this.floor);
+  LabelPainter({required this.structures, required this.floor});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -52,6 +52,7 @@ class LabelPainter extends CustomPainter {
           package: icon.fontPackage
         );
       } else {
+        // Unreachable
         continue;
       }
 

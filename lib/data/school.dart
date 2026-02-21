@@ -1,19 +1,18 @@
-import 'dart:io';
 import 'dart:math';
+import 'package:collection/collection.dart';
+import 'package:cwscompass/data/direction.dart';
+import 'package:cwscompass/data/graph.dart';
+import 'package:vector_math/vector_math.dart';
 
+import 'package:cwscompass/data/edge.dart';
+import 'package:cwscompass/data/floor.dart';
 import 'package:cwscompass/data/structures/building.dart';
-import 'package:cwscompass/data/structures/inaccessible.dart';
 import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/data/coordinates.dart';
 import 'package:cwscompass/data/entrance.dart';
-import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/data/path.dart';
-import 'package:cwscompass/common/maths.dart' as maths;
-
-import 'package:collection/collection.dart';
 import 'package:cwscompass/data/staircase.dart';
-import 'package:cwscompass/data/structures/toilet.dart';
-import 'package:vector_math/vector_math.dart';
+import 'package:cwscompass/common/maths.dart' as maths;
 
 class Route {
   final Coordinates start, end;
@@ -21,85 +20,6 @@ class Route {
   final Edge path;
 
   Route(this.start, this.end, this.directions, this.path);
-}
-
-enum Turn {
-  left, right, straight, enterBuilding, exitBuilding, destination, stairsUp, stairsDown
-}
-
-class Direction {
-  final Turn turn;
-  final String? label;
-  final Coordinates coordinates;
-
-  double distance;
-
-  Direction(this.turn, this.label, this.coordinates, this.distance);
-}
-
-class Edge {
-  final List<Coordinates> coordinates;
-  late final double distance;
-
-  Edge(this.coordinates) {
-    distance = calculateDistance();
-  }
-
-  double calculateDistance() {
-    double result = 0;
-    for (int i = 0; i < coordinates.length - 1; i++) {
-      if (coordinates[i] == coordinates[i + 1]) {
-        continue;
-      }
-
-      if (coordinates[i].floor != coordinates[i + 1].floor) {
-        result += Staircase.cost;
-      }
-      result += maths.equirectangularDistance(coordinates[i], coordinates[i + 1]);
-    }
-    return result;
-  }
-}
-
-class EdgeWithLabel extends Edge {
-  final String? label;
-
-  EdgeWithLabel(super.coordinates, this.label);
-}
-
-class Graph {
-  final Map<Coordinates, List<EdgeWithLabel>> simplified;
-  final Map<Coordinates, Edge> intermediateNodeEdge;
-
-  Graph(this.simplified, this.intermediateNodeEdge);
-}
-
-class Floor {
-  final List<Structure> structures;
-  Graph graph;
-
-  final List<Room> rooms;
-  final List<Building> buildings;
-  final List<Inaccessible> inaccessible;
-  final List<Toilet> toilets;
-
-  Floor(this.structures, this.graph)
-      : rooms = structures.whereType<Room>().toList(),
-        buildings = structures.whereType<Building>().toList(),
-        inaccessible = structures.whereType<Inaccessible>().toList(),
-        toilets = structures.whereType<Toilet>().toList();
-
-  static String floorString(int floor) {
-    String result;
-    if (floor == 0) {
-      result = "G";
-    } else {
-      result = floor.toString();
-    }
-    result += "/F";
-
-    return result;
-  }
 }
 
 class School {
@@ -123,7 +43,7 @@ class School {
       final children = fullGraph[junction]!;
 
       for (final child in children) {
-        // Skip over ones we have already traversed
+        // Skip over the ones we've already done
         if (visited.any((edge) =>
             (edge[0] == junction && edge[1] == child.$1) ||
             (edge[1] == junction && edge[0] == child.$1))) {
@@ -172,6 +92,10 @@ class School {
     final interactables = structures.whereType<Interactable>();
 
     Map<Coordinates, List<(Coordinates, String?)>> fullGraph = {};
+
+    // Since building entrances are just points that have the same coordinates
+    // as a path vertex and are stored separately to paths, a dictionary is used
+    // here to map a regular coordinates to a building entrance.
     Map<Coordinates, BuildingEntrance> coordinatesToBuildingEntrance = {};
     for (final building in buildings) {
       for (final entrance in building.entrances) {
@@ -235,17 +159,17 @@ class School {
   }
 
   Direction getDirectionSameFloor(Coordinates previous, Coordinates current, Coordinates next) {
-    final vector1 = Vector2(current.longitude - previous.longitude, current.latitude - previous.latitude);
-    final vector2 = Vector2(next.longitude - current.longitude, next.latitude - current.latitude);
-    final crossProduct = vector1.cross(vector2);
-    final dotProduct = vector1.dot(vector2);
+    final v1 = Vector2(current.longitude - previous.longitude, current.latitude - previous.latitude);
+    final v2 = Vector2(next.longitude - current.longitude, next.latitude - current.latitude);
+    final crossProduct = v1.cross(v2);
+    final dotProduct = v1.dot(v2);
     final angle = atan2(crossProduct, dotProduct);
 
     Turn turn;
-    if (angle < 0 - 0.1 * pi) {
-      turn = Turn.left;
-    } else if (angle > 0 + 0.1 * pi) {
+    if (angle < -0.25 * pi) {
       turn = Turn.right;
+    } else if (angle > 0.25 * pi) {
+      turn = Turn.left;
     } else {
       turn = Turn.straight;
     }
@@ -258,14 +182,14 @@ class School {
   }
 
   Direction getDirectionElevation(Coordinates current, Coordinates next) {
-    final turn = next.floor > current.floor ? Turn.stairsDown : Turn.stairsUp;
+    final turn = next.floor < current.floor ? Turn.stairsDown : Turn.stairsUp;
     final label = staircases.firstWhere((staircase) => staircase.coordinates.contains(current)).label;
     return Direction(turn, label, current, 0);
   }
 
   Direction getDirection(Coordinates previous, Coordinates current, Coordinates next) {
     if (current is BuildingEntrance) {
-      final isEntering = current.building.intersects(previous.point);
+      final isEntering = current.building.intersects(next.point);
       return Direction(isEntering ? Turn.enterBuilding : Turn.exitBuilding, current.building.name, current, 0);
     } else if (current.floor != next.floor) {
       return getDirectionElevation(current, next);
@@ -278,7 +202,7 @@ class School {
     // An additional cost is added to the distance for each floor change to make
     // sure the route finding won't get stuck exploring just one floor
     final floorChange = (c1.floor - c2.floor).abs();
-    return maths.equirectangularDistance(c1, c2) + floorChange * Staircase.cost;
+    return maths.fastDistance(c1, c2) + floorChange * Staircase.cost;
   }
 
   Route reconstruct(Map<Coordinates, Coordinates?> cameFrom, Coordinates start, Coordinates end) {
@@ -289,7 +213,7 @@ class School {
     double distanceToNextJunction = 0;
     while (current != start) {
       if (previous != null) {
-        distanceToNextJunction += maths.equirectangularDistance(current, previous);
+        distanceToNextJunction += maths.fastDistance(current, previous);
       }
       route.add(current);
 
@@ -297,7 +221,7 @@ class School {
       if (graph.simplified.containsKey(current) && previous != null && next != null) {
         if (graph.simplified[current]!.where((e) => e.coordinates.any((c) => c is Entrance)).isEmpty) {
           directions.first.distance = distanceToNextJunction;
-          directions.insert(0, getDirection(previous, current, next));
+          directions.insert(0, getDirection(next, current, previous));
           distanceToNextJunction = 0;
         }
       }
@@ -358,7 +282,7 @@ class School {
 
     // Get the closest node that is on the same floor as point
     for (final node in floors[point.floor].graph.simplified.keys) {
-      final distance = maths.equirectangularDistance(point, node);
+      final distance = maths.fastDistance(point, node);
       if (distance < minimum) {
         closest = node;
         minimum = distance;
@@ -378,7 +302,7 @@ class School {
     }
 
 
-    double minimum = maths.equirectangularDistance(point, closestNonIntermediate);
+    double minimum = maths.fastDistance(point, closestNonIntermediate);
     Coordinates closest = closestNonIntermediate;
 
     // Get the closest node that is on the same floor as point
@@ -388,7 +312,7 @@ class School {
           continue;
         }
 
-        final distance = maths.equirectangularDistance(point, node);
+        final distance = maths.fastDistance(point, node);
         if (distance < minimum) {
           closest = node;
           minimum = distance;
@@ -457,44 +381,44 @@ class School {
   }
 
   Route adjustRouteDisplay(Coordinates location, Route route) {
-    final closestNode = closestIntermediateNode(location);
+    final closest = closestIntermediateNode(location);
 
     final coordinates = route.path.coordinates;
-    final closestNodeIndex = coordinates.indexOf(closestNode);
+    final closestIndex = coordinates.indexOf(closest);
 
     double nextDistanceProportion;
-    if (closestNode == coordinates.last) {
+    if (closest == coordinates.last) {
       nextDistanceProportion = 0;
     } else {
-      nextDistanceProportion = maths.equirectangularDistance(location, coordinates[closestNodeIndex + 1])
-          / maths.equirectangularDistance(closestNode, coordinates[closestNodeIndex + 1]);
+      nextDistanceProportion = maths.fastDistance(location, coordinates[closestIndex + 1])
+          / maths.fastDistance(closest, coordinates[closestIndex + 1]);
     }
 
     double previousDistanceProportion;
-    if (closestNode == coordinates.first) {
-      if (maths.equirectangularDistance(location, coordinates[1]) > maths.equirectangularDistance(coordinates.first, coordinates[1])) {
+    if (closest == coordinates.first) {
+      if (maths.fastDistance(location, coordinates[1]) > maths.fastDistance(coordinates.first, coordinates[1])) {
         previousDistanceProportion = 0;
       } else {
         previousDistanceProportion = double.infinity;
       }
     } else {
-      previousDistanceProportion = maths.equirectangularDistance(location, coordinates[closestNodeIndex - 1])
-          / maths.equirectangularDistance(closestNode, coordinates[closestNodeIndex - 1]);
+      previousDistanceProportion = maths.fastDistance(location, coordinates[closestIndex - 1])
+          / maths.fastDistance(closest, coordinates[closestIndex - 1]);
     }
 
-    int lastDisplayNodeIndex;
+    int lastDisplayedIndex;
     // Only adjust if the new node and the location are on the same floor
-    if (previousDistanceProportion > nextDistanceProportion && coordinates[closestNodeIndex + 1].floor == location.floor) {
-      lastDisplayNodeIndex = closestNodeIndex + 1;
+    if (previousDistanceProportion > nextDistanceProportion && coordinates[closestIndex + 1].floor == location.floor) {
+      lastDisplayedIndex = closestIndex + 1;
     } else {
-      lastDisplayNodeIndex = closestNodeIndex;
+      lastDisplayedIndex = closestIndex;
     }
 
-    final path = [location] + coordinates.sublist(lastDisplayNodeIndex, coordinates.length);
+    final path = [location] + coordinates.sublist(lastDisplayedIndex, coordinates.length);
     return Route(path.first, path.last, route.directions, Edge(path));
   }
 
-  Route locationToRoom(Coordinates location, Interactable interactable) {
+  Route locationToInteractable(Coordinates location, Interactable interactable) {
     final closestNode = closestIntermediateNode(location);
     final route = shortestRouteFromIntermediateNode(closestNode, interactable.entrances);
 

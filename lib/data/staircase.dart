@@ -1,3 +1,4 @@
+import 'package:cwscompass/data/edge.dart';
 import 'package:cwscompass/data/school.dart';
 import 'package:sqflite/sqflite.dart';
 

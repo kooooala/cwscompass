@@ -40,9 +40,9 @@ class Explore extends ConsumerWidget {
     return Stack(
       children: [
         MapCanvas(
-            width: MediaQuery.sizeOf(context).width,
-            height: MediaQuery.sizeOf(context).height,
-            controller: canvasController
+          width: MediaQuery.sizeOf(context).width,
+          height: MediaQuery.sizeOf(context).height,
+          controller: canvasController
         ),
         Column(
           children: [
