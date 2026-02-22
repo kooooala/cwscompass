@@ -144,7 +144,7 @@ class InteractableInfo extends ConsumerWidget {
                   if (!canvasBounds.contains(location.point)) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: const Text("You're too far away from the school!"),
+                        content: const Text("Device too far away from the school!"),
                         behavior: SnackBarBehavior.floating,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24.0)
@@ -219,7 +219,7 @@ class NoneSelected extends ConsumerWidget {
         ),
         AnimatedSwitcher(
           duration: Duration(milliseconds: 300),
-          child: ref.watch(nearbyRoomsProvider).when(
+          child: ref.watch(nearbyInteractablesProvider).when(
             data: (nearbyRooms) => InteractableList(
               key: ValueKey(nearbyRooms[0].floor),
               onTap: (room) {

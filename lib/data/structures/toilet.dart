@@ -44,6 +44,7 @@ class Toilet extends Interactable<Toilet> {
 
   static String toiletTypeString(ToiletType type) {
     if (type == ToiletType.genderNeutral) {
+      // We can't just return type.name since it's two words
       return "gender neutral";
     } else {
       return type.name;

@@ -4,6 +4,7 @@ import 'dart:math';
 
 import 'package:sqflite/sqflite.dart';
 
+// Coordinates inherits from Equatable which allows class instances to be compared with the == operator
 class Coordinates extends Equatable {
   final int floor;
 
@@ -14,7 +15,7 @@ class Coordinates extends Equatable {
 
   Coordinates(this.floor, this.latitude, this.longitude) : point = coordinatesToPoint(latitude, longitude);
 
-
+  // These are the fields Equatable use to compare instances, if all of them are equal the instances are considered equal
   @override
   List<Object> get props => [floor, latitude, longitude];
 

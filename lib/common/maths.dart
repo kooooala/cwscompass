@@ -5,7 +5,7 @@ import 'package:cwscompass/common/bounding_box.dart';
 import 'package:cwscompass/data/coordinates.dart';
 import 'package:cwscompass/common/polygon.dart';
 
-/// Computes the area of a polygon using the shoelace formula.
+/// Computes the area of a polygon using the shoelace formula: https://en.wikipedia.org/wiki/Shoelace_formula
 double polygonArea(Polygon polygon) {
   final vertices = polygon.coordinates.map((c) => c.point).toList();
   double sum = 0;
@@ -33,14 +33,14 @@ Point<double> centroid(Polygon polygon) {
   return Point<double>(x, y);
 }
 
-/// Computes the arithmetic mean of the vertices of [polygon]
+/// Computes the arithmetic mean of the vertices of a polygon
 Point<double> average(Polygon polygon) {
   final xMean = polygon.coordinates.map((v) => v.point.x).reduce((a, b) => a + b) / polygon.coordinates.length;
   final yMean = polygon.coordinates.map((v) => v.point.y).reduce((a, b) => a + b) / polygon.coordinates.length;
   return Point(xMean, yMean);
 }
 
-/// Computes the contrast ratio between [c1] and [c2] using WCAG's contrast ratio guidelines: https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html#key-terms
+/// Computes the contrast ratio between c1 and c2 using WCAG's contrast ratio guidelines: https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html#key-terms
 double contrastRatio(Color c1, Color c2) {
   return (c1.computeLuminance() + 0.05) / (c2.computeLuminance() + 0.05);
 }
@@ -87,6 +87,7 @@ Point<double> epsg4326To3857(double latitude, double longitude) {
 }
 
 Coordinates epsg3857To4326(double latitude, double longitude, int floor) {
+  // Formula also from https://developers.auravant.com/en/blog/2022/09/09/post-3/
   double x = (longitude * 180) / (pi * earthRadius);
   double y = (latitude * 180) / (pi * earthRadius);
   y = atan(pow(e, y * pi / 180)) * 360 / pi - 90;

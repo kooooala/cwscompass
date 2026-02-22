@@ -7,6 +7,7 @@ class Building extends Structure {
   final String name;
 
   Building(super.floor, super.colour, super.coordinates, this.name, List<Entrance> entrances) {
+    // Pass this building object to each BuildingEntrance
     this.entrances = entrances.map((e) => BuildingEntrance(this, e.floor, e.latitude, e.longitude)).toList();
   }
 }

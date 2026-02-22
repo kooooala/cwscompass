@@ -1,5 +1,4 @@
 import 'package:cwscompass/data/edge.dart';
-import 'package:cwscompass/data/school.dart';
 import 'package:sqflite/sqflite.dart';
 
 import 'coordinates.dart';
@@ -13,8 +12,7 @@ class Landing extends Coordinates {
 class Staircase extends EdgeWithLabel {
   static double cost = 10.0;
 
-  Staircase(List<Coordinates> coordinates, String? label)
-      : super(coordinates, label);
+  Staircase(super.coordinates, super.label);
 
   static Future<List<int>> getStaircaseList(Database db) async {
     final queryResults = await db.query("staircases", columns: ["staircase_id"]);

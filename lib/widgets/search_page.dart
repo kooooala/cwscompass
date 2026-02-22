@@ -141,7 +141,7 @@ class SearchPage extends ConsumerWidget {
                               )
                             )
                           ),
-                          ref.watch(nearbyRoomsProvider).when(
+                          ref.watch(nearbyInteractablesProvider).when(
                             data: (nearbyRooms) => InteractableList(
                               interactables: value.isNotEmpty ? value : nearbyRooms,
                               onTap: (room) => Navigator.of(context).pop<SearchResult>(SearchResultInteractable(room)),
@@ -157,7 +157,7 @@ class SearchPage extends ConsumerWidget {
               ]
             );
           },
-          loading: () => CircularProgressIndicator(),
+          loading: () => Loading(colour: Colors.white),
           error: (err, stack) => Text("Oops: $err")
         )
       )

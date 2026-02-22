@@ -30,7 +30,8 @@ class Path {
     );
 
     final coordinates = await Future.wait(vertices.map((vertex) async =>
-        Coordinates.fromCoordinatesId(db, vertex["coordinates"] as int)));
+      Coordinates.fromCoordinatesId(db, vertex["coordinates"] as int))
+    );
 
     return Path(label == "None" ? null : label, coordinates[0].floor, coordinates);
   }

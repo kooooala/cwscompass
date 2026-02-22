@@ -2,6 +2,7 @@ import 'package:cwscompass/common/maths.dart';
 import 'package:cwscompass/data/coordinates.dart';
 import 'package:cwscompass/data/location.dart';
 import 'package:cwscompass/data/structures/structure.dart';
+import 'package:cwscompass/widgets/exit_button.dart';
 import 'package:cwscompass/widgets/map/canvas.dart';
 import 'package:cwscompass/data/map_data.dart';
 import 'package:cwscompass/widgets/direction_sheet.dart';
@@ -106,13 +107,17 @@ class _NavigationState extends ConsumerState<Navigation> {
               ),
               child: RouteInfo(route: displayRoute, endRoom: widget.end),
             ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                  padding: EdgeInsets.only(top: 32.0, right: 28.0),
-                  child: FloorSelector()
+            Padding(
+              padding: EdgeInsetsGeometry.symmetric(vertical: 32.0, horizontal: 28.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start ,
+                children: [
+                  ExitButton(),
+                  Spacer(),
+                  FloorSelector(locationChangeable: false)
+                ],
               ),
-            )
+            ),
           ],
         ),
         DirectionSheet(directions: displayRoute.directions, endRoom: widget.end,)

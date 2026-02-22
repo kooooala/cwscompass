@@ -3,6 +3,7 @@ import 'package:cwscompass/data/coordinates.dart';
 import 'package:cwscompass/data/location.dart';
 import 'package:cwscompass/widgets/map/canvas.dart';
 import 'package:cwscompass/data/school.dart';
+import 'package:cwscompass/widgets/map/selected_floor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';

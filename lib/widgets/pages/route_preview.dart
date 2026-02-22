@@ -1,19 +1,20 @@
 import 'package:cwscompass/common/capital_extension.dart';
-import 'package:cwscompass/data/coordinates.dart';
 import 'package:cwscompass/data/location.dart';
 import 'package:cwscompass/data/structures/structure.dart';
+import 'package:cwscompass/widgets/exit_button.dart';
 import 'package:cwscompass/widgets/map/canvas.dart';
 import 'package:cwscompass/data/map_data.dart';
 import 'package:cwscompass/common/polygon.dart';
-import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/floor_selector.dart';
+import 'package:cwscompass/widgets/map/selected_floor.dart';
+import 'package:cwscompass/widgets/map/zoom_focus.dart';
+import 'package:cwscompass/widgets/pages/explore.dart';
 import 'package:cwscompass/widgets/pages/navigation.dart';
 import 'package:cwscompass/widgets/search_page.dart';
 import 'package:cwscompass/data/school.dart' as school;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
@@ -75,6 +76,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
       drawEnd: true,
       zoomToPath: true,
       showPath: true,
+      roomSelectable: true,
       maxAnimationScale: 16.0,
       focusYOffset: 0,
       transformationController: ref.read(transformationControllerProvider),
@@ -86,13 +88,23 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
     });
   }
 
-  void onLocationUpdate(Coordinates _) {
+  void onLocationUpdate(_) {
     updateRoute(false);
+  }
+
+  void onRoomSelect(_, Interactable? interactable) {
+    if (interactable == null) {
+      return;
+    }
+
+    setState(() => end = interactable);
+    updateRoute(true);
   }
 
   @override
   Widget build(BuildContext context) {
     ref.watch(locationProvider).whenData(onLocationUpdate);
+    ref.listen<Interactable?>(selectedRoomProvider, onRoomSelect);
 
     return Stack(
       children: [
@@ -229,11 +241,15 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                 ]
               ),
             ),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Padding(
-                  padding: EdgeInsets.only(top: 32.0, right: 28.0),
-                  child: FloorSelector(locationChangeable: false)
+            Padding(
+              padding: EdgeInsetsGeometry.symmetric(vertical: 32.0, horizontal: 28.0),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start ,
+                children: [
+                  ExitButton(),
+                  Spacer(),
+                  FloorSelector(locationChangeable: false)
+                ],
               ),
             ),
             Spacer(),

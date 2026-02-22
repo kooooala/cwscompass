@@ -28,10 +28,9 @@ class School {
   final List<Staircase> staircases;
 
   static Graph simplifyGraph(Map<Coordinates, List<(Coordinates, String?)>> fullGraph) {
-    final graph = Graph({}, {});
+    // See section 2.5.1.2 for explanation and pseudo-code
 
-    // Simplify the graph by 'collapsing' paths with no branches i.e. removing
-    // intermediate nodes (nodes with degree 2)
+    final graph = Graph({}, {});
 
     // Identify all nodes that are not intermediate (the ones we want to keep)
     final junctions = fullGraph.keys
@@ -93,8 +92,8 @@ class School {
 
     Map<Coordinates, List<(Coordinates, String?)>> fullGraph = {};
 
-    // Since building entrances are just points that have the same coordinates
-    // as a path vertex and are stored separately to paths, a dictionary is used
+    // Since building entrances are points that have the same coordinates as a
+    // path vertex and are stored separately to paths, a dictionary is used
     // here to map a regular coordinates to a building entrance.
     Map<Coordinates, BuildingEntrance> coordinatesToBuildingEntrance = {};
     for (final building in buildings) {
@@ -104,10 +103,12 @@ class School {
       }
     }
 
+    // Iterate through each path, and add each consecutive vertex pair to the graph
     for (final path in paths) {
       for (final (i, c1) in path.vertices.sublist(0, path.vertices.length - 1).indexed) {
         final c2 = path.vertices[i + 1];
 
+        // Check if coordinates are building entrances
         final current = coordinatesToBuildingEntrance[c1] ?? c1;
         final next = coordinatesToBuildingEntrance[c2] ?? c2;
 
@@ -119,6 +120,7 @@ class School {
       }
     }
 
+    // Add the entrances to the graph
     for (final interactable in interactables) {
       for (final entrance in interactable.entrances) {
         final coordinates = Coordinates(entrance.floor, entrance.latitude, entrance.longitude);
@@ -159,12 +161,15 @@ class School {
   }
 
   Direction getDirectionSameFloor(Coordinates previous, Coordinates current, Coordinates next) {
+    // Calculate the signed angle between v1 (previous -> current) and v2 (current -> next)
+    // Formula: https://wumbo.net/formulas/angle-between-two-vectors-2d/
     final v1 = Vector2(current.longitude - previous.longitude, current.latitude - previous.latitude);
     final v2 = Vector2(next.longitude - current.longitude, next.latitude - current.latitude);
     final crossProduct = v1.cross(v2);
     final dotProduct = v1.dot(v2);
     final angle = atan2(crossProduct, dotProduct);
 
+    // See section 2.5.3.3 for graphics
     Turn turn;
     if (angle < -0.25 * pi) {
       turn = Turn.right;
@@ -174,6 +179,8 @@ class School {
       turn = Turn.straight;
     }
 
+    // Get the label from the first edge in the graph that contains current
+    // Probably not the best way of doing this
     String? label;
     if (current is! Entrance) {
       label = graph.simplified[current]!.firstWhere((e) => e.coordinates.contains(next)).label;
@@ -189,6 +196,7 @@ class School {
 
   Direction getDirection(Coordinates previous, Coordinates current, Coordinates next) {
     if (current is BuildingEntrance) {
+      // If next is in the building, it means we're entering the building
       final isEntering = current.building.intersects(next.point);
       return Direction(isEntering ? Turn.enterBuilding : Turn.exitBuilding, current.building.name, current, 0);
     } else if (current.floor != next.floor) {
@@ -219,8 +227,10 @@ class School {
 
       // Add direction if current is a junction
       if (graph.simplified.containsKey(current) && previous != null && next != null) {
-        if (graph.simplified[current]!.where((e) => e.coordinates.any((c) => c is Entrance)).isEmpty) {
+        // Check if the junction is a junction only because of being connected to an entrance
+        if (graph.simplified[current]!.where((e) => !e.coordinates.any((c) => c is Entrance)).length > 2) {
           directions.first.distance = distanceToNextJunction;
+          // Insert the direction at the front of the list since we're working backwards from end to start
           directions.insert(0, getDirection(next, current, previous));
           distanceToNextJunction = 0;
         }
@@ -238,6 +248,7 @@ class School {
   Route shortestRoute(Coordinates start, Coordinates end) {
     // Use A* search algorithm to find the shortest route between two points;
     // implementation based on https://theory.stanford.edu/~amitp/GameProgramming/ImplementationNotes.html
+    // See section 2.5.2 for explanation and pseudo-code
     final frontier = PriorityQueue<(Coordinates, double)>((a, b) => a.$2.compareTo(b.$2));
     frontier.add((start, 0));
     final cameFrom = <Coordinates, Coordinates?>{};
@@ -261,7 +272,7 @@ class School {
           frontier.add((next, priority));
 
           // Since an edge is made up of smaller intermediate edges, they will
-          // have all to be added to the list individually
+          // have to be added to the list individually
           List<Coordinates> intermediates = nextEdge.coordinates;
           if (nextEdge.coordinates.first == current) {
             intermediates = intermediates.reversed.toList();
@@ -327,6 +338,7 @@ class School {
     Route? shortest;
     double shortestDistance = double.infinity;
 
+    // This was added because rooms can have multiple entrances
     for (final startNode in startNodes) {
       for (final endNode in endNodes) {
         final route = shortestRoute(startNode, endNode);
@@ -340,9 +352,11 @@ class School {
     return shortest!;
   }
 
+  // Return a path that goes from the intermediate node to the regular node
   List<Coordinates> intermediateToRegular(Coordinates intermediate, Coordinates regular) {
     final edge = graph.intermediateNodeEdge[intermediate]!;
     final index = edge.coordinates.indexOf(intermediate);
+    // We want the path to start with intermediate so we reverse the edge if it starts with regular
     if (edge.coordinates.first == regular) {
       return edge.coordinates.sublist(0, index + 1).reversed.toList();
     } else {
@@ -381,6 +395,13 @@ class School {
   }
 
   Route adjustRouteDisplay(Coordinates location, Route route) {
+    // See section 2.5.5 for explanation and pseudo-code
+
+    if (route.path.coordinates.length == 1) {
+      final path = [location, route.path.coordinates.first];
+      return Route(path.first, path.last, route.directions, Edge(path));
+    }
+
     final closest = closestIntermediateNode(location);
 
     final coordinates = route.path.coordinates;

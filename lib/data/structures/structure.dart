@@ -5,8 +5,8 @@ import 'package:cwscompass/data/coordinates.dart';
 import 'package:cwscompass/data/entrance.dart';
 import 'package:cwscompass/common/polygon.dart';
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
 
+// This corresponds to the structure table in the database and is the parent of Building, Room, Toilet and Inaccessible
 class Structure extends Polygon {
   final int floor;
 
@@ -14,6 +14,7 @@ class Structure extends Polygon {
 
   Point<double>? _centroid;
 
+  // Centroid only gets calculated when needed
   Point<double> get centroid {
     if (_centroid != null) {
       return _centroid!;
@@ -31,6 +32,7 @@ class Structure extends Polygon {
   }
 }
 
+// An interactable is a structure that has an entrance and thus can be navigated to. It can be selected from the map and the search entry allows it to be searched.
 abstract class Interactable<T extends Structure> extends Structure {
   final String name;
   final String description;

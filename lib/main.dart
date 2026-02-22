@@ -20,6 +20,7 @@ class MyApp extends ConsumerWidget {
     return MaterialApp(
       title: 'CWS Compass',
       theme: ThemeData(
+        scaffoldBackgroundColor: Colors.white,
         textTheme: GoogleFonts.nunitoTextTheme()
       ),
       home: MyHomePage(),

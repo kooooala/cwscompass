@@ -2,9 +2,7 @@ import 'package:cwscompass/data/structures/building.dart';
 import 'package:cwscompass/data/structures/inaccessible.dart';
 import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/data/coordinates.dart';
-import 'package:cwscompass/data/location.dart';
 import 'package:cwscompass/data/structures/toilet.dart';
-import 'package:cwscompass/widgets/map/canvas.dart';
 import 'package:cwscompass/data/school.dart';
 import 'package:cwscompass/data/staircase.dart';
 import 'package:flutter/material.dart';
@@ -19,6 +17,7 @@ import 'entrance.dart';
 import 'path.dart';
 import 'structures/room.dart';
 
+// Load the map data from map.db
 final mapDataProvider = FutureProvider<MapData>((ref) async {
   ref.keepAlive();
 
@@ -34,17 +33,20 @@ class MapData {
   late Database _database;
   late School school;
 
+  // Dictionary/map that maps coordinatesId -> parsed coordinates
   late Map<int, Coordinates> _coordinates;
 
   MapData(this.dbName);
-  
+
+  // Read from the coordinates table and use the data to populate _coordinates
   Future<void> parseCoordinates() async {
     final results = await _database.query("coordinates",
         columns: ["coordinates_id", "latitude", "longitude", "floor"]
     );
     
     _coordinates = Map.fromEntries(results.map((row) =>
-      MapEntry(row["coordinates_id"] as int,
+      MapEntry(
+        row["coordinates_id"] as int,
         Coordinates(
           row["floor"] as int,
           row["latitude"] as double,
@@ -60,6 +62,7 @@ class MapData {
     final floor = structureData["floor"] as int;
     
     final colourHex = structureData["colour"] as int;
+    // Colour is stored in the database in the format: RRRR RRRR  GGGG GGGG  BBBB BBBB (each character represents a bit)
     final colour = Color.fromARGB(0xFF, colourHex >> 16, (colourHex >> 8) & 0xFF, colourHex & 0xFF);
 
     final vertices = await _database.query("structure_vertices",
@@ -69,6 +72,7 @@ class MapData {
       orderBy: "sequence"
     );
 
+    // The lambda function passed to map extracts the coordinates column from the structure vertex and use it as a key to look up the coordinates
     return Structure(floor, colour, vertices.map((v) => _coordinates[v["coordinates"] as int]!).toList());
   }
 
@@ -78,11 +82,12 @@ class MapData {
         where: "structure = ?",
         whereArgs: [structureId]
     );
-    final entrances = await Future.wait(entranceData.map((entrance) async {
+
+    final entrances = entranceData.map((entrance) {
       final coordinates = _coordinates[entrance["coordinates"] as int]!;
       final name = entrance["label"] as String == "None" ? null : structureLabel;
       return Entrance(coordinates.floor, coordinates.latitude, coordinates.longitude, name);
-    }));
+    }).toList();
 
     return entrances;
   }
@@ -100,6 +105,7 @@ class MapData {
       structure.floor,
       structure.colour,
       roomData["subject"] as String,
+      // "None" is how null data is stored in the database, due to the conversion script being written in Python
       number == "None" ? null : number,
       label == "None" ? null : label,
       entrances,
@@ -129,7 +135,7 @@ class MapData {
       structure.colour,
       structure.coordinates,
       label == "None" ? null : label,
-      entrance.first, // There should only be one entrance
+      entrance.first, // There should be only one entrance (it's a toilet)
       type
     );
   }
@@ -164,6 +170,7 @@ class MapData {
           structures.add(await parseBuilding(row));
           break;
         case "inaccessible":
+          // I didn't write a specific function to parse inaccessible areas since they are just structures
           final structure = await parseStructure(row);
           structures.add(Inaccessible(structure.floor, structure.colour, structure.coordinates));
           break;
@@ -177,6 +184,7 @@ class MapData {
   }
 
   Future load() async {
+    // Copy the database file from assets to the temporary directory and open it
     final directory = await getTemporaryDirectory();
     final path = join(directory.path, dbName);
 
@@ -190,6 +198,7 @@ class MapData {
     await parseCoordinates();
 
     final pathList = await Path.getPathList(_database);
+    // Future.wait takes in a list of futures and waits for them complete, returning their results in a list
     final paths = await Future.wait(pathList.map((path) async => await Path.fromPathId(_database, path)));
 
     final structures = await parseStructures();
