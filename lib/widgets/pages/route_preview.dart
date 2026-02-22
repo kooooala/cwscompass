@@ -11,7 +11,8 @@ import 'package:cwscompass/widgets/map/selected_floor.dart';
 import 'package:cwscompass/widgets/map/zoom_focus.dart';
 import 'package:cwscompass/widgets/pages/explore.dart';
 import 'package:cwscompass/widgets/pages/navigation.dart';
-import 'package:cwscompass/widgets/search_page.dart';
+import 'package:cwscompass/widgets/route_info.dart';
+import 'package:cwscompass/widgets/pages/search_page.dart';
 import 'package:cwscompass/data/school.dart' as school;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -35,11 +36,11 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
 
   double swapRotation = 0.0;
 
-  void rotateSwap() {
+  void _rotateSwap() {
     setState(() => swapRotation += 0.5);
   }
 
-  school.Route calculateRoute() {
+  school.Route _calculateRoute() {
     final mapData = ref.read(mapDataProvider).value!;
 
     school.Route shortestRoute;
@@ -53,8 +54,8 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
     return shortestRoute;
   }
 
-  void updateRoute(bool focus) {
-    final shortestRoute = calculateRoute();
+  void _updateRoute(bool focus) {
+    final shortestRoute = _calculateRoute();
 
     if (focus) {
       final routePolygon = Polygon(shortestRoute.path.coordinates);
@@ -70,7 +71,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
   void initState() {
     super.initState();
     end = widget.initialEnd;
-    final shortestRoute = calculateRoute();
+    final shortestRoute = _calculateRoute();
     widget.canvasController = MapCanvasController(
       drawStart: true,
       drawEnd: true,
@@ -88,23 +89,227 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
     });
   }
 
-  void onLocationUpdate(_) {
-    updateRoute(false);
+  void _onLocationUpdate(_) {
+    _updateRoute(false);
   }
 
-  void onRoomSelect(_, Interactable? interactable) {
+  void _onRoomSelect(_, Interactable? interactable) {
     if (interactable == null) {
       return;
     }
 
     setState(() => end = interactable);
-    updateRoute(true);
+    _updateRoute(true);
+  }
+
+  Widget _routePicker() {
+    return Material(
+      borderRadius: BorderRadius.circular(24.0),
+      color: Colors.white,
+      elevation: 4,
+      child: Wrap(
+        children: [
+          // Start location picker
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () async {
+              final result = await Navigator.of(context).push<SearchResult>(
+                MaterialPageRoute(
+                  builder: (context) => SearchPage(myLocationSelectable: true)
+                )
+              );
+              switch (result) {
+                case SearchResultNone _:
+                  return;
+                case SearchResultDeviceLocation _:
+                  setState(() => start = null);
+                  break;
+                case SearchResultInteractable r:
+                  setState(() => start = r.interactable);
+                  break;
+              }
+              _updateRoute(true);
+            },
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 12.0),
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: 300),
+                child: Row(
+                  key: ValueKey(start),
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Icon(
+                        Icons.circle_outlined,
+                        size: 20.0,
+                        color: ThemeColours.primary
+                      ),
+                    ),
+                    Text(
+                      start != null ? start!.name.capitalise() : "My location",
+                      style: TextStyle(
+                        color: ThemeColours.darkTextTint,
+                        fontSize: 16.0,
+                        fontWeight: FontWeight.w600
+                      ),
+                    ),
+                    Spacer()
+                  ],
+                )
+              )
+            )
+          ),
+          // Divider between start and end
+          Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0),
+            child: Divider(
+              thickness: 1.0,
+              color: ThemeColours.divider,
+              height: 0,
+            )
+          ),
+          // End location picker
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: () async {
+              final result = await Navigator.of(context).push<SearchResult>(
+                MaterialPageRoute(
+                  builder: (context) => SearchPage(myLocationSelectable: false)
+                )
+              );
+              switch (result) {
+                case SearchResultNone _:
+                case SearchResultDeviceLocation _:
+                  // You can't navigate to your current location
+                  return;
+                case SearchResultInteractable r:
+                  setState(() => end = r.interactable);
+                  break;
+              }
+              _updateRoute(true);
+            },
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 12.0),
+              child: AnimatedSwitcher(
+                duration: Duration(milliseconds: 300),
+                child: Row(
+                  key: ValueKey(end),
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Icon(
+                        Icons.location_on_rounded,
+                        size: 20.0,
+                        color: ThemeColours.primary
+                      ),
+                    ),
+                    Text(
+                      end.name.capitalise(),
+                      style: TextStyle(
+                        fontSize: 16.0,
+                        color: ThemeColours.darkTextTint,
+                        fontWeight: FontWeight.w600
+                      ),
+                    )
+                  ],
+                )
+              )
+            ),
+          )
+        ]
+      )
+    );
+  }
+
+  Widget _goButton() {
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (_) => Navigation(initialRoute: route, end: end)
+          )
+        );
+      },
+      child: Material(
+        color: ThemeColours.accent,
+        elevation: 4.0,
+        borderRadius: BorderRadius.circular(24.0),
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+          child: Wrap(
+            direction: Axis.horizontal,
+            spacing: 12.0,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              Text(
+                "Go",
+                style: TextStyle(
+                  fontSize: 24.0,
+                  fontWeight: FontWeight.w900,
+                  color: ThemeColours.lightText
+                ),
+              ),
+              Transform.flip(
+                flipX: true,
+                child: PhosphorIcon(
+                  PhosphorIconsFill.navigationArrow,
+                  color: ThemeColours.lightText,
+                  size: 20.0,
+                )
+              )
+            ],
+          )
+        ),
+      )
+    );
+  }
+
+  Widget _swapButton() {
+    return GestureDetector(
+      onTap: () {
+        if (start == null) {
+          return;
+        }
+
+        setState(() {
+          final temp = start;
+          start = end;
+          end = temp!;
+        });
+        _rotateSwap();
+      },
+      child: Container(
+        height: 46.0,
+        width: 46.0,
+        decoration: BoxDecoration(
+          color: start != null ? ThemeColours.accent : ThemeColours.disabled,
+          boxShadow: [BoxShadow(
+            offset: Offset(0, 3),
+            blurRadius: 4.0,
+            color: Colors.black.withAlpha(64)
+          )],
+          shape: BoxShape.circle
+        ),
+        child: AnimatedRotation(
+          turns: swapRotation,
+          duration: Duration(milliseconds: 150),
+          curve: Curves.easeInOutSine,
+          child: PhosphorIcon(
+            PhosphorIconsBold.arrowsDownUp,
+            size: 24.0,
+            color: Colors.white,
+          )
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(locationProvider).whenData(onLocationUpdate);
-    ref.listen<Interactable?>(selectedRoomProvider, onRoomSelect);
+    ref.watch(locationProvider).whenData(_onLocationUpdate);
+    ref.listen<Interactable?>(selectedRoomProvider, _onRoomSelect);
 
     return Stack(
       children: [
@@ -116,6 +321,7 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
+            // Route picker
             Padding(
               padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 16.0, left: 28.0, right: 48.0),
               child: Stack(
@@ -123,124 +329,12 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
                 children: [
                   Hero(
                     tag: "search-bar",
-                    child: Material(
-                        borderRadius: BorderRadius.circular(24.0),
-                        color: Colors.white,
-                        elevation: 4,
-                        child: Wrap(
-                            children: [
-                              GestureDetector(
-                                  behavior: HitTestBehavior.opaque,
-                                  onTap: () async {
-                                    final result = await Navigator.of(context).push<SearchResult>(
-                                        MaterialPageRoute(
-                                            builder: (context) => SearchPage(myLocationSelectable: true)
-                                        )
-                                    );
-                                    switch (result) {
-                                      case SearchResultNone _:
-                                        return;
-                                      case SearchResultDeviceLocation _:
-                                        setState(() => start = null);
-                                        break;
-                                      case SearchResultInteractable r:
-                                        setState(() => start = r.interactable);
-                                        break;
-                                    }
-                                    updateRoute(true);
-                                  },
-                                  child: Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 12.0),
-                                      child: AnimatedSwitcher(
-                                          duration: Duration(milliseconds: 300),
-                                          child: Row(
-                                            key: ValueKey(start),
-                                            mainAxisAlignment: MainAxisAlignment.start,
-                                            children: [
-                                              Padding(
-                                                padding: EdgeInsets.symmetric(horizontal: 16.0),
-                                                child: Icon(
-                                                    Icons.circle_outlined,
-                                                    size: 20.0,
-                                                    color: ThemeColours.primary
-                                                ),
-                                              ),
-                                              Text(
-                                                start != null ? start!.name.capitalise() : "My location",
-                                                style: TextStyle(
-                                                    color: ThemeColours.darkTextTint,
-                                                    fontSize: 16.0,
-                                                    fontWeight: FontWeight.w600
-                                                ),
-                                              ),
-                                              Spacer()
-                                            ],
-                                          )
-                                      )
-                                  )
-                              ),
-                              Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 16.0),
-                                  child: Divider(
-                                    thickness: 1.0,
-                                    color: ThemeColours.divider,
-                                    height: 0,
-                                  )
-                              ),
-                              GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () async {
-                                  final result = await Navigator.of(context).push<SearchResult>(
-                                      MaterialPageRoute(
-                                          builder: (context) => SearchPage(myLocationSelectable: false)
-                                      )
-                                  );
-                                  switch (result) {
-                                    case SearchResultNone _:
-                                    case SearchResultDeviceLocation _:
-                                      return;
-                                    case SearchResultInteractable r:
-                                      setState(() => end = r.interactable);
-                                      break;
-                                  }
-                                  updateRoute(true);
-                                },
-                                child: Padding(
-                                    padding: EdgeInsets.symmetric(vertical: 12.0),
-                                    child: AnimatedSwitcher(
-                                        duration: Duration(milliseconds: 300),
-                                        child: Row(
-                                          key: ValueKey(end),
-                                          mainAxisAlignment: MainAxisAlignment.start,
-                                          children: [
-                                            Padding(
-                                              padding: EdgeInsets.symmetric(horizontal: 16.0),
-                                              child: Icon(
-                                                  Icons.location_on_rounded,
-                                                  size: 20.0,
-                                                  color: ThemeColours.primary
-                                              ),
-                                            ),
-                                            Text(
-                                              end.name.capitalise(),
-                                              style: TextStyle(
-                                                  fontSize: 16.0,
-                                                  color: ThemeColours.darkTextTint,
-                                                  fontWeight: FontWeight.w600
-                                              ),
-                                            )
-                                          ],
-                                        )
-                                    )
-                                ),
-                              )
-                            ]
-                        )
-                    )
+                    child: _routePicker()
                   ),
                 ]
               ),
             ),
+            // Exit button
             Padding(
               padding: EdgeInsetsGeometry.symmetric(vertical: 32.0, horizontal: 28.0),
               child: Row(
@@ -253,52 +347,15 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
               ),
             ),
             Spacer(),
+            // Go button
             Align(
               alignment: Alignment.centerRight,
               child: Padding(
                 padding: EdgeInsets.symmetric(horizontal: 28.0, vertical: 16.0),
-                child: GestureDetector(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => Navigation(initialRoute: route, end: end)
-                      )
-                    );
-                  },
-                  child: Material(
-                    color: ThemeColours.accent,
-                    elevation: 4.0,
-                    borderRadius: BorderRadius.circular(24.0),
-                    child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
-                        child: Wrap(
-                          direction: Axis.horizontal,
-                          spacing: 12.0,
-                          crossAxisAlignment: WrapCrossAlignment.center,
-                          children: [
-                            Text(
-                              "Go",
-                              style: TextStyle(
-                                  fontSize: 24.0,
-                                  fontWeight: FontWeight.w900,
-                                  color: ThemeColours.lightText
-                              ),
-                            ),
-                            Transform.flip(
-                              flipX: true,
-                              child: PhosphorIcon(
-                                PhosphorIconsFill.navigationArrow,
-                                color: ThemeColours.lightText,
-                                size: 20.0,
-                              )
-                            )
-                          ],
-                        )
-                    ),
-                  )
-                )
+                child: _goButton()
               )
             ),
+            // Route info card
             Padding(
               padding: EdgeInsets.only(
                 left: 28.0,
@@ -309,136 +366,13 @@ class _RoutePreviewState extends ConsumerState<RoutePreview> {
             )
           ]
         ),
+        // Swap button
         Positioned(
-            top: MediaQuery.paddingOf(context).top + 40.0,
-            right: 23.0,
-            child: GestureDetector(
-              onTap: () {
-                if (start == null) {
-                  return;
-                }
-
-                setState(() {
-                  final temp = start;
-                  start = end;
-                  end = temp!;
-                });
-                rotateSwap();
-              },
-              child: Container(
-                height: 46.0,
-                width: 46.0,
-                decoration: BoxDecoration(
-                    color: start != null ? ThemeColours.accent : ThemeColours.disabled,
-                    boxShadow: [BoxShadow(
-                        offset: Offset(0, 3),
-                        blurRadius: 4.0,
-                        color: Colors.black.withAlpha(64)
-                    )],
-                    shape: BoxShape.circle
-                ),
-                child: AnimatedRotation(
-                    turns: swapRotation,
-                    duration: Duration(milliseconds: 150),
-                    curve: Curves.easeInOutSine,
-                    child: PhosphorIcon(
-                      PhosphorIconsBold.arrowsDownUp,
-                      size: 24.0,
-                      color: Colors.white,
-                    )
-                ),
-              ),
-            )
+          top: MediaQuery.paddingOf(context).top + 40.0,
+          right: 23.0,
+          child: _swapButton()
         )
       ]
-    );
-  }
-}
-
-class RouteInfo extends StatelessWidget {
-  final school.Route route;
-  final Interactable? endRoom;
-
-  const RouteInfo({super.key, required this.route, required this.endRoom});
-
-  @override
-  Widget build(BuildContext context) {
-    const walkingSpeed = 1.3;
-    final travelTime = route.path.distance / walkingSpeed;
-    final travelTimeMin = (travelTime / 60).round();
-    final eta = DateTime.now().add(Duration(seconds: travelTime.round()));
-    final formattedEta = DateFormat.Hm().format(eta);
-    final endName = endRoom == null ? "my location" : endRoom!.name.capitalise();
-
-    return Material(
-      borderRadius: BorderRadius.circular(24.0),
-      color: ThemeColours.primary,
-      elevation: 4,
-      child: Wrap(
-        children: [
-          Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: AnimatedSwitcher(
-                  duration: Duration(milliseconds: 300),
-                  child: Row(
-                    key: ValueKey(route.start.hashCode + route.end.hashCode),
-                    children: [
-                      Expanded(
-                        child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                  "To $endName",
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 1,
-                                  style: TextStyle(
-                                      color: ThemeColours.lightText,
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w700
-                                  )
-                              ),
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.baseline,
-                                textBaseline: TextBaseline.alphabetic,
-                                children: [
-                                  Text(
-                                    "${travelTimeMin < 1 ? "< 1" : travelTimeMin} min",
-                                    style: TextStyle(
-                                        color: ThemeColours.lightText,
-                                        fontSize: 26.0,
-                                        fontWeight: FontWeight.w900
-                                    ),
-                                  ),
-                                  Padding(
-                                      padding: EdgeInsets.only(left: 8.0),
-                                      child: Text(
-                                          "/ ETA $formattedEta",
-                                          style: TextStyle(
-                                              color: ThemeColours.lightTextTint,
-                                              fontSize: 18.0,
-                                              fontWeight: FontWeight.w600
-                                          )
-                                      )
-                                  )
-                                ],
-                              )
-                            ]
-                        )
-                      ),
-                      Text(
-                        "${route.path.distance.round()}m",
-                        style: TextStyle(
-                            color: ThemeColours.lightText,
-                            fontSize: 24.0,
-                            fontWeight: FontWeight.w900
-                        ),
-                      )
-                    ],
-                  )
-              )
-          )
-        ],
-      ),
     );
   }
 }

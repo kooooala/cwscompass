@@ -14,9 +14,10 @@ class StaircasePainter extends CustomPainter {
 
   StaircasePainter(this.school, this.floor, this.radius);
 
-  void drawStaircase(Canvas canvas, Staircase staircase, double radius) {
+  void _drawStaircase(Canvas canvas, Staircase staircase, double radius) {
     final landing = staircase.coordinates.firstWhere((c) => c.floor == floor);
 
+    // The staircase is drawn by layering an arrow icon and stairs icon on top of a blue circle
     final circlePaint = Paint()
       ..style = PaintingStyle.fill
       ..color = ThemeColours.primary;
@@ -57,7 +58,7 @@ class StaircasePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final staircases = school.staircases.where((staircase) => staircase.coordinates.any((c) => c.floor == floor));
     for (var staircase in staircases) {
-      drawStaircase(canvas, staircase, radius);
+      _drawStaircase(canvas, staircase, radius);
     }
   }
 

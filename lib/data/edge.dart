@@ -10,10 +10,10 @@ class Edge {
 
   Edge(this.coordinates) {
     // Distance is calculated when the object is instantiated
-    distance = calculateDistance();
+    distance = _calculateDistance();
   }
 
-  double calculateDistance() {
+  double _calculateDistance() {
     double result = 0;
     // Iterate through each path segment and add up their distances
     for (int i = 0; i < coordinates.length - 1; i++) {

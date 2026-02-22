@@ -5,7 +5,7 @@ import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/floor_selector.dart';
 import 'package:cwscompass/widgets/info_sheet.dart';
 import 'package:cwscompass/widgets/map/selected_floor.dart';
-import 'package:cwscompass/widgets/search_page.dart';
+import 'package:cwscompass/widgets/pages/search_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -22,6 +22,7 @@ class SelectedRoomNotifier extends Notifier<Interactable?> {
     state = room;
 
     if (room != null) {
+      // When a room is selected, the floor of the map changes to the floor the room is on
       ref.read(selectedFloorProvider.notifier).setView(room.floor);
     }
   }
@@ -72,12 +73,14 @@ class FakeSearchBar extends ConsumerWidget {
       padding: EdgeInsets.only(top: MediaQuery.paddingOf(context).top + 16.0, left: 28.0, right: 28.0),
       child: GestureDetector(
         onTap: () async {
+          // Open search page when tapped
           final result = await Navigator.of(context).push<SearchResult>(MaterialPageRoute(builder: (context) => SearchPage()));
           if (result is SearchResultInteractable) {
             ref.read(selectedRoomProvider.notifier).set(result.interactable);
           }
         },
         child: Hero(
+          // The hero tag makes it morph into other widgets with the same tag when switching pages
           tag: "search-bar",
           child: Material(
             elevation: 4,

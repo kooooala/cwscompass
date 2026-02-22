@@ -96,12 +96,12 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
       duration: Duration(milliseconds: 500)
     );
     // Listen to focus requests
-    widget.controller._focusRequest.addListener(onFocusRequest);
+    widget.controller._focusRequest.addListener(_onFocusRequest);
 
     // Zoom to controller's path if there already is a value in it
     if (widget.controller.zoomToPath && widget.controller.path.value != null) {
       final polygon = Polygon(widget.controller.path.value!.path.coordinates);
-      startFocusAnimation(average(polygon), computeZoomScale(polygon));
+      _startFocusAnimation(average(polygon), _computeZoomScale(polygon));
     }
   }
 
@@ -109,11 +109,11 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
   void dispose() {
     // Clean-up
     animationController.dispose();
-    widget.controller._focusRequest.removeListener(onFocusRequest);
+    widget.controller._focusRequest.removeListener(_onFocusRequest);
     super.dispose();
   }
 
-  void onFocusRequest() {
+  void _onFocusRequest() {
     final request = widget.controller._focusRequest.value;
     if (request != null) {
       Point<double> focus;
@@ -130,25 +130,25 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
             ZoomFocus.centroid => centroid(polygonFocus.polygon),
             ZoomFocus.average => average(polygonFocus.polygon),
           };
-          scale = computeZoomScale(polygonFocus.polygon);
+          scale = _computeZoomScale(polygonFocus.polygon);
         default:
           return;
       }
-      startFocusAnimation(focus, scale);
+      _startFocusAnimation(focus, scale);
     }
   }
 
-  void onRoomSelect(Interactable? _, Interactable? next) {
+  void _onRoomSelect(Interactable? _, Interactable? next) {
     if (next != null) {
       // Zoom to room
-      startFocusAnimation(next.centroid, computeZoomScale(next));
+      _startFocusAnimation(next.centroid, _computeZoomScale(next));
     }
   }
 
-  void startFocusAnimation(Point<double> focus, double scale) {
+  void _startFocusAnimation(Point<double> focus, double scale) {
     if (focusAnimation != null) {
       // Cancel the existing animation if there already is an animation running
-      cancelAnimation();
+      _cancelAnimation();
     }
 
     // Prevent scale from going over controller.maxAnimationScale
@@ -173,27 +173,27 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
       curve: Curves.easeInOutSine
     ));
     // Attach onAnimationUpdate to update the transformation controller's value
-    focusAnimation!.addListener(onAnimationUpdate);
+    focusAnimation!.addListener(_onAnimationUpdate);
     animationController.forward();
   }
 
-  void onAnimationUpdate() {
+  void _onAnimationUpdate() {
     // Set the transformation controller's value to the animation's value
     widget.controller.transformationController.value = focusAnimation!.value;
     if (!animationController.isAnimating) {
-      cancelAnimation();
+      _cancelAnimation();
     }
   }
 
-  void cancelAnimation() {
+  void _cancelAnimation() {
     // Stop the animation and remove the listener we attached
     animationController.stop();
-    focusAnimation!.removeListener(onAnimationUpdate);
+    focusAnimation!.removeListener(_onAnimationUpdate);
     focusAnimation = null;
     animationController.reset();
   }
 
-  double computeZoomScale(Polygon polygon) {
+  double _computeZoomScale(Polygon polygon) {
     final topLeft = polygon.boundingBox.topLeft, bottomRight = polygon.boundingBox.bottomRight;
 
     final xScale = widget.width / (bottomRight.x - topLeft.x);
@@ -204,7 +204,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     return scale * 0.5;
   }
 
-  void onTapUp(TapUpDetails details, school.School school) {
+  void _onTapUp(TapUpDetails details, school.School school) {
     ref.watch(selectedFloorProvider).whenData((selected) {
       // Iterate through each interactable on the floor and check if the tapped point intersects
       for (final room in school.floors[selected.viewFloor].structures.whereType<Interactable>()) {
@@ -213,7 +213,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
             ref.read(selectedRoomProvider.notifier).set(room);
           }
           if (widget.controller.focusOnTap) {
-            startFocusAnimation(room.centroid, computeZoomScale(room));
+            _startFocusAnimation(room.centroid, _computeZoomScale(room));
           }
           return;
         }
@@ -223,7 +223,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     });
   }
 
-  Widget baseLayer(int floor, school.School school) {
+  Widget _baseLayer(int floor, school.School school) {
     return RepaintBoundary(
       child: Stack(
         children: [
@@ -261,7 +261,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     );
   }
 
-  Widget buildingOverlay(double scale, int floor, school.School school) {
+  Widget _buildingOverlay(double scale, int floor, school.School school) {
     // The scale at which the fade animation starts/ends
     final startFade = 4.0, endFade = 7.0;
     return Opacity(
@@ -289,7 +289,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     );
   }
 
-  Widget pathPainter(int floor) {
+  Widget _paths(int floor) {
     return ListenableBuilder(
       listenable: widget.controller.path,
       builder: (context, _) {
@@ -308,21 +308,21 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     );
   }
 
-  Widget map(int floor, school.School school) {
+  Widget _map(int floor, school.School school) {
     return AnimatedSwitcher(
       duration: Duration(milliseconds: 150),
       child: Stack(
         key: ValueKey(floor),
         children: [
-          baseLayer(floor, school),
+          _baseLayer(floor, school),
           ListenableBuilder(
             listenable: widget.controller.transformationController,
             builder: (_, _) {
               final scale = widget.controller.transformationController.value.getMaxScaleOnAxis();
-              return buildingOverlay(scale, floor, school);
+              return _buildingOverlay(scale, floor, school);
             }
           ),
-          pathPainter(floor),
+          _paths(floor),
           CustomPaint(painter: StaircasePainter(school, floor, 0.5)),
         ],
       )
@@ -334,7 +334,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
     final school = ref.watch(mapDataProvider);
 
     if (widget.controller.focusOnRoomSelect) {
-      ref.listen<Interactable?>(selectedRoomProvider, onRoomSelect);
+      ref.listen<Interactable?>(selectedRoomProvider, _onRoomSelect);
     }
 
     return Center(
@@ -346,14 +346,14 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
               transformationController: widget.controller.transformationController,
               onInteractionStart: (_) {
                 if (animationController.status == AnimationStatus.forward) {
-                  cancelAnimation();
+                  _cancelAnimation();
                 }
               },
               minScale: 1,
               maxScale: 64,
               boundaryMargin: EdgeInsets.symmetric(horizontal: widget.width / 4, vertical: widget.height / 4),
               child: GestureDetector(
-                onTapUp: (details) => onTapUp(details, data.school),
+                onTapUp: (details) => _onTapUp(details, data.school),
                 child: Container(
                   color: Colors.white,
                   child: SizedBox(
@@ -363,7 +363,7 @@ class MapCanvasState extends ConsumerState<MapCanvas> with SingleTickerProviderS
                       data: (selected) {
                         return Stack(
                           children: [
-                            map(selected.viewFloor, data.school),
+                            _map(selected.viewFloor, data.school),
                             // This draws out lines and nodes which are useful when debugging the map
                             //CustomPaint(painter: DebugPainter(data.school, selected.viewFloor)),
                             Marker(20.0, widget.controller.transformationController, data.school),

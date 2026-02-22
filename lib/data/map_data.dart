@@ -39,7 +39,7 @@ class MapData {
   MapData(this.dbName);
 
   // Read from the coordinates table and use the data to populate _coordinates
-  Future<void> parseCoordinates() async {
+  Future<void> _parseCoordinates() async {
     final results = await _database.query("coordinates",
         columns: ["coordinates_id", "latitude", "longitude", "floor"]
     );
@@ -56,7 +56,7 @@ class MapData {
     ));
   }
   
-  Future<Structure> parseStructure(Map<String, Object?> structureData) async {
+  Future<Structure> _parseStructure(Map<String, Object?> structureData) async {
     final structureId = structureData["structure_id"] as int;
 
     final floor = structureData["floor"] as int;
@@ -76,7 +76,7 @@ class MapData {
     return Structure(floor, colour, vertices.map((v) => _coordinates[v["coordinates"] as int]!).toList());
   }
 
-  Future<List<Entrance>> parseEntrances(int structureId, String structureLabel) async {
+  Future<List<Entrance>> _parseEntrances(int structureId, String structureLabel) async {
     final entranceData = await _database.query("entrances",
         columns: ["label", "coordinates"],
         where: "structure = ?",
@@ -92,14 +92,14 @@ class MapData {
     return entrances;
   }
   
-  Future<Room> parseRoom(Map<String, Object?> roomData) async {
+  Future<Room> _parseRoom(Map<String, Object?> roomData) async {
     final structureId = roomData["structure_id"] as int;
-    final structure = await parseStructure(roomData);
+    final structure = await _parseStructure(roomData);
 
     final number = roomData["number"] as String;
     final label = roomData["label"] as String;
 
-    final entrances = await parseEntrances(structureId, label);
+    final entrances = await _parseEntrances(structureId, label);
 
     return Room(
       structure.floor,
@@ -113,9 +113,9 @@ class MapData {
     );
   }
 
-  Future<Toilet> parseToilet(Map<String, Object?> toiletData) async {
+  Future<Toilet> _parseToilet(Map<String, Object?> toiletData) async {
     final structureId = toiletData["structure_id"] as int;
-    final structure = await parseStructure(toiletData);
+    final structure = await _parseStructure(toiletData);
 
     final type = switch (toiletData["toilet_type"] as String) {
       "male" => ToiletType.gents,
@@ -128,7 +128,7 @@ class MapData {
 
     final label = toiletData["label"] as String;
 
-    final entrance = await parseEntrances(structureId, label);
+    final entrance = await _parseEntrances(structureId, label);
 
     return Toilet(
       structure.floor,
@@ -140,13 +140,13 @@ class MapData {
     );
   }
 
-  Future<Building> parseBuilding(Map<String, Object?> buildingData) async {
+  Future<Building> _parseBuilding(Map<String, Object?> buildingData) async {
     final structureId = buildingData["structure_id"] as int;
-    final structure = await parseStructure(buildingData);
+    final structure = await _parseStructure(buildingData);
 
     final label = buildingData["label"] as String;
 
-    final entrances = await parseEntrances(structureId, label);
+    final entrances = await _parseEntrances(structureId, label);
 
     return Building(
       structure.floor,
@@ -157,25 +157,25 @@ class MapData {
     );
   }
 
-  Future<List<Structure>> parseStructures() async {
+  Future<List<Structure>> _parseStructures() async {
     final results = await _database.query("structures");
 
     List<Structure> structures = [];
     for (final row in results) {
       switch (row["type"] as String) {
         case "room":
-          structures.add(await parseRoom(row));
+          structures.add(await _parseRoom(row));
           break;
         case "building":
-          structures.add(await parseBuilding(row));
+          structures.add(await _parseBuilding(row));
           break;
         case "inaccessible":
           // I didn't write a specific function to parse inaccessible areas since they are just structures
-          final structure = await parseStructure(row);
+          final structure = await _parseStructure(row);
           structures.add(Inaccessible(structure.floor, structure.colour, structure.coordinates));
           break;
         case "toilet":
-          structures.add(await parseToilet(row));
+          structures.add(await _parseToilet(row));
           break;
       }
     }
@@ -195,13 +195,13 @@ class MapData {
 
     _database = await openDatabase(path);
 
-    await parseCoordinates();
+    await _parseCoordinates();
 
     final pathList = await Path.getPathList(_database);
     // Future.wait takes in a list of futures and waits for them complete, returning their results in a list
     final paths = await Future.wait(pathList.map((path) async => await Path.fromPathId(_database, path)));
 
-    final structures = await parseStructures();
+    final structures = await _parseStructures();
 
     final staircaseList = await Staircase.getStaircaseList(_database);
     final staircases = await Future.wait(staircaseList.map((staircase) async => await Staircase.fromStaircaseId(_database, staircase)));

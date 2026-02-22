@@ -12,7 +12,8 @@ class StructurePainter extends CustomPainter {
 
   StructurePainter({required this.structures, required this.floor});
 
-  static Path structureOutline(Structure structure) {
+  static Path _structureOutline(Structure structure) {
+    // Add the vertices of the structure to the path
     final vertices = structure.coordinates.map((c) => c.point).toList();
 
     final path = Path();
@@ -25,8 +26,8 @@ class StructurePainter extends CustomPainter {
     return path;
   }
 
-  static void drawRoom(Canvas canvas, Structure structure) {
-    final outline = structureOutline(structure);
+  static void _drawRoom(Canvas canvas, Structure structure) {
+    final outline = _structureOutline(structure);
     final fill = Paint()
       ..style = PaintingStyle.fill
       ..color = structure.colour;
@@ -42,7 +43,7 @@ class StructurePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     for (final structure in structures) {
-      drawRoom(canvas, structure);
+      _drawRoom(canvas, structure);
     }
   }
 

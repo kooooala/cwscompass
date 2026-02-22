@@ -27,6 +27,7 @@ class PathPainter extends CustomPainter {
     double spillover = 0;
     double scale = transformations.value.getMaxScaleOnAxis();
 
+    // Keep the distance between dots constant regardless of scale
     final actualBetweenDots = betweenDots / scale;
 
     final path = route.path.coordinates;
@@ -53,6 +54,7 @@ class PathPainter extends CustomPainter {
         final y = point1.y + distanceSoFar * sin(angle);
         distanceSoFar += actualBetweenDots;
 
+        // The size is 5 / scale to keep it constant
         canvas.drawCircle(Offset(x, y), 5 / scale, Paint()..color = colour);
       }
 

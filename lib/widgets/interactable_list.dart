@@ -14,9 +14,9 @@ class InteractableList extends ConsumerWidget {
 
   final void Function(Interactable interactable) onTap;
 
-  const InteractableList({super.key, required this.interactables, this.onTap = defaultRoomTap});
+  const InteractableList({super.key, required this.interactables, this.onTap = _defaultRoomTap});
 
-  static void defaultRoomTap(Interactable room) {}
+  static void _defaultRoomTap(Interactable room) {}
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,13 +44,13 @@ class InteractableList extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                        interactables.isEmpty ? "Loading..." : interactable!.name.capitalise(),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                            color: ThemeColours.darkText,
-                            fontSize: 18.0
-                        )
+                      interactables.isEmpty ? "Loading..." : interactable!.name.capitalise(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          color: ThemeColours.darkText,
+                          fontSize: 18.0
+                      )
                     )
                   ),
                   Text(

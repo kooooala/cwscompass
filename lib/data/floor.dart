@@ -20,15 +20,7 @@ class Floor {
         inaccessible = structures.whereType<Inaccessible>().toList(),
         toilets = structures.whereType<Toilet>().toList();
 
-  static String floorString(int floor) {
-    String result;
-    if (floor == 0) {
-      result = "G";
-    } else {
-      result = floor.toString();
-    }
-    result += "/F";
+  static String floorChar(int floor) => floor == 0 ? "G" : floor.toString();
 
-    return result;
-  }
+  static String floorString(int floor) => "${floorChar(floor)}/F";
 }

@@ -5,7 +5,7 @@ import 'package:cwscompass/widgets/map/canvas.dart';
 import 'package:cwscompass/data/map_data.dart';
 import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/common/theme_colours.dart';
-import 'package:cwscompass/widgets/room_list.dart';
+import 'package:cwscompass/widgets/interactable_list.dart';
 import 'package:cwscompass/widgets/rounded_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -27,60 +27,62 @@ class SearchPage extends ConsumerWidget {
 
   SearchPage({super.key, this.myLocationSelectable = false});
 
-  void search(String query, Iterable<Interactable> interactables) async {
+  void _search(String query, Iterable<Interactable> interactables) async {
     final roomEntries = Map.fromEntries(interactables.map((i) => i.searchEntry));
     final results = extractAllSorted(
       query: query,
       choices: roomEntries.keys.toList(),
-      cutoff: 60,
+      cutoff: 75,
     );
 
     searchResults.value = results.map((key) => roomEntries[key.choice]! as Interactable).toList();
   }
 
+  Widget _locationButton(BuildContext context) {
+    if (!myLocationSelectable) {
+      return SizedBox.shrink();
+    }
+
+    // Button that lets the user select their current location
+    return Padding(
+      padding: EdgeInsets.only(top: 16.0),
+      child: GestureDetector(
+        onTap: () => Navigator.of(context).pop<SearchResult>(SearchResultDeviceLocation()),
+        child: RoundedList(
+          children: [
+            Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+              color: Colors.white,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: EdgeInsets.only(right: 8.0),
+                    child: Icon(
+                      Icons.my_location,
+                      size: 16.0,
+                      color: ThemeColours.primary,
+                    )
+                  ),
+                  Text(
+                    "My location",
+                    style: TextStyle(
+                      color: ThemeColours.darkText,
+                      fontSize: 18.0
+                    ),
+                  )
+                ],
+              )
+            )
+          ]
+        ),
+      )
+    );
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mapData = ref.watch(mapDataProvider);
-
-    Widget myLocationButton;
-    if (myLocationSelectable) {
-      myLocationButton = Padding(
-        padding: EdgeInsets.only(top: 16.0),
-        child: GestureDetector(
-          onTap: () => Navigator.of(context).pop<SearchResult>(SearchResultDeviceLocation()),
-          child: RoundedList(
-            children: [
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
-                color: Colors.white,
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.only(right: 8.0),
-                      child: Icon(
-                        Icons.my_location,
-                        size: 16.0,
-                        color: ThemeColours.primary,
-                      )
-                    ),
-                    Text(
-                      "My location",
-                      style: TextStyle(
-                        color: ThemeColours.darkText,
-                        fontSize: 18.0
-                      ),
-                    )
-                  ],
-                )
-              )
-            ]
-          ),
-        )
-      );
-    } else {
-      myLocationButton = SizedBox.shrink();
-    }
 
     return Scaffold(
       backgroundColor: ThemeColours.secondary,
@@ -114,13 +116,18 @@ class SearchPage extends ConsumerWidget {
                           size: 32.0,
                           color: ThemeColours.primary)
                       ],
-                      onChanged: (value) => search(value, data.school.floors.map((f) => f.structures.whereType<Interactable>().toList()).reduce((a, b) => a + b)),
+                      onChanged: (value) => _search(
+                        value,
+                        // Join up the interactables each floor
+                        data.school.floors.map((f) => f.structures.whereType<Interactable>().toList()).reduce((a, b) => a + b)
+                      ),
                       backgroundColor: WidgetStateProperty.resolveWith((_) => Colors.white),
                       padding: WidgetStatePropertyAll<EdgeInsets>(EdgeInsets.symmetric(horizontal: 12.0)),
                     )
                   )
                 ),
-                myLocationButton,
+                _locationButton(context),
+                // Results list
                 Expanded(
                   child: ValueListenableBuilder(
                     valueListenable: searchResults,
@@ -133,6 +140,7 @@ class SearchPage extends ConsumerWidget {
                           Padding(
                             padding: EdgeInsets.only(bottom: 4.0),
                             child: Text(
+                              // Show a list of nearby rooms when there is search results is empty
                               value.isNotEmpty ? "Results" : "Nearby",
                               style: TextStyle(
                                 color: ThemeColours.lightText,

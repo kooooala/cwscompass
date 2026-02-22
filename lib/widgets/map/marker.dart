@@ -22,6 +22,7 @@ class Marker extends ConsumerWidget {
     return ref.watch(locationProvider).when(
       data: (location) => ref.watch(selectedFloorProvider).when(
         data: (selected) {
+          // Don't draw marker if the floor the location is on is not selected
           if (location.floor != selected.viewFloor) {
             return const SizedBox.shrink();
           }
@@ -35,7 +36,9 @@ class Marker extends ConsumerWidget {
                 top: point.y,
                 left: point.x,
                 child: FractionalTranslation(
+                  // Offset by 1/2 of the marker's size to keep it centred
                   translation: Offset(-0.5, -0.5),
+                  // Undo the scaling done by the interactive viewer to keep the marker size constant
                   child: Transform.scale(
                     scale: 1.0 / scale,
                     child: Stack(
@@ -47,6 +50,7 @@ class Marker extends ConsumerWidget {
                           elevation: 1.0 / scale,
                           child: SizedBox(width: size, height: size),
                         ),
+                        // White circle
                         Container(
                           width: size * 0.6,
                           height: size * 0.6,

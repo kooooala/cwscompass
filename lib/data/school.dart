@@ -27,7 +27,7 @@ class School {
   final List<Floor> floors = [];
   final List<Staircase> staircases;
 
-  static Graph simplifyGraph(Map<Coordinates, List<(Coordinates, String?)>> fullGraph) {
+  static Graph _simplifyGraph(Map<Coordinates, List<(Coordinates, String?)>> fullGraph) {
     // See section 2.5.1.2 for explanation and pseudo-code
 
     final graph = Graph({}, {});
@@ -86,7 +86,7 @@ class School {
     return graph;
   }
 
-  static Graph floorGraph(List<Structure> structures, List<Path> paths) {
+  static Graph _floorGraph(List<Structure> structures, List<Path> paths) {
     final buildings = structures.whereType<Building>();
     final interactables = structures.whereType<Interactable>();
 
@@ -129,7 +129,7 @@ class School {
       }
     }
 
-    return simplifyGraph(fullGraph);
+    return _simplifyGraph(fullGraph);
   }
 
   School(List<Structure> structures, List<Path> paths, this.staircases) {
@@ -139,7 +139,7 @@ class School {
       final floorStructures = structures.where((s) => s.floor == i).toList();
       final floorPaths = paths.where((p) => p.floor == i).toList();
 
-      floors.add(Floor(floorStructures, floorGraph(floorStructures, floorPaths)));
+      floors.add(Floor(floorStructures, _floorGraph(floorStructures, floorPaths)));
     }
 
     // Merge the floor graphs into one
@@ -160,7 +160,7 @@ class School {
     }
   }
 
-  Direction getDirectionSameFloor(Coordinates previous, Coordinates current, Coordinates next) {
+  Direction _getDirectionSameFloor(Coordinates previous, Coordinates current, Coordinates next) {
     // Calculate the signed angle between v1 (previous -> current) and v2 (current -> next)
     // Formula: https://wumbo.net/formulas/angle-between-two-vectors-2d/
     final v1 = Vector2(current.longitude - previous.longitude, current.latitude - previous.latitude);
@@ -188,32 +188,32 @@ class School {
     return Direction(turn, label, current, 0);
   }
 
-  Direction getDirectionElevation(Coordinates current, Coordinates next) {
+  Direction _getDirectionElevation(Coordinates current, Coordinates next) {
     final turn = next.floor < current.floor ? Turn.stairsDown : Turn.stairsUp;
     final label = staircases.firstWhere((staircase) => staircase.coordinates.contains(current)).label;
     return Direction(turn, label, current, 0);
   }
 
-  Direction getDirection(Coordinates previous, Coordinates current, Coordinates next) {
+  Direction _getDirection(Coordinates previous, Coordinates current, Coordinates next) {
     if (current is BuildingEntrance) {
       // If next is in the building, it means we're entering the building
       final isEntering = current.building.intersects(next.point);
       return Direction(isEntering ? Turn.enterBuilding : Turn.exitBuilding, current.building.name, current, 0);
     } else if (current.floor != next.floor) {
-      return getDirectionElevation(current, next);
+      return _getDirectionElevation(current, next);
     } else {
-      return getDirectionSameFloor(previous, current, next);
+      return _getDirectionSameFloor(previous, current, next);
     }
   }
 
-  static double heuristic(Coordinates c1, Coordinates c2) {
+  static double _heuristic(Coordinates c1, Coordinates c2) {
     // An additional cost is added to the distance for each floor change to make
     // sure the route finding won't get stuck exploring just one floor
     final floorChange = (c1.floor - c2.floor).abs();
     return maths.fastDistance(c1, c2) + floorChange * Staircase.cost;
   }
 
-  Route reconstruct(Map<Coordinates, Coordinates?> cameFrom, Coordinates start, Coordinates end) {
+  Route _reconstruct(Map<Coordinates, Coordinates?> cameFrom, Coordinates start, Coordinates end) {
     Coordinates current = end;
     Coordinates? previous, next;
     final route = <Coordinates>[];
@@ -231,7 +231,7 @@ class School {
         if (graph.simplified[current]!.where((e) => !e.coordinates.any((c) => c is Entrance)).length > 2) {
           directions.first.distance = distanceToNextJunction;
           // Insert the direction at the front of the list since we're working backwards from end to start
-          directions.insert(0, getDirection(next, current, previous));
+          directions.insert(0, _getDirection(next, current, previous));
           distanceToNextJunction = 0;
         }
       }
@@ -268,7 +268,7 @@ class School {
         final next = nextEdge.coordinates.first == current ? nextEdge.coordinates.last : nextEdge.coordinates.first;
         if (!costSoFar.keys.contains(next) || newCost < costSoFar[next]!) {
           costSoFar[next] = newCost;
-          final priority = newCost + heuristic(next, end);
+          final priority = newCost + _heuristic(next, end);
           frontier.add((next, priority));
 
           // Since an edge is made up of smaller intermediate edges, they will
@@ -284,7 +284,7 @@ class School {
       }
     }
 
-    return reconstruct(cameFrom, start, end);
+    return _reconstruct(cameFrom, start, end);
   }
 
   Coordinates closestNode(Coordinates point) {
@@ -353,7 +353,7 @@ class School {
   }
 
   // Return a path that goes from the intermediate node to the regular node
-  List<Coordinates> intermediateToRegular(Coordinates intermediate, Coordinates regular) {
+  List<Coordinates> _intermediateToRegular(Coordinates intermediate, Coordinates regular) {
     final edge = graph.intermediateNodeEdge[intermediate]!;
     final index = edge.coordinates.indexOf(intermediate);
     // We want the path to start with intermediate so we reverse the edge if it starts with regular
@@ -364,7 +364,7 @@ class School {
     }
   }
 
-  Route shortestRouteFromIntermediateNode(Coordinates start, List<Coordinates> endNodes) {
+  Route _shortestRouteFromIntermediateNode(Coordinates start, List<Coordinates> endNodes) {
     Route shortestRoute;
     final startIsIntermediate = !graph.simplified.containsKey(start);
 
@@ -372,10 +372,10 @@ class School {
       final edge = graph.intermediateNodeEdge[start]!.coordinates;
 
       final route1 = shortestRoutePairing([edge.first], endNodes);
-      final distance1 = route1.path.distance + Edge(intermediateToRegular(start, route1.start)).distance;
+      final distance1 = route1.path.distance + Edge(_intermediateToRegular(start, route1.start)).distance;
 
       final route2 = shortestRoutePairing([edge.last], endNodes);
-      final distance2 = route2.path.distance + Edge(intermediateToRegular(start, route2.start)).distance;
+      final distance2 = route2.path.distance + Edge(_intermediateToRegular(start, route2.start)).distance;
 
       if (distance1 < distance2) {
         shortestRoute = route1;
@@ -388,7 +388,7 @@ class School {
 
     List<Coordinates> fullPath = shortestRoute.path.coordinates;
     if (startIsIntermediate) {
-      fullPath = intermediateToRegular(start, shortestRoute.start) + fullPath.sublist(1);
+      fullPath = _intermediateToRegular(start, shortestRoute.start) + fullPath.sublist(1);
     }
 
     return Route(start, shortestRoute.end, shortestRoute.directions, Edge(fullPath));
@@ -441,7 +441,7 @@ class School {
 
   Route locationToInteractable(Coordinates location, Interactable interactable) {
     final closestNode = closestIntermediateNode(location);
-    final route = shortestRouteFromIntermediateNode(closestNode, interactable.entrances);
+    final route = _shortestRouteFromIntermediateNode(closestNode, interactable.entrances);
 
     return adjustRouteDisplay(location, route);
   }

@@ -7,8 +7,8 @@ import 'package:cwscompass/widgets/map/canvas.dart';
 import 'package:cwscompass/data/map_data.dart';
 import 'package:cwscompass/widgets/direction_sheet.dart';
 import 'package:cwscompass/widgets/floor_selector.dart';
-import 'package:cwscompass/widgets/pages/route_preview.dart';
 import 'package:cwscompass/data/school.dart' as school;
+import 'package:cwscompass/widgets/route_info.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -41,7 +41,7 @@ class _NavigationState extends ConsumerState<Navigation> {
     widget.canvasController.path.value = route;
   }
 
-  void updateDirections() {
+  void _updateDirections() {
     displayRoute.directions.removeWhere((c) => !displayRoute.path.coordinates.contains(c.coordinates));
     ref.watch(locationProvider).whenData((location) {
       if (displayRoute.directions.isEmpty) {
@@ -60,15 +60,15 @@ class _NavigationState extends ConsumerState<Navigation> {
     });
   }
 
-  void updateDisplayRoute(school.Route newRoute) {
+  void _updateDisplayRoute(school.Route newRoute) {
     setState(() {
       displayRoute = newRoute;
     });
-    updateDirections();
+    _updateDirections();
     widget.canvasController.path.value = displayRoute;
   }
   
-  void onLocationUpdate(Coordinates location) {
+  void _onLocationUpdate(Coordinates location) {
     ref.watch(mapDataProvider).whenData((data) {
       final closestNode = data.school.closestIntermediateNode(location);
 
@@ -76,19 +76,19 @@ class _NavigationState extends ConsumerState<Navigation> {
       if (!route.path.coordinates.contains(closestNode)) {
         final newRoute = data.school.locationToInteractable(location, widget.end);
         setState(() => route = newRoute);
-        updateDisplayRoute(newRoute);
+        _updateDisplayRoute(newRoute);
         debugPrint("Route recalculated");
         return;
       }
 
       final displayRoute = data.school.adjustRouteDisplay(location, route);
-      updateDisplayRoute(displayRoute);
+      _updateDisplayRoute(displayRoute);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    ref.watch(locationProvider).whenData(onLocationUpdate);
+    ref.watch(locationProvider).whenData(_onLocationUpdate);
 
     return Stack(
       children: [

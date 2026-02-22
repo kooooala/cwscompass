@@ -1,13 +1,13 @@
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/data/location.dart';
 import 'package:cwscompass/widgets/map/canvas.dart';
+import 'package:cwscompass/data/floor.dart';
 import 'package:cwscompass/widgets/map/selected_floor.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-String floorToString(int floor) => floor == 0 ? "G" : floor.toString();
-
 class FloorSelector extends ConsumerStatefulWidget {
+  // Control whether selecting a floor also changes the location's floor
   final bool locationChangeable;
 
   const FloorSelector({super.key, this.locationChangeable = true});
@@ -29,10 +29,11 @@ class _FloorSelectorState extends ConsumerState<FloorSelector> {
             padding: EdgeInsets.all(6.0),
             child: Column(
               spacing: 8.0,
+              // Number of elements depends on how many floors there are
               children: List.generate(selected.floorCount, (i) {
                 final floor = selected.floorCount - 1 - i;
                 final textWidget = Text(
-                  floorToString(floor),
+                  Floor.floorChar(floor),
                   style: TextStyle(
                     fontSize: 20.0,
                     fontWeight: FontWeight.w900,

@@ -42,6 +42,7 @@ class LabelPainter extends CustomPainter {
           fontSize: 3.0,
         );
       } else if (structure is Toilet) {
+        // Icons are drawn for toilets
         final icon = Toilet.toiletTypeIcon(structure.type);
         label = String.fromCharCode(icon.codePoint);
 
@@ -52,7 +53,7 @@ class LabelPainter extends CustomPainter {
           package: icon.fontPackage
         );
       } else {
-        // Unreachable
+        // Skip over everything else (inaccessible areas)
         continue;
       }
 

@@ -5,7 +5,7 @@ import 'package:cwscompass/data/location.dart';
 import 'package:cwscompass/common/theme_colours.dart';
 import 'package:cwscompass/widgets/pages/explore.dart';
 import 'package:cwscompass/widgets/pages/route_preview.dart';
-import 'package:cwscompass/widgets/room_list.dart';
+import 'package:cwscompass/widgets/interactable_list.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,13 +28,13 @@ class InfoSheetState extends ConsumerState<InfoSheet> {
   void animateSizeChange(double newSize) {
     currentSize = newSize;
     controller.animateTo(
-        SheetOffset(newSize),
-        duration: Duration(milliseconds: 400),
-        curve: Curves.easeOut
+      SheetOffset(newSize),
+      duration: Duration(milliseconds: 400),
+      curve: Curves.easeOut
     );
   }
 
-  void onRoomSelect(Interactable? previous, Interactable? next) {
+  void _onRoomSelect(Interactable? previous, Interactable? next) {
     final newSize = next == null ? nearbySize : minSize;
     animateSizeChange(newSize);
   }
@@ -53,7 +53,7 @@ class InfoSheetState extends ConsumerState<InfoSheet> {
     final snapSizes = [minSize, nearbySize, maxSize].map((s) => SheetOffset(s)).toList();
     currentSize = nearbySize;
 
-    ref.listen<Interactable?>(selectedRoomProvider, onRoomSelect);
+    ref.listen<Interactable?>(selectedRoomProvider, _onRoomSelect);
 
     return SheetViewport(
       child: Sheet(
@@ -128,14 +128,14 @@ class InteractableInfo extends ConsumerWidget {
           children: [
             Expanded(
               child: Text(
-                  interactable.name.capitalise(),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                      color: ThemeColours.lightText,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 28.0
-                  )
+                interactable.name.capitalise(),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: ThemeColours.lightText,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 28.0
+                )
               )
             ),
             TextButton.icon(
@@ -144,8 +144,14 @@ class InteractableInfo extends ConsumerWidget {
                   if (!canvasBounds.contains(location.point)) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: const Text("Device too far away from the school!"),
+                        content: Text(
+                          "Device too far away from the school!",
+                          style: TextStyle(
+                            color: ThemeColours.darkText
+                          ),
+                        ),
                         behavior: SnackBarBehavior.floating,
+                        backgroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(24.0)
                         ),
@@ -185,6 +191,7 @@ class InteractableInfo extends ConsumerWidget {
             fontSize: 16.0
           ),
         ),
+        // Placeholder since timetable synchronisation hasn't been implemented yet
         Text(
           "No upcoming lessons",
           style: TextStyle(
@@ -203,6 +210,7 @@ class NoneSelected extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // When nothing is selected a list of nearby rooms is shown
     return ListView(
       padding: EdgeInsets.zero,
       children: [

@@ -9,33 +9,33 @@ void main() async {
   debugPaintSizeEnabled = false;
   debugRepaintRainbowEnabled = false;
 
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(const ProviderScope(child: App()));
 }
 
-class MyApp extends ConsumerWidget {
-  const MyApp({super.key});
+class App extends StatelessWidget {
+  const App({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     return MaterialApp(
       title: 'CWS Compass',
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
         textTheme: GoogleFonts.nunitoTextTheme()
       ),
-      home: MyHomePage(),
+      home: HomePage(),
     );
   }
 }
 
-class MyHomePage extends ConsumerStatefulWidget {
-  MyHomePage({super.key});
+class HomePage extends ConsumerStatefulWidget {
+  HomePage({super.key});
 
   @override
-  ConsumerState<ConsumerStatefulWidget> createState() => _MyHomePageState();
+  ConsumerState<ConsumerStatefulWidget> createState() => _HomePageState();
 }
 
-class _MyHomePageState extends ConsumerState<MyHomePage> {
+class _HomePageState extends ConsumerState<HomePage> {
   late final MapCanvasController canvasController;
 
   @override
@@ -52,18 +52,18 @@ class _MyHomePageState extends ConsumerState<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-        canPop: false ,
-        onPopInvokedWithResult: (_, _) {
-          // Unselect room with back button
-          if (ref.read(selectedRoomProvider) != null) {
-            ref.read(selectedRoomProvider.notifier).set(null);
-          }
-        },
-        child: Scaffold(
-          body: Builder(
-            builder: (context) => Explore()
-          ),
-        )
+      canPop: false ,
+      onPopInvokedWithResult: (_, _) {
+        // Unselect room with back button
+        if (ref.read(selectedRoomProvider) != null) {
+          ref.read(selectedRoomProvider.notifier).set(null);
+        }
+      },
+      child: Scaffold(
+        body: Builder(
+          builder: (context) => Explore()
+        ),
+      )
     );
   }
 }
