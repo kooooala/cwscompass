@@ -114,7 +114,7 @@ class _NavigationState extends ConsumerState<Navigation> {
                 children: [
                   ExitButton(),
                   Spacer(),
-                  FloorSelector(locationChangeable: false)
+                  FloorSelector(locationChangeable: true)
                 ],
               ),
             ),

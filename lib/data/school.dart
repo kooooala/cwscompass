@@ -228,7 +228,7 @@ class School {
       // Add direction if current is a junction
       if (graph.simplified.containsKey(current) && previous != null && next != null) {
         // Check if the junction is a junction only because of being connected to an entrance
-        if (graph.simplified[current]!.where((e) => !e.coordinates.any((c) => c is Entrance)).length > 2) {
+        if (graph.simplified[current]!.where((e) => !e.coordinates.any((c) => c is Entrance)).length > 2 || current is BuildingEntrance) {
           directions.first.distance = distanceToNextJunction;
           // Insert the direction at the front of the list since we're working backwards from end to start
           directions.insert(0, _getDirection(next, current, previous));
