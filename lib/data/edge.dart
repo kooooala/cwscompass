@@ -1,6 +1,5 @@
 import 'package:cwscompass/common/maths.dart' as maths;
 import 'package:cwscompass/data/coordinates.dart';
-import 'package:cwscompass/data/direction.dart';
 import 'package:cwscompass/data/staircase.dart';
 
 // A path (list of coordinates) with its distance

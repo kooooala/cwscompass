@@ -1,6 +1,4 @@
 import 'package:cwscompass/common/theme_colours.dart';
-import 'package:cwscompass/data/location.dart';
-import 'package:cwscompass/widgets/map/canvas.dart';
 import 'package:cwscompass/data/floor.dart';
 import 'package:cwscompass/widgets/map/selected_floor.dart';
 import 'package:flutter/material.dart';

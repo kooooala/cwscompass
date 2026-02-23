@@ -4,7 +4,6 @@ import 'package:cwscompass/data/entrance.dart';
 import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/data/floor.dart';
 import 'package:cwscompass/common/theme_colours.dart';
-import 'package:cwscompass/widgets/floor_selector.dart';
 import 'package:cwscompass/widgets/rounded_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';

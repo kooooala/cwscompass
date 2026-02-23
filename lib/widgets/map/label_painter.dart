@@ -5,7 +5,6 @@ import 'package:cwscompass/data/structures/building.dart';
 import 'package:cwscompass/data/structures/room.dart';
 import 'package:cwscompass/data/structures/structure.dart';
 import 'package:cwscompass/data/structures/toilet.dart';
-import 'package:cwscompass/data/school.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 

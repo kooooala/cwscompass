@@ -16,7 +16,6 @@ import 'package:cwscompass/widgets/pages/search_page.dart';
 import 'package:cwscompass/data/school.dart' as school;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class RoutePreview extends ConsumerStatefulWidget {
